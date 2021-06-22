@@ -41,6 +41,14 @@
 
 ### [SEO优化技巧](https://juejin.cn/post/6844904097263386638)
 
+* 合理的title、description、keywords：搜索对着三项的权重逐个减小，title值强调重点即可，重要关键词出现不要超过2次，而且要靠前，不同页面title要有所不同；description把页面内容高度概括，长度合适，不可过分堆砌关键词，不同页面description有所不同；keywords列举出重要关键词即可
+* 语义化的HTML代码，符合W3C规范：语义化代码让搜索引擎容易理解网页
+* 重要内容HTML代码放在最前：搜索引擎抓取HTML顺序是从上到下，有的搜索引擎对抓取长度有限制，保证重要内容一定会被抓取
+* 重要内容不要用js输出：爬虫不会执行js获取内容
+* 少用iframe：搜索引擎不会抓取iframe中的内容
+* 非装饰性图片必须加alt
+* 提高网站速度：网站速度是搜索引擎排序的一个重要指标
+
 ### [不同页面通信与跨域](https://juejin.cn/post/6844903613030989832)
 
 ### [iframe](https://segmentfault.com/a/1190000004502619)
@@ -78,7 +86,7 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
     <meta charset="UTF-8"><!-- 字符编码 -->
     <meta http-equiv="refresh" content="30"><!-- 每30秒刷新页面 -->
     <meta http-equiv="Cache-Control" name="no-store" /><!-- 禁止浏览器从本地计算机的缓存中访问页面内容 -->
-    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1, user-scalable=no"><!-- 为移动设备添加 viewport -->
+    <meta name="’viewport’" content="”width=device-width," initial-scale="1." maximum-scale="1,user-scalable=no”"/><!-- 为移动设备添加 viewport -->
     <!-- <title> 元素可定义文档的标题 -->
     <title>文档的标题</title>
     <!-- <link> 标签定义文档与外部资源的关系，最常见的用途是链接样式表 -->
