@@ -113,3 +113,7 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
 
 * display为block/table；如 div p h1 h2.., table ul ol等
 * dispay为inline/inline-block；如 span img input button等
+
+### 使用http-server开启一个本地服务器，方便本地调试
+
+![命令行](https://github.com/lujiajian1/study-notes/blob/main/img/http-server.jpg)
