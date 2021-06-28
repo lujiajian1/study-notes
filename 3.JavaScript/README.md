@@ -31,6 +31,11 @@
 
 * 运算符（优先级）和表达式
 * 类型转换
+    * 字符串拼接
+    * ==
+    * if语句和逻辑运算
+* 类型转换规则
+![类型转换规则](https://github.com/lujiajian1/study-notes/blob/main/img/type-change.jpg)
 
 ### 语句
 
@@ -43,19 +48,161 @@
 
 ### 深拷贝
 
+```js
+function deepClone(obj = {}){    
+    if(obj typeof !== 'object' || obj typeof == null) {
+        return obj;
+    }    
+    let result = {};    
+    if(obj instanceof Array) {
+        result = [];
+    }    
+    for(let key in obj){        
+        if(obj.hasOwnProperty(key)){            
+            result[key] = deepClone(obj[key]);        
+        }    
+    }    
+    return result;
+}
+```
+
 ### 闭包
+
+#### 作用域应用的特殊情况，有两种表现：
+
+* 函数作为返回值（闭包）
+```js
+function create() {
+    const a = 100
+    return function () {
+        console.log(a)
+    }
+}
+
+const fn = create()
+const a = 200
+fn() // 100
+```
+* 函数作为参数（非闭包）
+```js
+function print(fn) {
+    const a = 200
+    fn()
+}
+const a = 100
+function fn() {
+    console.log(a)
+}
+print(fn) // 100
+```
+* 解题关键：所有的自由变量的查找，是在函数定义的地方，向上级作用域查找，而不是在执行的地方查找。
+
+#### 闭包的应用：隐藏数据，只提供 API
+```js
+function createCache() {
+    const data = {} // 闭包中的数据，被隐藏，不被外界访问
+    return {
+        set: function (key, val) {
+            data[key] = val
+        },
+        get: function (key) {
+            return data[key]
+        }
+    }
+}
+
+const c = createCache()
+c.set('a', 100)
+console.log( c.get('a') )
+```
 
 ### javascript的垃圾回收原理
 
 ### 判断数据类型的方法及原理
 
-* typeof
-* instanceof
+* typeof 运算符
+    * 识别所有值类型
+    * 识别函数
+    * 判断是否引用数据类型（不可在细分）
+* instanceof 运算符
+    * instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上，所有说instanceof是基于原型链实现的
+    ```js
+    xialuo instanceof Stutent //true
+    xialuo instanceof People //true
+    xialuo instanceof Object //true
+
+    [] instanceof Array //true
+    [] instanceof Object //true
+
+    {} instanceof Object //true
+    ```
 * constructor
 * prototype
 * jquery.type()
 
 ### bind,call,apply的区别，手写实现
+```js
+//手写bind
+Function.prototype.mybind = function(){
+    // 参数转化为数组
+    const args = Array.prototype.slice.call(argument);
+    // 获取this
+    const t = args.shift();
+    // 获取绑定mybind的function
+    const self = this;
+    // 返回一个函数
+    return function(){
+        return self.apply(t, args);
+    }
+}
+
+function fn1(a, b, c){
+    console.log('this', this);
+    console.log(a,b,c);
+    return 'this is fn1';
+}
+
+const fn2 = fn1.mybind({x:100}, 10. 20. 30);
+const res = fn2():
+console.log(res);
+```
+
+### 原型和原型链
+js是一门基于原型实现继承的语言，es6的class知识一个语法糖而已
+```js
+// 示例代码
+//父类
+class People { //类首字母要大写
+    constructor(name) {
+        this.name = name;
+    }
+    eat() {
+        console.log(`${this.name} eat something`)
+    }
+}
+//子类
+class Student extends People {
+    constructor(number){
+        super(name);
+        this.number = number;
+    }
+    sayHi(){
+        console.log(`姓名：${this.name} 学号：${this.Number}`)
+    }
+}
+```
+#### 原型关系
+
+* 每个 class 都有显示原型 prototype
+* 每个实例都有隐式原型 __proto__ 
+* 实例的 __proto__ 指向对应 class 的 prototype
+![原型关系](https://github.com/lujiajian1/study-notes/blob/main/img/prototype.png)
+
+#### 基于原型的执行规则
+现在自身属性和方法中寻找，如果找不到则自动去 __proto__ 中查找
+
+#### 原型链
+![原型链](https://github.com/lujiajian1/study-notes/blob/main/img/prototype-line.jpg)
 
 ### js实现继承的方法
 
@@ -66,6 +213,90 @@
 * 组合继承
 * 寄生组合继承
 
+ES6 class
+class 是 ES6 语法规范,有 ECMA 委员会发布，ECMA 只规定语法规则，即我们代码的书写规范，不规定如何实现,以上实现方式都是v8 引擎的实现方式，也是主流的。
+
+* constructor
+* 属性
+* 方法
+
+ES6 class 继承（extends，super）
+
+```js
+//父类
+class People { //类首字母要大写
+    constructor(name) {
+        this.name = name;
+    }
+    eat() {
+        console.log(`${this.name} eat something`)
+    }
+}
+//子类
+class Student extends People {
+    constructor(number){
+        super(name);
+        this.number = number;
+    }
+    sayHi(){
+        console.log(`姓名：${this.name} 学号：${this.Number}`)
+    }
+}
+```
+
+### this
+this的值不是在函数定义的时候决定的，而是在函数执行的时候决定的
+
+* 作为普通函数
+```js
+function fn1(){
+    console.log(this);
+}
+fn1(); //window
+```
+* 使用call、apply、bind
+```js
+function fn1(){
+    console.log(this);
+}
+fn1.call({x: 100}); //{x: 100}
+const fn2 = fn1.bind({x: 200});
+fn2();//{x: 200}
+```
+* 作为对象方法被调用
+```js
+const zhangsan = {
+    name: "张三",
+    sayHi() {
+        console.log(this); //this 当前对象
+    }
+}
+```
+* 在class方法中调用
+```js
+class People{
+    constructor(name){
+        this.name = name;
+    }
+    sayHi() {
+        console.log(this);
+    }
+}
+const zhangsan = new People('张三');
+zhangsan.sayHi(); //this 当前对象
+```
+* 箭头函数
+```js
+const zhangsan = {
+    name: "张三",
+    wait(){
+        setTimeout(()=>{
+            console.log(this); //zhangsan 对象
+        })
+    }
+}
+```
+
 ### new操作符具体干了什么
 
 ### 常见web安全及防护原理
@@ -73,8 +304,6 @@
 * sql注入
 * XSS
 * CSRF
-
-### promise
 
 ### AMD、CMD
 
@@ -86,12 +315,179 @@ https://github.com/haizlin/fe-interview/issues/80
 
 ### JS执行上下文栈和作用域链
 
-### prototype 和 proto 区别
+### prototype 和 __proto__ 区别
 
 ### for...of 和 for...in
 
 https://www.cnblogs.com/zjx304/p/10687017.html
 
 ### 迭代器对象和普通对象
+
+
+### 写一个简单的jQuery
+```js
+class jQuery {
+    constructor(selector) {
+        const result = document.querySelectorAll(selector)
+        const length = result.length
+        for (let i = 0; i < length; i++) {
+            this[i] = result[i]
+        }
+        this.length = length
+        this.selector = selector
+    }
+    get(index) {
+        return this[index]
+    }
+    each(fn) {
+        for (let i = 0; i < this.length; i++) {
+            const elem = this[i]
+            fn(elem)
+        }
+    }
+    on(type, fn) {
+        return this.each(elem => {
+            elem.addEventListener(type, fn, false)
+        })
+    }
+    // 扩展很多 DOM API
+}
+
+// 插件
+jQuery.prototype.dialog = function (info) {
+    alert(info)
+}
+
+// “造轮子”
+class myJQuery extends jQuery {
+    constructor(selector) {
+        super(selector)
+    }
+    // 扩展自己的方法
+    addClass(className) {
+
+    }
+    style(data) {
+
+    }
+}
+
+const $p = new jQuery('p')
+$p.get(1)
+$p.each((elem) => console.log(elem.nodeName))
+$p.on('click', () => alert('clicked'))
+```
+
+### event loop（事件循环/事件轮询）
+
+#### 什么是event loop
+
+* js 是单线程执行的
+    * 从前到后，一行行执行
+    * 遇到报错，则下面代码停止执行
+    * 先把同步代码执行完，再执行异步
+* 异步要基于回调来实现
+* event loop 就是异步回调的实现原理
+
+#### event loop 执行过程
+
+* 同步代码，一行一行放在 call stack 中执行
+* 遇到异步，先“记录”下，等待时间（定时，网络请求等）
+* 时机到了，就移动到 calllback queue
+* 如果call stack 为空（即同步代码执行完），event loop开始工作
+* 轮询查找callback queue，如有则移动到call stack 执行
+* 继续轮询查找（永动机一样） 
+
+```js
+// 示例代码
+console.log('Hi');
+
+setTimeout(function cb1(){
+    console.log('cb1');
+}, 500)
+
+console.log('Bye');
+```
+1. 将 console.log("Hi") 推入调用栈，调用栈会执行代码
+2. 执行代码，控制台打印“Hi”，调用栈清空
+3. 执行 setTimeout，setTimeout由浏览器定义，不是ES6的内容；将定时器放到Web APIs中，到时间后将回调函数放到回调函数队列中
+4. 执行完了setTimeout， 清空调用栈
+5. console.log("Bye")进入调用栈，执行，调用栈清空
+6. 同步代码被执行完,，回调栈空，浏览器内核启动时间循环机制
+7. 五秒之后，定时器将cb1推到回调函数队列中
+8. 事件循环将cb1放入调用栈
+
+### 单线程和异步
+
+* js是单线程语言，只能同时做一件事
+* 浏览器和node.js支持js启动 进程（webWorker），但是js依然是单线程
+* js和DOM渲染共用同一线程，因为js可修改DOM结构
+* 遇到等待（定时器，网络请求）不能卡住，启动异步，回调callback函数
+
+#### 异步和同步
+
+* JS是单线程语言
+* 异步不会阻塞代码执行
+* 同步会阻塞代码执行。
+
+#### 异步应用场景
+
+* 网络请求，如ajax、图片加载
+* 定时任务，如setTimeout
+
+### promise
+
+#### 什么是promise
+promise解决callback hell的问题
+```js
+function loadImg(src) {
+    const p = new Promise(
+        (resolve, reject) => {
+            const img = document.createElement('img')
+            img.onload = () => {
+                resolve(img)
+            }
+            img.onerror = () => {
+                const err = new Error(`图片加载失败 ${src}`)
+                reject(err)
+            }
+            img.src = src
+        }
+    )
+    return p
+}
+
+const url1 = 'https://img.mukewang.com/5a9fc8070001a82402060220-140-140.jpg'
+const url2 = 'https://img3.mukewang.com/5a9fc8070001a82402060220-100-100.jpg'
+
+loadImg(url1).then(img1 => {
+    console.log(img1.width)
+    return img1 // 普通对象
+}).then(img1 => {
+    console.log(img1.height)
+    return loadImg(url2) // promise 实例
+}).then(img2 => {
+    console.log(img2.width)
+    return img2
+}).then(img2 => {
+    console.log(img2.height)
+}).catch(ex => console.error(ex))
+```
+#### 三种状态
+
+* pending resolved rejected
+* pending ----->resolved 或 pending ----->rejected
+* 变化不可逆
+
+#### 状态表现
+
+* pending状态，不会出发then和catch
+* resolved状态，会触发后续的then回调函数
+* rejected状态，会出发后续的catch回调函数
+
+#### then和catch改变状态
+
+* then正常返回resolved，里面有报错则返回rejected
+* catch正常返回resolved，里面有报错则返回rejected
 
 ### 正则表达式
