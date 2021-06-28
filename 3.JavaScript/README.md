@@ -319,6 +319,8 @@ https://github.com/haizlin/fe-interview/issues/80
 
 ### for...of 和 for...in
 
+* for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
+
 https://www.cnblogs.com/zjx304/p/10687017.html
 
 ### 迭代器对象和普通对象
@@ -378,6 +380,12 @@ $p.each((elem) => console.log(elem.nodeName))
 $p.on('click', () => alert('clicked'))
 ```
 
+### 微任务和宏任务
+
+* 宏任务：setTimeout，setInterval, Ajax, DOM事件
+* 微任务：Promise async/await
+* 微任务执行时机比宏任务要早：微任务（ES6语法规定）DOM渲染前触发，宏任务（浏览器规定）DOM渲染后触发
+
 ### event loop（事件循环/事件轮询）
 
 #### 什么是event loop
@@ -416,7 +424,16 @@ console.log('Bye');
 6. 同步代码被执行完,，回调栈空，浏览器内核启动时间循环机制
 7. 五秒之后，定时器将cb1推到回调函数队列中
 8. 事件循环将cb1放入调用栈
+![event loop](https://github.com/lujiajian1/study-notes/blob/main/img/event-loop.jpg)
 
+#### event loop  和 DOM 渲染
+
+* 每次 Call Stack 清空（即每次轮询结束），即同步任务执行完成
+* 都是DOM重新渲染的机会，DOM结构如有改变则重新渲染
+* 然后再去触发下一次的 event loop
+
+#### 结合DOM渲染，微任务执行的 event loop 示意图
+![event loop](https://github.com/lujiajian1/study-notes/blob/main/img/event-loop-DOM.png)
 ### 单线程和异步
 
 * js是单线程语言，只能同时做一件事
@@ -434,6 +451,12 @@ console.log('Bye');
 
 * 网络请求，如ajax、图片加载
 * 定时任务，如setTimeout
+
+#### 异步的本质
+
+* async/await 是消灭异步回调的终极武器
+* js还是单线程，异步还是基于 event loop
+* async/await 是一个语法糖，但是这个语法糖特别香
 
 ### promise
 
@@ -489,5 +512,110 @@ loadImg(url1).then(img1 => {
 
 * then正常返回resolved，里面有报错则返回rejected
 * catch正常返回resolved，里面有报错则返回rejected
+
+#### async/await
+
+* 执行 async 函数返回的是 Promise 对象
+* await 相当于 Promise的 then
+* try...catch...可捕获异常，代替 Promise 的 catch
+
+#### XMLHttpRequest
+```js
+const xhr = new XMLHttpRequest()
+xhr.open('GET', '/data/test.json', true)
+xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+            // console.log(
+            //     JSON.parse(xhr.responseText)
+            // )
+            alert(xhr.responseText)
+        } else if (xhr.status === 404) {
+            console.log('404 not found')
+        }
+    }
+}
+xhr.send(null)
+```
+xhr.readuState
+0：未初始化，还未调用send方法
+1：载入，已调用send方法，正发送请求
+2：载入完成，send方法执行完毕，已接收到全部响应内容
+3：交互，正在解析响应内容
+4：完成，响应内容解析完成，可以再客户端调用
+
+#### 手写简易的ajax
+```js
+function ajax(url) {
+    const p = new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', url, true)
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    resolve(
+                        JSON.parse(xhr.responseText)
+                    )
+                } else if (xhr.status === 404 || xhr.status === 500) {
+                    reject(new Error('404 not found'))
+                }
+            }
+        }
+        xhr.send(null)
+    })
+    return p
+}
+
+const url = '/data/test.json'
+ajax(url)
+.then(res => console.log(res))
+.catch(err => console.error(err))
+```
+
+### JS-Web-API
+
+JS基础知识，是规定语法 （ECMA262标准），JS Web API，网页操作的API（Ｗ３Ｃ标准） ，前者是后者的基础，两者结合才能真正实际应用
+* DOM
+* BOM
+* 事件绑定
+* ajax
+* 存储
+
+### property 和 attribute
+* property：修改JS对象属性，不会体现到HTML结构中
+* attribute：修改HTML属性，会改变HTML 结构（标签结构）
+* 两者都有可能引起DOM重新渲染
+建议：尽量用 property 操作，因为property可能会在JS机制中，避免一些不必要的DOM渲染；但是attribute是修改HTML结构，一定会引起DOM结构的重新渲染，而DOM重新渲染是比较耗费性能的。
+
+### DOM性能
+* DOM操作非常“昂贵”，避免频繁的DOM操作
+* 对DOM查询做缓存
+* 将频繁操作改为一次操作（createDocumentFragment）
+
+### 页面加载过程
+1. DNS解析：域名 -> IP地址
+2. 浏览器根据IP地址向服务器发起http请求
+3. 服务器处理http请求，并返回给浏览器
+
+### 页面渲染过程
+
+1. 根据HTML代码生成DOM Tree
+2. 根据CSS代码生成CSSOM 
+3. 将DOM Tree和CSSOM整合形成Render Tree
+4. 根据Render Tree渲染页面
+5. 遇到\<script\>则暂停渲染，优先加载并执行JS代码，完成再继续
+6. 图片不会阻塞DOM渲染
+7. 直至把Render Tree渲染完成
+
+### window.onload 和 DOMComtentLoaded
+
+```js
+window.addEventListener('load',function(){    
+    // 页面的全部资源加载完成才会执行，包括图片、视频等
+})
+document.addEvenListener('DOMContentLoaded',function(){    
+    // DOM 渲染完，即可执行，此时图片、视频等异步资源可能还没有加载完
+})
+```
 
 ### 正则表达式
