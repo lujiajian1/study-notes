@@ -80,12 +80,6 @@
 * 多列等高布局
 * 三行布局（头尾定高主栏自适应）
 
-### 预处理器，如：less，sass，stylus语法
-
-### 后处理器， 如： postCss
-
-### CSS模块化（BEM，css-in-js）
-
 ### 响应式布局方案
 
 ### [css3新特性](https://juejin.cn/post/6844903518520901639#heading-13)
@@ -100,70 +94,6 @@
 * 3.5代 CSS Houdini
 
 ### float
-
-###  BFC、IFC、GFC、FFC
-
-### 视觉格式化模型
-
-
-### 12px问题
-```css
-/* Chrome支持小于12px 的文字 */
-.shrink {
-    -webkit-transform: scale(0.8);
-    -o-transform: scale(1);
-    display: inilne-block;
-}
-```
-
-### 自定义属性
-
-### 1px边框解决方案
-
-### 清除浮动
-
-### 消除浏览器默认样式
-
-### 长文本处理
-
-### 水平居中
-
-* inine 元素: text-align: center
-* block元素: margin: auto;
-* absolute元素: left 50% + margin-left 负值
-* display: flex, jusitity-content: center
-
-### 垂直居中
-
-* inline元素: line-height 的值等于height值
-* absolute元素: top 50% +margin-top负值
-* absolute元素: transform:translate(-50%, -50%)
-* absolute元素: top, left, bottom, right = 0 + margin: auto
-* display: flex; align-items: center;
-
-### margin负值问题
-
-* margin-left和margin-top负值，元素向左和向上移动
-* margin-right负值，右侧元素左移，自身不受影响
-* margin-bottom负值，下方元素上移，自身不受影响
-
-### 形成BFC的常见条件
-
-Block formmat context，块级格式化上下文。它是一块独立的区域，内部元素的渲染不会影响边界以外的元素。
-* float 不是 none
-* position 是 absolute 或者 fixed
-* overflow 不是 visible
-* display 是 flex 或者 inline-block等
-
-### 手写clearFloat
-
-```css
-.clear-float::after{
-    content: '';
-    display: table;
-    clear: both;
-}
-```
 
 ### flex常用语法
 
@@ -191,8 +121,69 @@ Block formmat context，块级格式化上下文。它是一块独立的区域�
 * align-self：允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch
     * 该属性可能取6个值，除了auto，其他都与align-items属性完全一致
 
+
+###  BFC、IFC、GFC、FFC
+
+### 形成BFC的常见条件
+
+Block formmat context，块级格式化上下文。它是一块独立的区域，内部元素的渲染不会影响边界以外的元素。
+* float 不是 none
+* position 是 absolute 或者 fixed
+* overflow 不是 visible
+* display 是 flex 或者 inline-block等
+
+### 视觉格式化模型
+
+### 预处理器，如：less，sass，stylus语法
+
+### 后处理器， 如： postCss
+
+### CSS模块化（BEM，css-in-js）
+
 ### line-height的继承问题
 
 * 写具体数值，如30px， 则继承该值
 * 写比例，如2/1.5,则继承该比例
 * 写百分比，如200%，则继承计算出来的值
+
+### 手写clearFloat
+
+```css
+.clear-float::after{
+    content: '';
+    display: table;
+    clear: both;
+}
+```
+
+### 12px问题
+```css
+/* Chrome支持小于12px 的文字 */
+.shrink {
+    -webkit-transform: scale(0.8);
+    -o-transform: scale(1);
+    display: inilne-block;
+}
+```
+### margin负值问题
+
+* margin-left和margin-top负值，元素向左和向上移动
+* margin-right负值，右侧元素左移，自身不受影响
+* margin-bottom负值，下方元素上移，自身不受影响
+
+### 水平居中
+
+* inine 元素: text-align: center
+* block元素: margin: auto;
+* absolute元素: left 50% + margin-left 负值
+* display: flex, jusitity-content: center
+
+### 垂直居中
+
+* inline元素: line-height 的值等于height值
+* absolute元素: top 50% +margin-top负值
+* absolute元素: transform:translate(-50%, -50%)
+* absolute元素: top, left, bottom, right = 0 + margin: auto
+* display: flex; align-items: center;
+
+### 1px边框解决方案

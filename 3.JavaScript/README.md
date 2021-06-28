@@ -1,5 +1,3 @@
-## 语法
-
 ### javascript
 
 | 语法（Grammar）           | 语义 | 运行时（Runtime）  |
@@ -17,15 +15,42 @@
 
 ### 类型
 
-# Number（精度丢失问题）
-# String（字符集，编码方式）
-# Boolean
-# Object
-# Null
-# Undefined（void 0 生成undefined）
-# Symbol
-# BigInt
+* Number（精度丢失问题）
+* String（字符集，编码方式）
+* Boolean
+* Object
+* Null
+* Undefined（void 0 生成undefined）
+* Symbol
+* BigInt
 
+### 判断数据类型的方法及原理
+
+* typeof 运算符
+    * 识别所有值类型
+    * 识别函数
+    * 判断是否引用数据类型（不可在细分）
+* instanceof 运算符
+    * instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上，所有说instanceof是基于原型链实现的
+    ```js
+    xialuo instanceof Stutent //true
+    xialuo instanceof People //true
+    xialuo instanceof Object //true
+
+    [] instanceof Array //true
+    [] instanceof Object //true
+
+    {} instanceof Object //true
+    ```
+* constructor
+* prototype
+* jquery.type()
+
+### 迭代器对象和普通对象
+
+### 0.2+0.1==0.3
+
+https://github.com/haizlin/fe-interview/issues/80
 
 ### 表达式
 
@@ -36,15 +61,6 @@
     * if语句和逻辑运算
 * 类型转换规则
 ![类型转换规则](https://github.com/lujiajian1/study-notes/blob/main/img/type-change.jpg)
-
-### 语句
-
-### 结构化
-
-* 宏任务和微任务
-* JS函数调用
-
-## 查漏补缺
 
 ### 深拷贝
 
@@ -68,7 +84,7 @@ function deepClone(obj = {}){
 
 ### 闭包
 
-#### 作用域应用的特殊情况，有两种表现：
+##### 作用域应用的特殊情况，有两种表现：
 
 * 函数作为返回值（闭包）
 ```js
@@ -97,7 +113,7 @@ print(fn) // 100
 ```
 * 解题关键：所有的自由变量的查找，是在函数定义的地方，向上级作用域查找，而不是在执行的地方查找。
 
-#### 闭包的应用：隐藏数据，只提供 API
+##### 闭包的应用：隐藏数据，只提供 API
 ```js
 function createCache() {
     const data = {} // 闭包中的数据，被隐藏，不被外界访问
@@ -116,56 +132,9 @@ c.set('a', 100)
 console.log( c.get('a') )
 ```
 
-### javascript的垃圾回收原理
 
-### 判断数据类型的方法及原理
 
-* typeof 运算符
-    * 识别所有值类型
-    * 识别函数
-    * 判断是否引用数据类型（不可在细分）
-* instanceof 运算符
-    * instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上，所有说instanceof是基于原型链实现的
-    ```js
-    xialuo instanceof Stutent //true
-    xialuo instanceof People //true
-    xialuo instanceof Object //true
 
-    [] instanceof Array //true
-    [] instanceof Object //true
-
-    {} instanceof Object //true
-    ```
-* constructor
-* prototype
-* jquery.type()
-
-### bind,call,apply的区别，手写实现
-```js
-//手写bind
-Function.prototype.mybind = function(){
-    // 参数转化为数组
-    const args = Array.prototype.slice.call(argument);
-    // 获取this
-    const t = args.shift();
-    // 获取绑定mybind的function
-    const self = this;
-    // 返回一个函数
-    return function(){
-        return self.apply(t, args);
-    }
-}
-
-function fn1(a, b, c){
-    console.log('this', this);
-    console.log(a,b,c);
-    return 'this is fn1';
-}
-
-const fn2 = fn1.mybind({x:100}, 10. 20. 30);
-const res = fn2():
-console.log(res);
-```
 
 ### 原型和原型链
 js是一门基于原型实现继承的语言，es6的class知识一个语法糖而已
@@ -297,34 +266,33 @@ const zhangsan = {
 }
 ```
 
+### bind,call,apply的区别，手写实现
+```js
+//手写bind
+Function.prototype.mybind = function(){
+    // 参数转化为数组
+    const args = Array.prototype.slice.call(argument);
+    // 获取this
+    const t = args.shift();
+    // 获取绑定mybind的function
+    const self = this;
+    // 返回一个函数
+    return function(){
+        return self.apply(t, args);
+    }
+}
+
+function fn1(a, b, c){
+    console.log('this', this);
+    console.log(a,b,c);
+    return 'this is fn1';
+}
+
+const fn2 = fn1.mybind({x:100}, 10. 20. 30);
+const res = fn2():
+console.log(res);
+```
 ### new操作符具体干了什么
-
-### 常见web安全及防护原理
-
-* sql注入
-* XSS
-* CSRF
-
-### AMD、CMD
-
-### 防抖节流
-
-### 0.2+0.1==0.3
-
-https://github.com/haizlin/fe-interview/issues/80
-
-### JS执行上下文栈和作用域链
-
-### prototype 和 __proto__ 区别
-
-### for...of 和 for...in
-
-* for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
-
-https://www.cnblogs.com/zjx304/p/10687017.html
-
-### 迭代器对象和普通对象
-
 
 ### 写一个简单的jQuery
 ```js
@@ -388,7 +356,7 @@ $p.on('click', () => alert('clicked'))
 
 ### event loop（事件循环/事件轮询）
 
-#### 什么是event loop
+##### 什么是event loop
 
 * js 是单线程执行的
     * 从前到后，一行行执行
@@ -397,7 +365,7 @@ $p.on('click', () => alert('clicked'))
 * 异步要基于回调来实现
 * event loop 就是异步回调的实现原理
 
-#### event loop 执行过程
+##### event loop 执行过程
 
 * 同步代码，一行一行放在 call stack 中执行
 * 遇到异步，先“记录”下，等待时间（定时，网络请求等）
@@ -426,13 +394,13 @@ console.log('Bye');
 8. 事件循环将cb1放入调用栈
 ![event loop](https://github.com/lujiajian1/study-notes/blob/main/img/event-loop.jpg)
 
-#### event loop  和 DOM 渲染
+##### event loop  和 DOM 渲染
 
 * 每次 Call Stack 清空（即每次轮询结束），即同步任务执行完成
 * 都是DOM重新渲染的机会，DOM结构如有改变则重新渲染
 * 然后再去触发下一次的 event loop
 
-#### 结合DOM渲染，微任务执行的 event loop 示意图
+##### 结合DOM渲染，微任务执行的 event loop 示意图
 ![event loop](https://github.com/lujiajian1/study-notes/blob/main/img/event-loop-DOM.png)
 ### 单线程和异步
 
@@ -441,26 +409,78 @@ console.log('Bye');
 * js和DOM渲染共用同一线程，因为js可修改DOM结构
 * 遇到等待（定时器，网络请求）不能卡住，启动异步，回调callback函数
 
-#### 异步和同步
+##### 异步和同步
 
 * JS是单线程语言
 * 异步不会阻塞代码执行
 * 同步会阻塞代码执行。
 
-#### 异步应用场景
+##### 异步应用场景
 
 * 网络请求，如ajax、图片加载
 * 定时任务，如setTimeout
 
-#### 异步的本质
+##### 异步的本质
 
 * async/await 是消灭异步回调的终极武器
 * js还是单线程，异步还是基于 event loop
 * async/await 是一个语法糖，但是这个语法糖特别香
+##### XMLHttpRequest
+```js
+const xhr = new XMLHttpRequest()
+xhr.open('GET', '/data/test.json', true)
+xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+            // console.log(
+            //     JSON.parse(xhr.responseText)
+            // )
+            alert(xhr.responseText)
+        } else if (xhr.status === 404) {
+            console.log('404 not found')
+        }
+    }
+}
+xhr.send(null)
+```
+xhr.readuState
+0：未初始化，还未调用send方法
+1：载入，已调用send方法，正发送请求
+2：载入完成，send方法执行完毕，已接收到全部响应内容
+3：交互，正在解析响应内容
+4：完成，响应内容解析完成，可以再客户端调用
+
+##### 手写简易的ajax
+```js
+function ajax(url) {
+    const p = new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', url, true)
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    resolve(
+                        JSON.parse(xhr.responseText)
+                    )
+                } else if (xhr.status === 404 || xhr.status === 500) {
+                    reject(new Error('404 not found'))
+                }
+            }
+        }
+        xhr.send(null)
+    })
+    return p
+}
+
+const url = '/data/test.json'
+ajax(url)
+.then(res => console.log(res))
+.catch(err => console.error(err))
+```
 
 ### promise
 
-#### 什么是promise
+##### 什么是promise
 promise解决callback hell的问题
 ```js
 function loadImg(src) {
@@ -496,81 +516,28 @@ loadImg(url1).then(img1 => {
     console.log(img2.height)
 }).catch(ex => console.error(ex))
 ```
-#### 三种状态
+##### 三种状态
 
 * pending resolved rejected
 * pending ----->resolved 或 pending ----->rejected
 * 变化不可逆
 
-#### 状态表现
+##### 状态表现
 
 * pending状态，不会出发then和catch
 * resolved状态，会触发后续的then回调函数
 * rejected状态，会出发后续的catch回调函数
 
-#### then和catch改变状态
+##### then和catch改变状态
 
 * then正常返回resolved，里面有报错则返回rejected
 * catch正常返回resolved，里面有报错则返回rejected
 
-#### async/await
+##### async/await
 
 * 执行 async 函数返回的是 Promise 对象
 * await 相当于 Promise的 then
 * try...catch...可捕获异常，代替 Promise 的 catch
-
-#### XMLHttpRequest
-```js
-const xhr = new XMLHttpRequest()
-xhr.open('GET', '/data/test.json', true)
-xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-            // console.log(
-            //     JSON.parse(xhr.responseText)
-            // )
-            alert(xhr.responseText)
-        } else if (xhr.status === 404) {
-            console.log('404 not found')
-        }
-    }
-}
-xhr.send(null)
-```
-xhr.readuState
-0：未初始化，还未调用send方法
-1：载入，已调用send方法，正发送请求
-2：载入完成，send方法执行完毕，已接收到全部响应内容
-3：交互，正在解析响应内容
-4：完成，响应内容解析完成，可以再客户端调用
-
-#### 手写简易的ajax
-```js
-function ajax(url) {
-    const p = new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('GET', url, true)
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    resolve(
-                        JSON.parse(xhr.responseText)
-                    )
-                } else if (xhr.status === 404 || xhr.status === 500) {
-                    reject(new Error('404 not found'))
-                }
-            }
-        }
-        xhr.send(null)
-    })
-    return p
-}
-
-const url = '/data/test.json'
-ajax(url)
-.then(res => console.log(res))
-.catch(err => console.error(err))
-```
 
 ### JS-Web-API
 
@@ -619,3 +586,13 @@ document.addEvenListener('DOMContentLoaded',function(){
 ```
 
 ### 正则表达式
+
+### javascript的垃圾回收原理
+
+### AMD、CMD
+
+### for...of 和 for...in
+
+* for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
+
+https://www.cnblogs.com/zjx304/p/10687017.html
