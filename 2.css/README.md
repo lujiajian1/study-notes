@@ -27,7 +27,7 @@
             * \[\] (属性选择器)
             * : (伪类)
                 * :any-link
-                * :link:visited
+                * :visited
                 * :hover
                 * :active
                 * :focus
@@ -81,19 +81,12 @@
 * 三行布局（头尾定高主栏自适应）
 
 ### 响应式布局方案
-
-### [css3新特性](https://juejin.cn/post/6844903518520901639#heading-13)
-
-### [css性能](https://github.com/chokcoco/iCSS/issues/11)
-
 ### CSS排版（layout）技术
 
 * 1代 正常流
 * 2代 flex
 * 3代 grid
 * 3.5代 CSS Houdini
-
-### float
 
 ### flex常用语法
 
@@ -136,7 +129,7 @@ Block formmat context，块级格式化上下文。它是一块独立的区域�
 
 ### 预处理器，如：less，sass，stylus语法
 
-### 后处理器， 如： postCss
+### 后处理器， 如：postCss
 
 ### CSS模块化（BEM，css-in-js）
 
@@ -176,7 +169,7 @@ Block formmat context，块级格式化上下文。它是一块独立的区域�
 * inine 元素: text-align: center
 * block元素: margin: auto;
 * absolute元素: left 50% + margin-left 负值
-* display: flex, jusitity-content: center
+* display: flex, justify-content: center
 
 ### 垂直居中
 
@@ -187,3 +180,73 @@ Block formmat context，块级格式化上下文。它是一块独立的区域�
 * display: flex; align-items: center;
 
 ### 1px边框解决方案
+
+* 产生的原因是DPR（设备像素比，window.devicePixelRatio=物理像素 /CSS像素）
+* IOS 8+，非安卓：border:0.5px solid #E5E5E5
+* 使用边框图片：border-image: url('./../../image/96.jpg') 2 repeat;
+* 使用box-shadow：0  -1px 1px -1px #e5e5e5, 
+* 使用伪元素+缩放（-webkit-transform: scale(.5);）
+```css
+.border(
+    @borderWidth: 1px; 
+    @borderStyle: solid; 
+    @borderColor: @lignt-gray-color; 
+    @borderRadius: 0) {
+    position: relative;
+    &:before {
+        content: '';
+        position: absolute;
+        width: 98%;
+        height: 98%;
+        top: 0;
+        left: 0;
+        transform-origin: left top;
+        -webkit-transform-origin: left top;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+    @media (-webkit-min-device-pixel-ratio: 2) {
+        &:before {
+            width: 200%;
+            height: 200%;
+            -webkit-transform: scale(.5);
+        }
+    }
+    @media (-webkit-min-device-pixel-ratio: 2.5) {
+        &:before {
+            width: 250%;
+            height: 250%;
+            -webkit-transform: scale(.4);
+        }
+    }
+    @media (-webkit-min-device-pixel-ratio: 2.75) {
+        &:before {
+            width: 275%;
+            height: 275%;
+            -webkit-transform: scale(1 / 2.75);
+        }
+    }
+    @media (-webkit-min-device-pixel-ratio: 3) {
+        &:before {
+            width: 300%;
+            height: 300%;
+            transform: scale(1 / 3);
+            -webkit-transform: scale(1 / 3);
+        }
+    }
+    .border-radius(@borderRadius);
+    &:before {
+        border-width: @borderWidth;
+        border-style: @borderStyle;
+        border-color: @borderColor;
+    }
+}
+
+.border-all(
+	@borderWidth: 1px; 
+	@borderStyle: solid; 
+	@borderColor: @lignt-gray-color; 
+	@borderRadius: 0) {
+    .border(@borderWidth; @borderStyle; @borderColor; @borderRadius);
+}
+```
