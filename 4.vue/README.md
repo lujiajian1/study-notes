@@ -160,7 +160,7 @@ export default new VueRouter({
 
 ### 模板编译（模板转JS代码）
 
-1. vue-template-complier（with 语法） 将模板编译为render函数
+1. vue-template-complier（with 语法） 将模板编译为render函数（template先转成AST树，然后AST树再转成render函数，render函数再转成VNode）
 2. 执行render函数生成vnode
 
 
