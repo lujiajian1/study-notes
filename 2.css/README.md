@@ -63,11 +63,6 @@
 * vw：网页视口宽度的 1 / 100
 * vmax 取两者最大值，vmin 取两者最小值
 
-### 设置rem的方法
-
-* media-query，根据不同屏幕宽度设置根元素font-size
-* js根据设计稿和屏幕宽度设置根元素font-size
-
 ### 网页视口尺寸：
 * window.screen.height // 屏幕高度
 * window.innerHeight // 网页视口高度
@@ -80,13 +75,40 @@
 * 多列等高布局
 * 三行布局（头尾定高主栏自适应）
 
-### 响应式布局方案
+### [响应式布局方案](https://juejin.cn/post/6844903990669361165)
+* 媒体查询
+* 百分比%
+* vw/vh
+* rem
+    * media-query，根据不同屏幕宽度设置根元素font-size
+    * js根据设计稿和屏幕宽度设置根元素font-size
+* 利用UI框架实现响应式布局（比如；elementUi的\<row\>\<col\>）
+
 ### CSS排版（layout）技术
 
-* 1代 正常流
-* 2代 flex
+* 1代 正常流（放置盒的格式化上下文）
+    * 行为：依次排列，排不下了换行。
+        * 当遇到块级盒：排入块级格式化上下文，没有块格式化上下文，则创建一个
+        * 当遇到行内级盒或者文字：首先尝试排入行内级格式化上下文，如果排不下，那么创建一个行盒，先将行盒排版（行盒是块级，由一行中所有的内联元素所组成，所以到第一种情况），行盒会创建一个行内级格式化上下文。
+        * 遇到float：把盒的顶部跟当前行内级上下文上边缘对齐，然后根据float的方向把盒的对应边缘对到块级格式化上下文的边缘，之后重排当前行盒。
+    * 原理：块级格式化上下文（Block Formatting Contexts）和行内级格式化上下文（Inline Formatting Contexts）
+        * BFC：块级排布，一个独立的布局环境，其中的元素布局是不受外界的影响
+            * 设置方法
+                * 根元素（<html>），这里就可以理解正常流的逻辑
+                * float 不是 none
+                * position 是 absolute 或者 fixed
+                * overflow 不是 visible
+                * display 是 flex 或者 inline-block等
+            * 应用
+                * 避免外边距折叠
+                * 清除浮动
+                * 自适应两栏布局
+        * IFC：行内排布，盒子在水平方向的 内外边距+边框 所占用的空间都会被考虑
+* 2代 flex（弹性布局）
+    * FFC(自适应格式上下文)
 * 3代 grid
-* 3.5代 CSS Houdini
+    * GFC(网格布局格式化上下文)
+* 3.5代 [CSS Houdini](https://juejin.cn/post/6844903701971206158)
 
 ### flex常用语法
 
@@ -114,25 +136,8 @@
 * align-self：允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch
     * 该属性可能取6个值，除了auto，其他都与align-items属性完全一致
 
-
-###  BFC、IFC、GFC、FFC
-
-### 形成BFC的常见条件
-
-Block formmat context，块级格式化上下文。它是一块独立的区域，内部元素的渲染不会影响边界以外的元素。
-* float 不是 none
-* position 是 absolute 或者 fixed
-* overflow 不是 visible
-* display 是 flex 或者 inline-block等
-
-### 视觉格式化模型
-
-### 预处理器，如：less，sass，stylus语法
-
-### 后处理器， 如：postCss
-
-### CSS模块化（BEM，css-in-js）
-
+### [视觉格式化模型](https://juejin.cn/post/6844903855847637005)
+CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(CSS basic box model) 将 文档(doucment) 中的元素转换一个个盒子的实际算法。官方说法就是： 它规定了用户端在媒介中如何处理文档树( document tree )。
 ### line-height的继承问题
 
 * 写具体数值，如30px， 则继承该值
