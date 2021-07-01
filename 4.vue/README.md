@@ -108,11 +108,33 @@ export default {
 ##### mixin
 多个组件有相同的逻辑，抽离出来，但mixin并不是完美的，首先变量来源不明确，不利于阅读，多mixin可能会造成命名冲突，另外mixin和组件可能出现多对多的关系，复杂度较高。
 
-### vuex
+### vuex：专为 Vue.js 应用程序开发的状态管理模式
 * state
 * getters
 * action
 * mutation
+```js
+export default new Vuex.Store({
+    state: { 
+        // state 类似 data
+        //这里面写入数据
+    },
+    getters:{ 
+        // getters 类似 computed 
+        // 在这里面写个方法
+    },
+    mutations:{ 
+        // mutations 类似methods
+        // 写方法对数据做出更改(同步操作)
+    },
+    actions:{
+        // actions 类似methods
+        // 写方法对数据做出更改(异步操作)
+    }
+})
+this.$store.xxxx //获取
+this.$store.commit('XXXXfn',value);//
+```
 ![vuex](https://github.com/lujiajian1/study-notes/blob/main/img/vuex.png)
 
 ### Vue-router
@@ -162,9 +184,6 @@ export default new VueRouter({
 
 1. vue-template-complier（with 语法） 将模板编译为render函数（template先转成AST树，然后AST树再转成render函数，render函数再转成VNode）
 2. 执行render函数生成vnode
-
-
-### render函数
 
 ### 组件 渲染/更新 过程
 
@@ -242,4 +261,5 @@ window.onpopstate = (event) => { // 重要！！
 1. v-for比v-if优先级高，一起使用v-for循环了多少次，v-if就判断了多少次
 2. @click="btnClick('dsds', $event)" $event参数放最后
 3. v-for中key的好处：如果没有key就全部删掉节点然后再插入，有key就可以移动过来，不用再做销毁处理，这也是key作为标识符的好处。key不能是随机数，因为新老产生的随机数不一样，所以不能作为新老对比的标识，而且index也不能作为标识符，如果是有排序功能话，就会出现问题，最好使用业务中的key值，如id，字符串等等。
+4. AST：抽象语法树
 

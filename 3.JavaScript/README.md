@@ -575,7 +575,7 @@ $p.on('click', () => alert('clicked'))
 
 * 同步代码，一行一行放在 call stack(调用栈) 中执行
 * 遇到异步，先“记录”下，等待时间（定时，网络请求等）
-* 时机到了，就移动到 calllback queue
+* 时机到了，就移动到 calllback queue（回调队列）
 * 如果call stack 为空（即同步代码执行完），event loop开始工作
 * 轮询查找callback queue，如有则移动到call stack 执行
 * 继续轮询查找（永动机一样） 

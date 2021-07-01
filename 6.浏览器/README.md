@@ -100,5 +100,3 @@ Response Headers中控制强制缓存的逻辑，例如cache-Control:max-age=315
 * CORS（需服务端设置http-header）
 ![cors](https://github.com/lujiajian1/study-notes/blob/main/img/cors.png)
 * web服务nginx代理
-
-### localStorage SessionStorage 和 cookie 的区别
