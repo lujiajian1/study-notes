@@ -22,7 +22,15 @@
 * Null
 * Undefined（void 0 生成undefined）
 * Symbol
-* BigInt
+* BigInt： 是一种特殊的数字类型，它提供了对任意长度整数的支持
+```js
+//创建 bigint 的方式有两种:
+
+//在一个整数字面量后面加 n
+const bigint = 1234567890123456789012345678901234567890n; 
+//调用 BigInt 函数
+const sameBigint = BigInt("1234567890123456789012345678901234567890");
+```
 
 ### 判断数据类型的方法及原理
 
@@ -42,13 +50,26 @@
 
     {} instanceof Object //true
     ```
-* constructor
 * prototype
+    ```js
+    alert(Object.prototype.toString.call(a) === ‘[object String]’) -------> true;
+    alert(Object.prototype.toString.call(b) === ‘[object Number]’) -------> true;
+    alert(Object.prototype.toString.call(c) === ‘[object Array]’) -------> true;
+    alert(Object.prototype.toString.call(d) === ‘[object Date]’) -------> true;
+    alert(Object.prototype.toString.call(e) === ‘[object Function]’) -------> true;
+    alert(Object.prototype.toString.call(f) === ‘[object Function]’) -------> true;
+    ```
 * jquery.type()
+    ```js
+    jQuery.type( true ) === "boolean"
+    jQuery.type( 3 ) === "number"
+    jQuery.type( "test" ) === "string"
+    jQuery.type( function(){} ) === "function"
+    jQuery.type( [] ) === "array"
+    jQuery.type( new Date() ) === "date"
+    ```
 
-### 迭代器对象和普通对象
-
-### 0.2+0.1==0.3
+### 精度丢失问题(0.2+0.1==! 0.3)
 
 https://github.com/haizlin/fe-interview/issues/80
 
@@ -83,6 +104,8 @@ function deepClone(obj = {}){
 ```
 
 ### 闭包
+
+##### 闭包原理：[执行上下文和作用域链](https://juejin.cn/post/6844903858636849159#heading-0)
 
 ##### 作用域应用的特殊情况，有两种表现：
 
@@ -131,65 +154,190 @@ const c = createCache()
 c.set('a', 100)
 console.log( c.get('a') )
 ```
+### 原型
+每一个函数，包括构造函数，都会自动创建一个prototype属性，prototype属性指向当前函数的原型对象，原型对象自动创建constructor属性，constructor属性指针指向当前原型对象的构造函数。想要理解原型，首先要理解js创建的对象的方式，了解js创建对象是如何发展到原型模式的，从原型模式了解原型。
 
-
-
-
-
-### 原型和原型链
-js是一门基于原型实现继承的语言，es6的class知识一个语法糖而已
+##### 创建对象的方式
+* 使用原生构造函数创建对象
 ```js
-// 示例代码
-//父类
-class People { //类首字母要大写
-    constructor(name) {
-        this.name = name;
-    }
-    eat() {
-        console.log(`${this.name} eat something`)
-    }
-}
-//子类
-class Student extends People {
-    constructor(number){
-        super(name);
-        this.number = number;
-    }
-    sayHi(){
-        console.log(`姓名：${this.name} 学号：${this.Number}`)
-    }
+var o = new Object();
+o.name = '张三'；
+```
+* 使用对象字面量
+```js
+var o = {
+    name: '张三'
 }
 ```
-#### 原型关系
+* 工厂模式
+```js
+function people(){
+    var o = new Object();
+    o.name = '张三'；
+    return o;
+}
+var newp = people();
+```
+* 构造函数：解决对象无法识别问题
+```js
+function People(){
+    this.name = '张三'；
+}
+var newp = new People();
+```
+* 原型模式（每一个函数都有一个prototype 原型对象）：解决公共属性重复声明问题
+```js
+function People(){
+}
+People.prototype.name = '张三'；
+var newp = new People();
+```
+* 构造函数 + 原型模式
+```js
+function People(name){
+    this.name = name;
+}
+People.prototype.sayName = function() {
+    console.log(this.name);
+}；
+var newp = new People('张三');
+```
+* 寄生构造函数模式（类似工厂模式，目的是防止污染原生构造函数时如：Array、Object）
+##### 原型关系
 
-* 每个 class 都有显示原型 prototype
+* 每个函数（构造函数、class） 都有显示原型 prototype
 * 每个实例都有隐式原型 __proto__ 
-* 实例的 __proto__ 指向对应 class 的 prototype
+* 实例的 __proto__ 指向对应函数（构造函数、class）的 prototype
 ![原型关系](https://github.com/lujiajian1/study-notes/blob/main/img/prototype.png)
 
 #### 基于原型的执行规则
 现在自身属性和方法中寻找，如果找不到则自动去 __proto__ 中查找
 
-#### 原型链
+### 原型链
+原型对象等于另一个类型的实例，就形成原型链。
 ![原型链](https://github.com/lujiajian1/study-notes/blob/main/img/prototype-line.jpg)
 
 ### js实现继承的方法
 
-* 原型链继承
-* 构造继承
-* 实例继承
+* 原型链继承：将父类的实例作为子类的原型
+```js
+function Cat(){ 
+}
+Cat.prototype = new Animal();
+Cat.prototype.name = 'cat';
+```
+* 构造继承：使用父类的构造函数来增强子类实例，等于是复制父类的实例属性给子类（没用到原型）
+```js
+function Cat(name){
+  Animal.call(this);
+  this.name = name || 'Tom';
+}
+```
+* 实例继承：为父类实例添加新特性，作为子类实例返回
+```js
+function Cat(name){
+  var instance = new Animal();
+  instance.name = name || 'Tom';
+  return instance;
+}
+```
 * 拷贝继承
-* 组合继承
-* 寄生组合继承
+```js
+function Cat(name){
+  var animal = new Animal();
+  for(var p in animal){
+    Cat.prototype[p] = animal[p];
+  }
+  Cat.prototype.name = name || 'Tom';
+}
+```
+* 组合继承：通过调用父类构造，继承父类的属性并保留传参的优点，然后通过将父类实例作为子类原型，实现函数复用
+```js
+function Cat(name){
+  Animal.call(this);
+  this.name = name || 'Tom';
+}
+Cat.prototype = new Animal();
+Cat.prototype.constructor = Cat;
+```
+* 寄生组合继承：通过寄生方式，砍掉父类的实例属性，这样，在调用两次父类的构造的时候，就不会初始化两次实例方法/属性，避免的组合继承的缺点
+```js
+function Cat(name){
+  Animal.call(this);
+  this.name = name || 'Tom';
+}
+(function(){
+  // 创建一个没有实例方法的类
+  var Super = function(){};
+  Super.prototype = Animal.prototype;
+  //将实例作为子类的原型
+  Cat.prototype = new Super();
+})();
+```
 
-ES6 class
-class 是 ES6 语法规范,有 ECMA 委员会发布，ECMA 只规定语法规则，即我们代码的书写规范，不规定如何实现,以上实现方式都是v8 引擎的实现方式，也是主流的。
-
+### ES6 class
+class 是 ES6 语法规范，有 ECMA 委员会发布，ECMA 只规定语法规则，即我们代码的书写规范，不规定如何实现，以上实现方式都是v8 引擎的实现方式，也是主流的。
 * constructor
 * 属性
 * 方法
 
-ES6 class 继承（extends，super）
+##### [class语法糖](https://juejin.cn/post/6844903638674980872)
+* constructor 方法是类的构造函数，是一个默认方法，通过 new 命令创建对象实例时，自动调用该方法。一个类必须有 constructor 方法，如果没有显式定义，一个默认的 consructor 方法会被默认添加。
+```js
+function Point(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+Point.prototype.toString = function() {
+  return '(' + this.x + ',' + this.y + ')';
+}
+//等同于
+class Point {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  toString() {
+    return '(' + this.x + ',' + this.y + ')';
+  }
+}
+```
+* super当作函数使用相当于A.prototype.constructor.call(this, props)。当做对象使用，指向父类的原型对象。
+```js
+// super当作函数使用
+class A {
+  constructor() {
+    console.log(new.target.name); // new.target 指向当前正在执行的函数
+  }
+}
+class B extends A {
+  constructor {
+    super();
+  }
+}
+new A(); // A
+new B(); // B
+
+// super当作对象使用
+//子类 B 当中的 super.c()，就是将 super 当作一个对象使用。这时，super 在普通方法之中，指向 A.prototype，所以 super.c() 就相当于 A.prototype.c()
+class A {
+  c() {
+    return 2;
+  }
+}
+
+class B extends A {
+  constructor() {
+    super();
+    console.log(super.c()); // 2 // 当作对象
+  }
+}
+
+let b = new B();
+```
+##### ES6 class 继承（extends，super）
 
 ```js
 //父类
@@ -266,7 +414,61 @@ const zhangsan = {
 }
 ```
 
-### bind,call,apply的区别，手写实现
+### bind,call,apply的[区别](https://juejin.cn/post/6844903496253177863)，手写实现
+* apply 和 call 的区别：其实 apply 和 call 基本类似，他们的区别只是传入的参数不同，call 方法接受的是若干个参数列表，而 apply 接收的是一个包含多个参数的数组。
+```js
+ b.apply(a,[1,2]); 
+ b.call(a,1,2);
+```
+* bind 和 apply、call 区别：bind()方法创建一个新的函数, 当被调用时，将其this关键字设置为提供的值，在调用新函数时，在任何提供之前提供一个给定的参数序列，所以bind 是创建一个新的函数，我们必须要手动去调用，bind和apply一样也是接受的若干个参数列表。
+```js
+b.bind(a,1,2)() 
+```
+* 手写apply
+```js
+Function.prototype.myapply = function (context, arr) {
+    var context = context || window;
+    context.fn = this; //this就是fn1
+
+    var result;
+    if (!arr) {
+        result = context.fn();
+    } else {
+        var args = [];
+        for (var i = 0, len = arr.length; i < len; i++) {
+            args.push('arr[' + i + ']');
+        }
+        result = eval('context.fn(' + args + ')')
+    }
+
+    delete context.fn
+    return result;
+}
+function fn1(a, b, c){
+    console.log('this', this);
+    console.log(a,b,c);
+    return 'this is fn1';
+}
+const fn2 = fn1.myapply({x:100}, []);
+```
+* 手写call
+```js
+Function.prototype.mycall = function (context) {
+    var context = context || window;
+    context.fn = this;
+
+    var args = [];
+    for(var i = 1, len = arguments.length; i < len; i++) {
+        args.push('arguments[' + i + ']');
+    }
+
+    var result = eval('context.fn(' + args +')');
+
+    delete context.fn
+    return result;
+}
+```
+* 手写bind
 ```js
 //手写bind
 Function.prototype.mybind = function(){
@@ -293,6 +495,10 @@ const res = fn2():
 console.log(res);
 ```
 ### new操作符具体干了什么
+1. 创建一个新对象
+2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
+3. 执行构造函数中的代码（为这个新对象添加属性）
+4. 返回新对象
 
 ### 写一个简单的jQuery
 ```js
@@ -367,7 +573,7 @@ $p.on('click', () => alert('clicked'))
 
 ##### event loop 执行过程
 
-* 同步代码，一行一行放在 call stack 中执行
+* 同步代码，一行一行放在 call stack(调用栈) 中执行
 * 遇到异步，先“记录”下，等待时间（定时，网络请求等）
 * 时机到了，就移动到 calllback queue
 * 如果call stack 为空（即同步代码执行完），event loop开始工作
@@ -584,15 +790,17 @@ document.addEvenListener('DOMContentLoaded',function(){
     // DOM 渲染完，即可执行，此时图片、视频等异步资源可能还没有加载完
 })
 ```
-
-### 正则表达式
-
-### javascript的垃圾回收原理
-
-### AMD、CMD
-
 ### for...of 和 for...in
 
+* for...in
+    * 遍历对象及其原型链上可枚举的属性
+    * 如果用于遍历数组，处理遍历其元素外，还会遍历开发者对数组对象自定义的可枚举属性及其原型链上的可枚举属性
+    * 遍历对象返回的属性名和遍历数组返回的索引都是 string 类型
+* for...of
+    * es6 中添加的循环遍历语法；
+    * 支持遍历数组，类数组对象（DOM NodeList），字符串，Map 对象，Set 对象；
+    * 不支持遍历普通对象；
+    * 遍历后输出的结果为数组元素的值
 * for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
 
-https://www.cnblogs.com/zjx304/p/10687017.html
+### [正则表达式](https://juejin.cn/post/6844903845227659271)
