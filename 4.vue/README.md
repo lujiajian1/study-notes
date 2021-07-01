@@ -256,8 +256,20 @@ window.onpopstate = (event) => { // 重要！！
 // 需要 server 端配合，可参考
 // https://router.vuejs.org/zh/guide/essentials/history-mode.html#%E5%90%8E%E7%AB%AF%E9%85%8D%E7%BD%AE%E4%BE%8B%E5%AD%90
 ```
-### 查漏补缺
 
+### Vue 常见的性能优化方式
+* 合理使用v-show和v-if
+* 合理使用computed（缓存，提高计算的性能）
+* v-for时加key，以及避免和v-if同时使用（v-for的优先级更高，每次v-for 时 v-if 都要重新计算一遍）
+* 自定义事件、DOM时间及时销毁（可能会导致内存泄漏）
+* 合理使用异步组件（大组件）
+* 合理使用keep-alive（不需要重复渲染的地方将其缓存下来）
+* data 层级不要太深（深度监听需要一次性遍历完成，太深会导致做监听的时候递归的次数比较多），层级尽量设计地扁平一些
+* 使用vue-loader 在开发环境中做模板编译（预编译）
+* webpack层面的优化
+* 前端通用的性能优化，如图片懒加载
+* 使用SSR（服务端渲染）
+### 查漏补缺
 1. v-for比v-if优先级高，一起使用v-for循环了多少次，v-if就判断了多少次
 2. @click="btnClick('dsds', $event)" $event参数放最后
 3. v-for中key的好处：如果没有key就全部删掉节点然后再插入，有key就可以移动过来，不用再做销毁处理，这也是key作为标识符的好处。key不能是随机数，因为新老产生的随机数不一样，所以不能作为新老对比的标识，而且index也不能作为标识符，如果是有排序功能话，就会出现问题，最好使用业务中的key值，如id，字符串等等。

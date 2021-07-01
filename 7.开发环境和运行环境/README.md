@@ -21,51 +21,6 @@
     * 加载更快：减少资源体积（压缩代码），减少访问次数（合并代码，SSR服务端渲染，缓存），使用更快的网络（CDN）
     * 让渲染更快：1. CSS放在head中，JS放在body最下面2. 尽早开始执行JS，用DOMContentLoaded触发3. 懒加载（图片懒加载，上滑加载更多）4. 对DOM查询进行缓存5. 频繁DOM操作，合并到一起插入DOM结构6. 节流throttle 防抖debounce （让渲染更加流畅）
 
-### 手写防抖 debounce
-```js
-const input1 = document.getElementById('input1')
-function debounce(fn, delay = 500) {
-    // timer 是闭包中的
-    let timer = null
-
-    return function () {
-        if (timer) {
-            clearTimeout(timer)
-        }
-        timer = setTimeout(() => {
-            fn.apply(this, arguments)
-            timer = null
-        }, delay)
-    }
-}
-
-input1.addEventListener('keyup', debounce(function (e) {
-    console.log(e.target)
-    console.log(input1.value)
-}, 600))
-```
-### 手写节流 throttle
-```js
-const div1 = document.getElementById('div1')
-function throttle(fn, delay = 100) {
-    let timer = null
-
-    return function () {
-        if (timer) {
-            return
-        }
-        timer = setTimeout(() => {
-            fn.apply(this, arguments)
-            timer = null
-        }, delay)
-    }
-}
-
-div1.addEventListener('drag', throttle(function (e) {
-    console.log(e.offsetX, e.offsetY)
-}))
-```
-
 ### 安全
 
 * XSS跨站请求攻击

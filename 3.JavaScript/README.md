@@ -83,26 +83,6 @@ https://github.com/haizlin/fe-interview/issues/80
 * 类型转换规则
 ![类型转换规则](https://github.com/lujiajian1/study-notes/blob/main/img/type-change.jpg)
 
-### 深拷贝
-
-```js
-function deepClone(obj = {}){    
-    if(obj typeof !== 'object' || obj typeof == null) {
-        return obj;
-    }    
-    let result = {};    
-    if(obj instanceof Array) {
-        result = [];
-    }    
-    for(let key in obj){        
-        if(obj.hasOwnProperty(key)){            
-            result[key] = deepClone(obj[key]);        
-        }    
-    }    
-    return result;
-}
-```
-
 ### 闭包
 
 ##### 闭包原理：[执行上下文和作用域链](https://juejin.cn/post/6844903858636849159#heading-0)
@@ -226,6 +206,27 @@ function Cat(){
 Cat.prototype = new Animal();
 Cat.prototype.name = 'cat';
 ```
+* class 继承
+```js
+class People { //类首字母要大写
+    constructor(name) {
+        this.name = name;
+    }
+    eat() {
+        console.log(`${this.name} eat something`)
+    }
+}
+//子类
+class Student extends People {
+    constructor(number){
+        super(name);
+        this.number = number;
+    }
+    sayHi(){
+        console.log(`姓名：${this.name} 学号：${this.Number}`)
+    }
+}
+```
 * 构造继承：使用父类的构造函数来增强子类实例，等于是复制父类的实例属性给子类（没用到原型）
 ```js
 function Cat(name){
@@ -280,6 +281,30 @@ class 是 ES6 语法规范，有 ECMA 委员会发布，ECMA 只规定语法规�
 * constructor
 * 属性
 * 方法
+
+##### ES6 class 继承（extends，super）
+
+```js
+//父类
+class People { //类首字母要大写
+    constructor(name) {
+        this.name = name;
+    }
+    eat() {
+        console.log(`${this.name} eat something`)
+    }
+}
+//子类
+class Student extends People {
+    constructor(number){
+        super(name);
+        this.number = number;
+    }
+    sayHi(){
+        console.log(`姓名：${this.name} 学号：${this.Number}`)
+    }
+}
+```
 
 ##### [class语法糖](https://juejin.cn/post/6844903638674980872)
 * constructor 方法是类的构造函数，是一个默认方法，通过 new 命令创建对象实例时，自动调用该方法。一个类必须有 constructor 方法，如果没有显式定义，一个默认的 consructor 方法会被默认添加。
@@ -337,29 +362,6 @@ class B extends A {
 
 let b = new B();
 ```
-##### ES6 class 继承（extends，super）
-
-```js
-//父类
-class People { //类首字母要大写
-    constructor(name) {
-        this.name = name;
-    }
-    eat() {
-        console.log(`${this.name} eat something`)
-    }
-}
-//子类
-class Student extends People {
-    constructor(number){
-        super(name);
-        this.number = number;
-    }
-    sayHi(){
-        console.log(`姓名：${this.name} 学号：${this.Number}`)
-    }
-}
-```
 
 ### this
 this的值不是在函数定义的时候决定的，而是在函数执行的时候决定的
@@ -414,7 +416,7 @@ const zhangsan = {
 }
 ```
 
-### bind,call,apply的[区别](https://juejin.cn/post/6844903496253177863)，手写实现
+### bind,call,apply的[区别](https://juejin.cn/post/6844903496253177863)
 * apply 和 call 的区别：其实 apply 和 call 基本类似，他们的区别只是传入的参数不同，call 方法接受的是若干个参数列表，而 apply 接收的是一个包含多个参数的数组。
 ```js
  b.apply(a,[1,2]); 
@@ -424,135 +426,12 @@ const zhangsan = {
 ```js
 b.bind(a,1,2)() 
 ```
-* 手写apply
-```js
-Function.prototype.myapply = function (context, arr) {
-    var context = context || window;
-    context.fn = this; //this就是fn1
 
-    var result;
-    if (!arr) {
-        result = context.fn();
-    } else {
-        var args = [];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            args.push('arr[' + i + ']');
-        }
-        result = eval('context.fn(' + args + ')')
-    }
-
-    delete context.fn
-    return result;
-}
-function fn1(a, b, c){
-    console.log('this', this);
-    console.log(a,b,c);
-    return 'this is fn1';
-}
-const fn2 = fn1.myapply({x:100}, []);
-```
-* 手写call
-```js
-Function.prototype.mycall = function (context) {
-    var context = context || window;
-    context.fn = this;
-
-    var args = [];
-    for(var i = 1, len = arguments.length; i < len; i++) {
-        args.push('arguments[' + i + ']');
-    }
-
-    var result = eval('context.fn(' + args +')');
-
-    delete context.fn
-    return result;
-}
-```
-* 手写bind
-```js
-//手写bind
-Function.prototype.mybind = function(){
-    // 参数转化为数组
-    const args = Array.prototype.slice.call(argument);
-    // 获取this
-    const t = args.shift();
-    // 获取绑定mybind的function
-    const self = this;
-    // 返回一个函数
-    return function(){
-        return self.apply(t, args);
-    }
-}
-
-function fn1(a, b, c){
-    console.log('this', this);
-    console.log(a,b,c);
-    return 'this is fn1';
-}
-
-const fn2 = fn1.mybind({x:100}, 10. 20. 30);
-const res = fn2():
-console.log(res);
-```
 ### new操作符具体干了什么
 1. 创建一个新对象
 2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
 3. 执行构造函数中的代码（为这个新对象添加属性）
 4. 返回新对象
-
-### 写一个简单的jQuery
-```js
-class jQuery {
-    constructor(selector) {
-        const result = document.querySelectorAll(selector)
-        const length = result.length
-        for (let i = 0; i < length; i++) {
-            this[i] = result[i]
-        }
-        this.length = length
-        this.selector = selector
-    }
-    get(index) {
-        return this[index]
-    }
-    each(fn) {
-        for (let i = 0; i < this.length; i++) {
-            const elem = this[i]
-            fn(elem)
-        }
-    }
-    on(type, fn) {
-        return this.each(elem => {
-            elem.addEventListener(type, fn, false)
-        })
-    }
-    // 扩展很多 DOM API
-}
-
-// 插件
-jQuery.prototype.dialog = function (info) {
-    alert(info)
-}
-
-// “造轮子”
-class myJQuery extends jQuery {
-    constructor(selector) {
-        super(selector)
-    }
-    // 扩展自己的方法
-    addClass(className) {
-
-    }
-    style(data) {
-
-    }
-}
-
-const $p = new jQuery('p')
-$p.get(1)
-$p.each((elem) => console.log(elem.nodeName))
-$p.on('click', () => alert('clicked'))
-```
 
 ### 微任务和宏任务
 
@@ -655,34 +534,6 @@ xhr.readuState
 2：载入完成，send方法执行完毕，已接收到全部响应内容
 3：交互，正在解析响应内容
 4：完成，响应内容解析完成，可以再客户端调用
-
-##### 手写简易的ajax
-```js
-function ajax(url) {
-    const p = new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('GET', url, true)
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    resolve(
-                        JSON.parse(xhr.responseText)
-                    )
-                } else if (xhr.status === 404 || xhr.status === 500) {
-                    reject(new Error('404 not found'))
-                }
-            }
-        }
-        xhr.send(null)
-    })
-    return p
-}
-
-const url = '/data/test.json'
-ajax(url)
-.then(res => console.log(res))
-.catch(err => console.error(err))
-```
 
 ### promise
 
@@ -804,3 +655,16 @@ document.addEvenListener('DOMContentLoaded',function(){
 * for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
 
 ### [正则表达式](https://juejin.cn/post/6844903845227659271)
+
+### 数组API
+* split：将字符串拆成数组
+* join：将数组拼接为字符串
+* push：数组最后面添加一个元素，返回值为添加后数组的length
+* pop：删除数组最后一个元素，返回值为删除的元素
+* unshift：数组前面添加一个元素，返回添加后数组的length
+* shift：删除数组的第一个元素，返回删除的元素
+* concat：数组合并，不改变原数组，返回合并后的新数组
+* map：不改变原数组，返回新数组
+* filter：过滤数组，不改变原数组，返回新数组
+* slice：slice(start,end)，从已有的数组中返回一个新的数组，包含从 start 到 end （不包括该元素），不改变原数组，返回新数组
+* splice：从数组中添加/删除项目，然后返回被删除的项目，splice(index,howmany,item1,.....,itemX)，删除从 index 处开始的howmany个元素，并且用参数列表中声明的一个或多个值（item1,.....,itemX）来替换那些被删除的元素
