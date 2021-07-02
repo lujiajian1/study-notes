@@ -668,3 +668,102 @@ document.addEvenListener('DOMContentLoaded',function(){
 * filter：过滤数组，不改变原数组，返回新数组
 * slice：slice(start,end)，从已有的数组中返回一个新的数组，包含从 start 到 end （不包括该元素），不改变原数组，返回新数组
 * splice：从数组中添加/删除项目，然后返回被删除的项目，splice(index,howmany,item1,.....,itemX)，删除从 index 处开始的howmany个元素，并且用参数列表中声明的一个或多个值（item1,.....,itemX）来替换那些被删除的元素
+
+### ES6
+* let const
+* 箭头函数
+* iterator迭代器
+    * 可迭代的数据结构会有一个[Symbol.iterator]方法
+    * [Symbol.iterator]执行后返回一个iterator对象
+    * iterator对象有一个next方法
+    * 执行一次next方法(消耗一次迭代器)会返回一个有value,done属性的对象
+* 解构赋值
+    * 数组解构
+    ```js
+    var [name, pwd, sex]=["小周", "123456", "男"];
+    console.log(name) //小周
+    console.log(pwd)//123456
+    console.log(sex)//男
+    ```
+    * 对象的解构赋值
+    ```js
+    var obj={name:"小周", pwd:"123456", sex:"男"}
+    var {name, pwd, sex}=obj;
+    console.log(name) //小周
+    console.log(pwd)//123456
+    console.log(sex)//男
+    ```
+* 扩展运算符
+    * 将字符串转成数组
+    ```js
+    var str="abcd";
+    console.log([...str]) // ["a", "b", "c", "d"]
+    ```
+    * 将集合转成数组
+    ```js
+    var sets=new Set([1,2,3,4,5])
+    console.log([...sets]) // [1, 2, 3, 4, 5]
+    ```
+    * 两个数组的合并
+    ```js
+    var a1=[1,2,3];
+    var a2=[4,5,6];
+    console.log([...a1,...a2]); //[1, 2, 3, 4, 5, 6]
+    ```
+    * 在函数中，用来代替arguments参数，rest参数  …变量名称，rest 参数是一个数组 ，它的后面不能再有参数，不然会报错
+    ```js
+    function func(...args){
+    console.log(args);//[1, 2, 3, 4]
+    }
+    func(1, 2, 3, 4);
+    
+    function f(x, ...y) {
+        console.log(x);
+        console.log(y);
+    }
+    f('a', 'b', 'c');     //a 和 ["b","c"]
+    f('a')                //a 和 []
+    f()                   //undefined 和 []
+    ```
+    * 移除某几项
+    ```js
+    //数组
+    const number = [1,2,3,4,5]
+    const [first, ...rest] = number
+    console.log(rest) //2,3,4,5
+    //对象
+    const user = {
+        username: 'lux',
+        gender: 'female',
+        age: 19,
+        address: 'peking'
+    }
+    const { username, ...rest } = user
+    console.log(rest) //{"address": "peking", "age": 19, "gender": "female"
+    ```
+* for ... of循环
+* Promise
+* 模块化（Module）
+```js
+//导入部分
+//全部导入
+import Person from './example'
+ 
+//将整个模块所有导出内容当做单一对象，用as起别名
+import * as example from "./example.js"
+console.log(example.name)
+console.log(example.getName())
+ 
+//导入部分
+import { name } from './example'
+ 
+//导出部分
+// 导出默认
+export default App
+ 
+// 部分导出
+export class User extend Component {};
+```
+* 函数默认值
+* Proxy
+* 对象合并（Object.assign）
