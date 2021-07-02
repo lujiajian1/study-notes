@@ -165,6 +165,24 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
     * 页面在浏览器外预渲染
 * visibilityChange：这是一个事件，当文档的可见性发生变化时触发。
 
+### preload、prefetch、preconnect 和 dns-prefetch
+* preload：提升了资源加载的优先级，使得它提前开始加载（预加载），但是资源加载完成后并不会执行。
+```html
+<script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+<script rel="preload" src="./main.js"></script><!--优先加载-->
+```
+* prefetch：用于加载未来（比如下一个页面）会用到的资源，并且告诉浏览器在空闲的时候去下载，它会将下载资源的优先级降到最低。
+* 当浏览器向服务器请求一个资源的时候，需要建立连接，而建立一个安全的连接需要经历以下 3 个步骤：1.查询域名并将其解析成 IP 地址（DNS Lookup）；2.建立和服务器的连接（Initial connection）；3.加密连接以确保安全（SSL）；以上 3 个步骤浏览器都需要和服务器进行通信，而这一来一往的请求和响应势必会耗费不少时间。而就基于这点上，可以使用 preconnect 或者 dns-prefetch 进行优化。
+* preconnect：提前建立连接
+```js
+<link rel="preconnect" href="https://b.com">
+```
+* dns-prefetch：浏览器使用 DNS 来将站点转成 IP 地址，这个是建立连接的第一步，而这一步骤通常需要花费的时间大概是 20ms ~ 120ms。因此，可以通过 dns-prefetch 来节省这一步骤的时间。居然能通过 preconnect 来减少整个建立连接的时间，那为什么还需要 dns-prefetch 来减少建立连接中第一步 DNS 查找解析的时间呢？假如页面引入了许多第三方域下的资源，而如果它们都通过 preconnect 来预建立连接，其实这样的优化效果反而不好，甚至可能变差，所以这个时候就有另外一个方案，那就是对于最关键的连接使用 preconnect，而其他的则可以用 dns-prefetch。另外由于 preconnect 的浏览器兼容稍微比 dns-prefetch 低。
+```js
+<link rel="dns-prefetch" href="https://cdn.bootcss.com">
+```
+* https://juejin.cn/post/6915204591730556935#heading-3
+
 ### 使用http-server开启一个本地服务器，方便本地调试
 
 ![命令行](https://github.com/lujiajian1/study-notes/blob/main/img/http-server.jpg)
