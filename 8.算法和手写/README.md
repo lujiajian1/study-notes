@@ -1,7 +1,7 @@
 ### 深拷贝
 ```js
 function deepClone(obj = {}){    
-    if(obj typeof !== 'object' || obj typeof == null) {
+    if (typeof obj !== 'object' || obj == null) {
         return obj;
     }    
     let result = {};    
@@ -20,22 +20,18 @@ function deepClone(obj = {}){
 ### 手写apply
 ```js
 Function.prototype.myapply = function (context, arr) {
-    var context = context || window;
-    context.fn = this; //this就是fn1
-
-    var result;
-    if (!arr) {
-        result = context.fn();
-    } else {
-        var args = [];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            args.push('arr[' + i + ']');
-        }
-        result = eval('context.fn(' + args + ')')
-    }
-
-    delete context.fn
-    return result;
+    //这里默认不传就是给window,也可以用es6给参数设置默认参数
+    context = context || window
+    args = args ? args : []
+    //给context新增一个独一无二的属性以免覆盖原有属性
+    const key = Symbol()
+    context[key] = this //this就是fn1
+    //通过隐式绑定的方式调用函数
+    const result = context[key](...args)
+    //删除添加的属性
+    delete context[key]
+    //返回函数调用的返回值
+    return result
 }
 function fn1(a, b, c){
     console.log('this', this);
@@ -46,34 +42,30 @@ const fn2 = fn1.myapply({x:100}, []);
 ```
 ### 手写call
 ```js
-Function.prototype.mycall = function (context) {
-    var context = context || window;
-    context.fn = this;
-
-    var args = [];
-    for(var i = 1, len = arguments.length; i < len; i++) {
-        args.push('arguments[' + i + ']');
-    }
-
-    var result = eval('context.fn(' + args +')');
-
-    delete context.fn
-    return result;
+Function.prototype.mycall = function (context, ...args) {
+    //这里默认不传就是给window,也可以用es6给参数设置默认参数
+    context = context || window
+    args = args ? args : []
+    //给context新增一个独一无二的属性以免覆盖原有属性
+    const key = Symbol()
+    context[key] = this
+    //通过隐式绑定的方式调用函数
+    const result = context[key](...args)
+    //删除添加的属性
+    delete context[key]
+    //返回函数调用的返回值
+    return result
 }
 ```
 ### 手写bind
 ```js
 //手写bind
-Function.prototype.mybind = function(){
-    // 参数转化为数组
-    const args = Array.prototype.slice.call(argument);
-    // 获取this
-    const t = args.shift();
-    // 获取绑定mybind的function
-    const self = this;
+Function.prototype.mybind = function(context, ...args){
+    const fn = this// 获取绑定mybind的function
+    args = args ? args : []
     // 返回一个函数
     return function(){
-        return self.apply(t, args);
+        return fn.apply(context, args);
     }
 }
 
@@ -241,10 +233,13 @@ function isObject(obj) {
 // 全相等（深度）
 function isEqual(obj1, obj2) {
     if (!isObject(obj1) || !isObject(obj2)) {
+        //处理非对象的比较
+
         // 值类型（注意，参与 equal 的一般不会是函数）
         return obj1 === obj2
     }
     if (obj1 === obj2) {
+        // 处理两个相同值
         return true
     }
     // 两个都是对象或数组，而且不相等
@@ -252,6 +247,7 @@ function isEqual(obj1, obj2) {
     const obj1Keys = Object.keys(obj1)
     const obj2Keys = Object.keys(obj2)
     if (obj1Keys.length !== obj2Keys.length) {
+        //key 的长度不同
         return false
     }
     // 2. 以 obj1 为基准，和 obj2 一次递归比较
@@ -269,6 +265,7 @@ function isEqual(obj1, obj2) {
 
 ### 手写数组 flatern（数组拍平）
 ```js
+//使用apply
 function flat(arr) {
     // 验证 arr 中，还有没有深层数组 [1, 2, [3, 4]]
     const isDeep = arr.some(item => item instanceof Array)
@@ -282,6 +279,19 @@ function flat(arr) {
 
 const res = flat( [1, 2, [3, 4, [10, 20, [100, 200]]], 5] )
 console.log(res)
+
+//使用展开运算符
+function arrf(arr){
+    let res = [];
+    for(let i = 0;i<arr.length;i++){
+        if (arr[i] instanceof Array){   
+            res = res.concat(arrf([...arr[i]]));
+        } else {
+            res.push(arr[i]);
+        }
+    }
+    return res;
+}
 ```
 
 ### 冒泡排序
@@ -324,65 +334,58 @@ function quickSort(arr) {
 ### 链表（插入，删除，反转）
 ```js
 //节点类
-class Node{
-    constructor(data){
-        this.data = data
-        this.next = null
+class Node {
+    constructor(data) {
+        this.data = data;
+        this.next = null;
     }
 }
-//链表类
+
 class SinglyLinkedList{
-    constructor(){
-        this.head = new Node() //head指向头节点
+    constructor(data){
+        this.head = new Node(data);
     }
-    //在链表组后添加节点
     add(data){
-        let node = new Node(data)
-        let current = this.head
-        while(current.next){
-            current = current.next
+        let node = new Node(data);
+        let current = this.head;
+        while (current.next) {
+            current = current.next;
         }
-        current.next = node
+        current.next = node;
     }
-    //添加到指定位置
-    addAt(index, data){
-        let node = new Node(data)
-        let current = this.head
-        let counter = 1
-        while(current){
-            if(counter === index){
-                node.next = current.next
-                current.next = node
-            }
-            current = current.next
-            counter++
+    addAt(data, index){
+        let node = new Node(data);
+        let current = this.head;
+        let currentIndex = 1;
+        while(currentIndex < index) {
+            current = current.next;
+            currentIndex++;  
         }
+        node.next = current.next
+        current.next = node;
     }
-    //删除某个位置的节点
     removeAt(index){
-        let current = this.head
-        let counter = 1
-        while(current.next){
-            if(counter === index){
-                current.next = current.next.next
-            }
-            current = current.next
-            counter++
+        let current = this.head;
+        let currentIndex = 1;
+        let pre = null;
+        while(currentIndex < index) {
+            pre = current;
+            current = current.next;
+            currentIndex++;  
         }
+        pre.next = current.next;
     }
-    //反转链表
     reverse(){
-        let current = this.head.next
-        let prev = this.head
-        while(current){
-            let next = current.next
-            //反转：改变当前节点指针。若当前节点是第一个（即头节点后面的）节点，
-            //则此节点的next为null，否则next指向他的上一个节点
-            current.next = prev===this.head ? null : prev
-            prev = current
-            current = next
+        let pre = this.head;
+        let current = this.head.next;
+        pre.next = null;
+        while (current) {
+            let next = current.next;
+            current.next = pre;
+            pre = current;
+            current = next;
         }
-        this.head.next = prev
+        this.head = pre;
     }
 }
 ```
@@ -533,35 +536,30 @@ function madeRandomList(a, b, c){
 //add(1)(2)(3) = 6;
 //add(1, 2, 3)(4) = 10;
 //add(1)(2)(3)(4)(5) = 15;
-function add() {
-    // 第一次执行时，定义一个数组专门用来存储所有的参数
-    var _args = Array.prototype.slice.call(arguments);
-
-    // 在内部声明一个函数，利用闭包的特性保存_args并收集所有的参数值
-    var _adder = function() {
-        _args.push(...arguments);
+function add(...args) {
+    let allArg = args;
+    var _adder = function (){
+        allArg.push(...arguments);
         return _adder;
-    };
-
-    // 利用toString隐式转换的特性，当最后执行时隐式转换，并计算最终的值返回
-    _adder.toString = function () {
-        return _args.reduce(function (a, b) {
-            return a + b;
-        });
     }
-    return _adder;
+    _adder.toString = function() {
+        return allArg.reduce(function (a, b) {
+            return a + b;
+        }, 0);
+    }
+    return _adder
 }
-
-add(1)(2)(3)                // 6
-add(1, 2, 3)(4)             // 10
-add(1)(2)(3)(4)(5)          // 15
-add(2, 6)(1)                // 9
+console.log(add(1)(2)(3).toString()) //6
+console.log(add(1, 2, 3)(4).toString()) //10
+console.log(add(1)(2)(3)(4)(5).toString()) //15
+console.log(add(2, 6)(1).toString()) //9
 ```
 
 ### DOM树的DFS(深度优先遍历)
 ```js
 const parentDOM = document.querySelector('#container');
-function  deepTravalSal(node){
+//回调
+function deepTravalSal(node){
 	const nodes = [];
 	const stack = [];
 	if(node){
@@ -577,11 +575,23 @@ function  deepTravalSal(node){
 	}
 	return nodes;
 }
+//回调
+function dfs(dom){
+    let nodeList = [];
+    nodeList.push(dom);
+    if (dom.children && dom.children.length) {
+        for (let i = 0; i < dom.children.length; i++) {
+            nodeList = nodeList.concat(dfs(dom.children[i]))
+        }
+    }
+    return nodeList;
+};
 console.log(deepTravalSal(parentDOM));
 ```
 ### DOM树的BFS(广度优先遍历)
 ```js
 const parentDOM = document.getElementById('container');
+//非回调
 function breathTravalSal(node){
 	const nodes = [];
 	const queue = [];
@@ -597,5 +607,6 @@ function breathTravalSal(node){
 	}
 	return nodes;
 }
+//回调
 console.log(breathTravalSal(parentDOM));
 ```

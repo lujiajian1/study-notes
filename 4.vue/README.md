@@ -138,6 +138,33 @@ this.$store.commit('XXXXfn',value);//
 ![vuex](https://github.com/lujiajian1/study-notes/blob/main/img/vuex.png)
 
 ### Vue-router
+* 基本使用
+    * query方式传参和接收参数（query相当于get请求，页面跳转的时候，可以在地址栏看到请求参数）
+    ```js
+    //传参: 
+    this.$router.push({
+        path:'/xxx',
+        query:{
+        id:id
+        }
+    })
+    
+    //接收参数:
+    this.$route.query.id
+    ```
+    * params方式传参和接收参数（相当于post请求，参数不会再地址栏中显示）
+    ```js
+    //传参: 
+    this.$router.push({
+        name:'xxx',
+        params:{
+          id:id
+        }
+      })
+  
+    //接收参数:
+    this.$route.params.id
+    ```
 * 路由模式 hash 和 H5 history（需要server端支持）
 * 动态路由
 ```js

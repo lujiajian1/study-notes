@@ -17,9 +17,10 @@
 3. 服务器处理请求并返回 HTTP 报文
 4. 断开连接：TCP 四次分手
     1. 第一次挥手：客户端发送一个 FIN 报文。
-    2. 第二次握手：服务端收到 FIN 之后，会发送 ACK 报文，表明已经收到客户端的报文了。
+    2. 第二次挥手：服务端收到 FIN 之后，会发送 ACK 报文，表明已经收到客户端的报文了。
     3. 第三次挥手：如果服务端也想断开连接了，和客户端的第一次挥手一样，发给 FIN 报文。
     4. 第四次挥手：客户端收到 FIN 之后，一样发送一个 ACK 报文作为应答。
+    ![tcp](https://github.com/lujiajian1/study-notes/blob/main/img/tcpend.png)
 * 参考：
     * https://mp.weixin.qq.com/s/1FSYt2NR14s_zx_CJl7miA
     * https://juejin.cn/post/6935232082482298911#heading-32
@@ -28,7 +29,7 @@
 
 * 1xx：服务端收到请求
 * 2xx：请求成功，200（成功）
-* 3xx：重定向，301（永久重定向，配合location，浏览器自动处理）301（临时重定向）304（资源未被修改）
+* 3xx：重定向，301（永久重定向，配合location，浏览器自动处理）302（临时重定向）304（资源未被修改）
 * 4xx：客服端错误，404（资源没有找到）403（没有权限）
 * 5xx：服务端错误，500（服务器错误）504（网关超时）
 
@@ -62,10 +63,6 @@
 * TRACE：
 * CONNECT：
 
-### Restful API
-
-### HTTPS和HTTP
-
 ### 浏览器多个标签页之间的通信
 
 * websocket通讯
@@ -96,7 +93,7 @@
 #### 强制缓存（初次请求后，不再请求服务器，直接读取本地缓存）
 
 Response Headers中控制强制缓存的逻辑，例如cache-Control:max-age=315336000
-![强制缓存](https://github.com/lujiajian1/study-notes/blob/main/img/qiangzhi.png)
+![强制缓存](https://github.com/lujiajian1/study-notes/blob/main/img/qangzhi.png)
 
 #### 协商缓存（对比缓存）
 
