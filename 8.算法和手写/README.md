@@ -608,5 +608,22 @@ function breathTravalSal(node){
 	return nodes;
 }
 //回调
+function bfs(dom){
+    if (!(dom instanceof Array)) {
+        dom = [dom];
+    }
+    let nodeList = [];
+    let childrenArr = [];
+    for (let i = 0; i<dom.length; i++) {
+        nodeList.push(dom[i]);
+        if (dom[i].children && dom[i].children.length) {
+            childrenArr = childrenArr.concat(dom[i].children)
+        }
+    }
+    if (childrenArr.length > 0) {
+        nodeList = nodeList.concat(bfs(childrenArr));
+    }
+    return nodeList
+}
 console.log(breathTravalSal(parentDOM));
 ```
