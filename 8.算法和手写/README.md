@@ -558,7 +558,7 @@ console.log(add(2, 6)(1).toString()) //9
 ### DOM树的DFS(深度优先遍历)
 ```js
 const parentDOM = document.querySelector('#container');
-//回调
+//非回调
 function deepTravalSal(node){
 	const nodes = [];
 	const stack = [];
