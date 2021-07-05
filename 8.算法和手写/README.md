@@ -285,7 +285,7 @@ function arrf(arr){
     let res = [];
     for(let i = 0;i<arr.length;i++){
         if (arr[i] instanceof Array){   
-            res = res.concat(arrf([...arr[i]]));
+            res = res.concat(arrf(arr[i]));
         } else {
             res.push(arr[i]);
         }
