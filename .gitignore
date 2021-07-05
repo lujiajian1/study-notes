@@ -1,17 +1,3 @@
-.idea　　　　
-.mvn　　　　
-.iml
-mvnw
-mvnw.cmd
-logs/
-target/
-help.md
- 
-.project
-.settings
-.classpath
- 
- 
 /node_modules/
 /9.TypeScript/node_modules/
 
