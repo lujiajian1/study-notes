@@ -9,17 +9,18 @@
     * boolean
     * string
     * number
+    * null
+    * undefined
+    * void
+    * symbol
+    * never
+    * any
     * array
     ```ts
     let arr1: number[] = [1, 2, 3];
     let arr2: Array<number> = [1, 2, 3]; // 使用泛型的方式
     ```
-    * null
-    * undefined
     * object
-    ```ts
-
-    ```
     * tuple：元组，固定长度固定类型的数组
     ```ts
     let list: [number, string] = [1, 'lujiajian']
@@ -53,9 +54,6 @@
     let color2 = Color2.green;
     console.log(color2); //lujiajian
     ```
-    * void
-    * never
-    * any
 * 高级类型
     * union：联合类型
     ```ts

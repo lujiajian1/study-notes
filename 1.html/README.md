@@ -105,9 +105,9 @@ self.postMessage({
 ### HTML引用外链样式表的方式
 HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表，有两种方式：链接式、导入式，有两种方式：链接式、导入式。
 ``` html
-// 链接式
+// 链接式 link 会同时被加载，link 方式样式的权重高于@import 的
 <link type="text/css" rel="styleSheet"  href="CSS文件路径" />
-// 链接式
+// 链接式 @import 引用的 css 会等到页面加载结束后加载
 <style type="text/css">
   @import url("css文件路径");
 </style>
