@@ -25,7 +25,7 @@
             * \. (clas)
             * \# (id)
             * \[\] (属性选择器)
-            * : (伪类)
+            * : (伪类)伪类是操作文档中已有的元素
                 * :any-link
                 * :visited
                 * :hover
@@ -39,7 +39,7 @@
                 * :not(selector) (选择除 selector 元素意外的元素)
                 * :where:has
                 * :root (选择文档的根元素，等同于html元素)
-            * :: (伪元素选择器)
+            * :: (伪元素选择器)伪元素是创建了一个文档外的元素
                 * ::before
                 * ::after
                 * ::first-line
