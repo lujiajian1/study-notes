@@ -87,3 +87,24 @@ interface Point {
     y: number;
 }
 ```
+
+### vue2 + typescript
+* vue-class-component： Vue 官方推出的一个支持使用 class 方式来开发 vue 单文件组件的库
+    * methods 可以直接声明为类的成员方法
+    * 计算属性可以被声明为类的属性访问器
+    * 初始化的 data 可以被声明为类属性
+    * data、render 以及所有的 Vue 生命周期钩子可以直接作为类的成员方法
+    * 所有其他属性，需要放在装饰器中
+* vue-property-decorator：vue-class-component基础上增加了装饰器相关的功能，因此它也同时拥有 vue-class-component 的功能
+    * @Prop
+    * @PropSync
+    * @Model
+    * @Watch
+    * @Provide
+    * @Inject
+    * @ProvideReactive
+    * @InjectReactive
+    * @Emit
+    * @Ref
+    * @Component (由 vue-class-component 提供)
+    * Mixins (由 vue-class-component 提供)
