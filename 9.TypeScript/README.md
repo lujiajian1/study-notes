@@ -573,11 +573,44 @@ logAdvance({ length: 3 })
         3. 确定函数返回值
     2. 最佳通用类型推断：推断出一个可以兼容当前所有类型的通用类型
     3. 上下文推断：根据事件绑定推断出事件类型
+```ts
+let a = 1;
+let b = [1, null, 'a']
+let c = {x: 1, y: 'a'}
+
+let d = (x = 1) => x + 1
+
+window.onkeydown = (event) => {
+    // console.log(event.button)
+}
+```
 * 类型断言：用自己声明的类型覆盖类型推断
     * 方式：表达式 as type 或者 \<type\>表达式
-    * 弊端：没有按照接口的约定赋值，不会报错
-* 类型兼容性：如果X（目标类型）＝Y（源类型），则X兼容Y
+    * 弊端：没有按照接口的约定赋值，不会报错，避免滥用
+```ts
+interface Foo {
+    bar: number
+}
+let foo = {} as Foo
+let foo = <Foo>{}
+```
+* 类型兼容性：如果X（目标类型）= Y（源类型），则X兼容Y
     * 接口兼容性：成员少的兼容成员多的（鸭式辨型法）
+    ```ts
+    interface X {
+        a: any;
+        b: any;
+    }
+    interface Y {
+        a: any;
+        b: any;
+        c: any;
+    }
+    let x: X = {a: 1, b: 2}
+    let y: Y = {a: 1, b: 2, c: 3}
+    x = y
+    // y = x //报错
+    ```
     * 函数兼容性
         * 参数个数：目标函数多于源函数
         * 可选参数和剩余参数，遵循原则
@@ -589,16 +622,118 @@ logAdvance({ length: 3 })
             * 严格模式，成员多的兼容成员少的
             * 非严格模式，相互兼容（函数参数双向协变）
         * 返回值类型：目标函数必须与源函数相同，或为其子类型
+    ```ts
+    type Handler = (a: number, b: number) => void
+    function hof(handler: Handler) {
+        return handler
+    }
+
+    // 1)参数个数
+    let handler1 = (a: number) => {}
+    hof(handler1)
+    let handler2 = (a: number, b: number, c: number) => {}
+    // hof(handler2) //报错
+
+    // 可选参数和剩余参数
+    let a = (p1: number, p2: number) => {}
+    let b = (p1?: number, p2?: number) => {}
+    let c = (...args: number[]) => {}
+    a = b
+    a = c
+    // b = a //报错
+    // b = c //报错
+    c = a
+    c = b
+
+    // 2)参数类型
+    let handler3 = (a: string) => {}
+    // hof(handler3) //报错
+
+    interface Point3D {
+        x: number;
+        y: number;
+        z: number;
+    }
+    interface Point2D {
+        x: number;
+        y: number;
+    }
+    let p3d = (point: Point3D) => {}
+    let p2d = (point: Point2D) => {}
+    p3d = p2d
+    // p2d = p3d //报错
+
+    // 3) 返回值类型
+    let f = () => ({name: 'Alice'})
+    let g = () => ({name: 'Alice', location: 'Beijing'})
+    f = g
+    // g = f //报错
+
+    // 函数重载
+    function overload(a: number, b: number): number
+    function overload(a: string, b: string): string
+    function overload(a: any, b: any): any {}
+    // function overload(a: any): any {}
+    // function overload(a: any, b: any, c: any): any {}
+    // function overload(a: any, b: any) {}
+    ```
     * 枚举兼容性
         * 枚举类型和数字类型相互兼容
         * 枚举类型之间不兼容
+    ```ts
+    enum Fruit { Apple, Banana }
+    enum Color { Red, Yellow }
+    let fruit: Fruit.Apple = 1
+    let no: number = Fruit.Apple
+    // let color: Color.Red = Fruit.Apple //报错
+    ```
     * 类兼容性
         * 静态成员和构造函数不在比较范围
         * 两个类具有相同的实例成员，它们的实例相互兼容
         * 类中包含私有成员或受保护成员，只有父类和子类的实例相互兼容
+    ```ts
+    class A {
+        constructor(p: number, q: number) {}
+        id: number = 1
+        private name: string = ''
+    }
+    class B {
+        static s = 1
+        constructor(p: number) {}
+        id: number = 2
+        private name: string = ''
+    }
+    class C extends A {}
+    let aa = new A(1, 2)
+    let bb = new B(1)
+    // aa = bb //报错，因为有私有成员，如果没有 private name: string = '' 则不报错
+    // bb = aa
+    let cc = new C(1, 2)
+    aa = cc
+    cc = aa
+    ```
     * 泛型兼容性
         * 泛型接口：只有类型参数T被接口成员使用时，才会影响兼容性
         * 泛型函数：定义相同，没有指定类型参数时就兼容
+    ```ts
+    interface Empty<T> {
+    // value: T //定义value，则不兼容
+    }
+    let obj1: Empty<number> = {};
+    let obj2: Empty<string> = {};
+    obj1 = obj2
+
+    let log1 = <T>(x: T): T => {
+        console.log('x')
+        return x
+    }
+    let log2 = <U>(y: U): U => {
+        console.log('y')
+        return y
+    }
+    log1 = log2
+    ```
+    * 口诀：1.结构之间兼容：成员少的兼容成员多的 2.函数之间兼容：参数多的兼容参数少的
 * 类型保护
     * 含义：在特定的区块中保证变量属于某种确定的类型
     * 创建区块的方法
@@ -606,39 +741,240 @@ logAdvance({ length: 3 })
         * typeof
         * in
         * 类型保护函数，特殊的返回值：arg is type（类型谓词）
+```ts
+enum Type { Strong, Week }
+
+class Java {
+    helloJava() {
+        console.log('Hello Java')
+    }
+    java: any
+}
+
+class JavaScript {
+    helloJavaScript() {
+        console.log('Hello JavaScript')
+    }
+    js: any
+}
+
+function isJava(lang: Java | JavaScript): lang is Java {
+    return (lang as Java).helloJava !== undefined
+}
+
+function getLanguage(type: Type, x: string | number) {
+    let lang = type === Type.Strong ? new Java() : new JavaScript();
+    
+    if (isJava(lang)) {
+        lang.helloJava();
+    } else {
+        lang.helloJavaScript();
+    }
+
+    //每一个都写类型断言，显然过于麻烦
+    if ((lang as Java).helloJava) {
+        (lang as Java).helloJava();
+    } else {
+        (lang as JavaScript).helloJavaScript();
+    }
+
+    // instanceof
+    if (lang instanceof Java) {
+        lang.helloJava()
+        // lang.helloJavaScript()
+    } else {
+        lang.helloJavaScript()
+    }
+
+    // in
+    if ('java' in lang) {
+        lang.helloJava()
+    } else {
+        lang.helloJavaScript()
+    }
+
+    // typeof
+    if (typeof x === 'string') {
+        console.log(x.length)
+    } else {
+        console.log(x.toFixed(2))
+    }
+
+    return lang;
+}
+
+getLanguage(Type.Week, 1)
+```
 
 ### 高级类型
 * 交叉类型（类型并集）
     * 含义：将多个类型合并为一个类型，新的类型将具有所有类型的特性
     * 应用场景：混入
+```ts
+interface DogInterface {
+    run(): void
+}
+interface CatInterface {
+    jump(): void
+}
+let pet: DogInterface & CatInterface = {
+    run() {},
+    jump() {}
+}
+```
 * 联合类型（类型交集）
     * 含义：类型并不确定，可能为多个类型中的一个
     * 应用场景：多类型支持
     * 可区分的联合类型：结合联合类型和字面量类型的类型保护方法
+```ts
+let a: number | string = 1
+let b: 'a' | 'b' | 'c'
+let c: 1 | 2 | 3
+
+class Dog implements DogInterface {
+    run() {}
+    eat() {}
+}
+class Cat  implements CatInterface {
+    jump() {}
+    eat() {}
+}
+enum Master { Boy, Girl }
+function getPet(master: Master) {
+    let pet = master === Master.Boy ? new Dog() : new Cat();
+    // pet.run()
+    // pet.jump()
+    pet.eat()
+    return pet
+}
+
+//可区分的联合类型
+interface Square {
+    kind: "square";
+    size: number;
+}
+interface Rectangle {
+    kind: "rectangle";
+    width: number;
+    height: number;
+}
+interface Circle {
+    kind: "circle";
+    radius: number;
+}
+type Shape = Square | Rectangle | Circle
+function area(s: Shape) {
+    switch (s.kind) {
+        case "square":
+            return s.size * s.size;
+        case "rectangle":
+            return s.height * s.width;
+        case 'circle':
+            return Math.PI * s.radius ** 2
+        default:
+            return ((e: never) => {throw new Error(e)})(s)
+    }
+}
+console.log(area({kind: 'circle', radius: 1}))
+```
 * 字面量类型
     * 字符串字面量
     * 数字字面量
     * 应用场景：限定变量取值范围
+```ts
+type names = '小飞侠' | '水星仔';  
+let a:names = '小飞侠';
+let b:names = '水星仔';
+```
 * 索引类型
     * 要点
         * keyof T（索引查询操作符）：类型T公共属性名的字面量联合类型
-        * T［K］（索引访问操作符）：对象T的属性K所代表的类型
+        * T[K]（索引访问操作符）：对象T的属性K所代表的类型
         * 泛型约束
     * 应用场景：从一个对象中选取某些属性的值
+```ts
+let obj = {
+    a: 1,
+    b: 2,
+    c: 3
+}
+
+function getValues(obj: any, keys: string[]) {
+    return keys.map(key => obj[key])
+}
+console.log(getValues(obj, ['d', 'e'])) //没有报错
+
+//使用索引类型，解决对象选取值类型校验
+function getValues<T, K extends keyof T>(obj: T, keys: K[]): T[K][] {
+    return keys.map(key => obj[key])
+}
+console.log(getValues(obj, ['a', 'b']))
+```
 * 映射类型
     * 含义：从旧类型创建出新类型
     * 应用场景
-        * Readonly\<T\>：将T的所有属性变为只读
-        * Partial\<T\>：将T的所有属性变为可选
-        * Pick\<T，K\>：选取以K为属性的对象T的子集
-        * Record\<K，T\>：创新属性为K的新对象，属性值的类型为T
+        * 同态：只作用于 T 的属性
+            * Readonly\<T\>：将T的所有属性变为只读
+            * Partial\<T\>：将T的所有属性变为可选
+            * Pick\<T,K\>：选取以K为属性的对象T的子集
+        * Record\<K,T\>：创新属性为K的新对象，属性值的类型为T
+```ts
+interface Obj {
+    a: string;
+    b: number;
+}
+type ReadonlyObj = Readonly<Obj>
+
+type PartialObj = Partial<Obj>
+
+type PickObj = Pick<Obj, 'a' | 'b'>
+
+type RecordObj = Record<'x' | 'y', Obj>
+```
 * 条件类型
     * 含义：T extends U ? X : Y（如果类型T可以赋值给类型U，那么结果类型就是X，否则就是Y）
-    * 应用场景
+    * 应用场景：官方预置的条件类型
         * Exclude\<T,U\>：从T中过滤掉可以赋值给U的类型
         * Extract\<T,U\>：从T中抽取出可以赋值给U的类型
         * NonNullable\<T\>：从T中除去 undefined 和 null
         * ReturnType\<T\>：获取函数的返回值类型
+```ts
+// T extends U ? X : Y
+
+type TypeName<T> =
+    T extends string ? "string" :
+    T extends number ? "number" :
+    T extends boolean ? "boolean" :
+    T extends undefined ? "undefined" :
+    T extends Function ? "function" :
+    "object";
+type T1 = TypeName<string> //string
+type T2 = TypeName<string[]> //object
+
+// (A | B) extends U ? X : Y
+// (A extends U ? X : Y) | (B extends U ? X : Y)
+type T3 = TypeName<string | string[]> //string | object
+
+type Diff<T, U> = T extends U ? never : T
+type T4 = Diff<"a" | "b" | "c", "a" | "e">
+// 拆解为：
+// Diff<"a", "a" | "e"> | Diff<"b", "a" | "e"> | Diff<"c", "a" | "e">
+// 结果：
+// never | "b" | "c"
+// "b" | "c" //never和其他类型的联合类型，never可以省略
+
+type NotNull<T> = Diff<T, null | undefined>
+type T5 = NotNull<string | number | undefined | null>
+
+// Exclude<T, U>
+// NonNullable<T>
+
+// Extract<T, U>
+type T6 = Extract<"a" | "b" | "c", "a" | "e">
+
+// ReturnType<T>
+type T8 = ReturnType<() => string>
+```
 
 ### 为什么要使用 TypeScript
 * 类型推演和类型匹配
