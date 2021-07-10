@@ -161,18 +161,148 @@ let g2: G.a = G.a //只能取G.a
     * 对象的属性
         * 可选属性
         * 只读属性
+```ts
+interface List {
+    readonly id: number; //只读
+    name: string;
+    // [x: string]: any;
+    age?: number; //可选
+}
+interface Result {
+    data: List[]
+}
+function render(result: Result) {
+    result.data.forEach((value) => {
+        console.log(value.id, value.name)
+        if (value.age) {
+            console.log(value.age)
+        }
+        // value.id++ //报错，只读属性不允许修改
+    })
+}
+let result = {
+    data: [
+        {id: 1, name: 'A', sex: 'male'},//虽然sex没有定义，但是ts不会报错，因为鸭式辨型法，只要满足接口的必要条件即可
+        {id: 2, name: 'B', age: 10}
+    ]
+}
+render(result)
+
+// 如果按照下面的方式直接传入对象字面量的话，会报错
+// 绕过对象字面量检查的方法
+// 1.将对象字面量赋值给变量 render(result)
+// 2.使用类型断言 render({...} as Result)
+// 3.使用字符串索引签名 [x: string]: any
+render({
+    data: [
+        {id: 1, name: 'A', sex: 'male'},//报错，直接传入对象字面量的话，就会额外检查，sex没有定义，产生报错
+        {id: 2, name: 'B', age: 10}
+    ]
+})
+```
 * 可索引类型接口
     * 数字索引（相当于数组）[index: number]
     * 字符串索引[x: string]
+```ts
+interface StringArray {
+    [index: number]: string
+}
+let chars: StringArray = ['a', 'b']
+
+interface Names {
+    [x: string]: any;
+    [z: number]: number; //数字索引类型必须是字符串索引类型的子类型， 因为JavaScript会进行类型转化，将索引number转为string
+}
+```
 * 函数类型接口：interface F{ (arg:type):type }
+```ts
+//方法一：用一个变量来定义函数类型
+let add: (x: number, y: number) => number
+//方法二：接口
+interface Add {
+    (x: number, y: number): number
+}
+//方法三：类型别名
+type Add = (x: number, y: number) => number
+
+let add: Add = (a: number, b: number) => a + b
+```
 * 混合类型接口：interface H { (arg: type): type, prop: type, method(arg: type): type }
+```ts
+interface Lib {
+    (): void;
+    version: string;
+    doSomething(): void;
+}
+
+function getLib() {
+    let lib = (() => {}) as Lib
+    lib.version = '1.0.0'
+    lib.doSomething = () => {}
+    return lib;
+}
+let lib1 = getLib()
+lib1()
+let lib2 = getLib()
+lib2.doSomething()
+```
 * 类类型接口
     * 类必须实现接口中所有属性
     * 接口只能约束类的公用成员，不能约束私有成员、受保护成员、静态成员和构造函数
+```ts
+interface Human {
+    name: string;
+    eat(): void;
+}
+
+class Asian implements Human {
+    constructor(name: string) {
+        this.name = name;
+    }
+    name: string
+    eat() {}
+    age: number = 0
+    sleep() {}
+}
+```
 * 接口继承接口
     * 抽离可重用的接口
     * 将多个接口整合成一个接口
+```ts
+interface Man extends Human {
+    run(): void
+}
+
+interface Child {
+    cry(): void
+}
+
+interface Boy extends Man, Child {}
+
+let boy: Boy = {
+    name: '',
+    run() {},
+    eat() {},
+    cry() {}
+}
+```
 * 接口继承类：抽象出类的公用成员、私有成员和受保护成员
+```ts
+class Auto {
+    state = 1
+    // private state2 = 1
+}
+interface AutoInterface extends Auto {
+
+}
+class C implements AutoInterface {
+    state1 = 1
+}
+class Bus extends Auto implements AutoInterface {
+
+}
+```
+![接口和类](https://github.com/lujiajian1/study-notes/blob/main/img/interface.png)
 
 ### 函数
 * 定义函数
@@ -181,6 +311,19 @@ let g2: G.a = G.a //只能取G.a
         * 变量定义
         * 类型别名
         * 接口定义
+    ```ts
+    function add1(x: number, y: number) {
+        return x + y
+    }
+
+    let add2: (x: number, y: number) => number
+
+    type add3 = (x: number, y: number) => number
+
+    interface add4 {
+        (x: number, y: number): number
+    }
+    ```
     * 类型要求
         * 参数类型必须声明
         * 返回值类型一般无需声明
@@ -188,15 +331,61 @@ let g2: G.a = G.a //只能取G.a
     * 参数个数：实参和形参必须一一对应
     * 可选参数：必选参数不能位于可选参数后
     * 默认参数：在必选参数前，默认参数不可省略，在必选参数后，默认参数可以省略
-    * 剩余参数
+    * 剩余参数，剩余参数类型为数组
+```ts
+//可选参数
+function add5(x: number, y?: number) {
+    return y ? x + y : x
+}
+add5(1)
+
+//默认参数
+function add6(x: number, y = 0, z: number, q = 1) {
+    return x + y + z + q
+}
+add6(1, undefined, 3)
+
+//剩余参数
+function add7(x: number, ...rest: number[]) {
+    return x + rest.reduce((pre, cur) => pre + cur);
+}
+add7(1, 2, 3, 4, 5)
+```
 * 函数重载
     * 静态类型语言：函数的名称相同，参数的个数或类型不同
     * Typescript：预先定义一组名称相同，类型不同的函数声明，并在一个类型最宽松的版本中实现
+```ts
+function add8(...rest: number[]): number;
+function add8(...rest: string[]): string;
+function add8(...rest: any[]) {
+    let first = rest[0];
+    if (typeof first === 'number') {
+        return rest.reduce((pre, cur) => pre + cur);
+    }
+    if (typeof first === 'string') {
+        return rest.join('');
+    }
+}
+console.log(add8(1, 2))
+console.log(add8('a', 'b', 'c'))
+```
 
 ### 类
 * 基本实现
     * 类中定义的属性都是实例属性，类中定义的方法都是原型方法
     * 实例属性必须有初始值，或在构造函数中被赋值，或为可选成员
+```ts
+class Dog {
+    constructor(name: string) {
+        this.name = name
+    }
+    name: string
+    run() {}
+}
+console.log(Dog.prototype)
+let dog = new Dog('wangwang')
+console.log(dog)
+```
 * 继承：子类的构造函数中必须包含 super 调用
 * 成员修饰符
     * public：对所有人可见，所有成员默认为public
@@ -204,15 +393,109 @@ let g2: G.a = G.a //只能取G.a
     * protected：只能在被定义的类和子类中访问，不能通过实例访问，protected constructor 只能被实例化，不能被继承
     * readonly：必须有初始值，或在构造函数中被赋值
     * static：只能由类名调用，不能通过实例访问，可继承
+```ts
+abstract class Animal {
+    eat() {
+        console.log('eat')
+    }
+    abstract sleep(): void
+}
+
+class Dog extends Animal {
+    constructor(name: string) {
+        super()
+        this.name = name
+        this.pri()
+    }
+    public name: string = 'dog'
+    run() {}
+    private pri() {}
+    protected pro() {}
+    readonly legs: number = 4
+    static food: string = 'bones'
+    sleep() {
+        console.log('Dog sleep')
+    }
+}
+// console.log(Dog.prototype)
+let dog = new Dog('wangwang')
+// console.log(dog)
+// dog.pri()
+// dog.pro()
+console.log(Dog.food)
+dog.eat()
+
+class Husky extends Dog {
+    constructor(name: string, public color: string) { //构造函数参数添加修饰符，可以省略在类中的定义
+        super(name)
+        this.color = color
+        // this.pri()
+        this.pro()
+    }
+    // color: string
+}
+console.log(Husky.food)
+```
 * 构造函数参数中的修饰符：将参数变为实例属性
-* 抽象类
+* 抽象类：使用 abstract 关键字
     * 不能被实例化，只能被继承
         * 抽象方法包含具体实现，子类直接复用
         * 抽象方法不包含具体实现，子类必须实现
     * 多态：多个子类对父抽象类的方法有不同实现，实现运行时绑定
+```ts
+abstract class Animal {
+    eat() {
+        console.log('eat')
+    }
+    abstract sleep(): void //抽象方法
+}
+// let animal = new Animal() //报错，不能被实例化，只能被继承
+
+class Dog extends Animal {
+    constructor(name: string) {
+        super()
+        this.name = name
+    }
+    name: string
+    run() {}
+    sleep() {
+        console.log('Dog sleep')
+    }
+}
+
+class Cat extends Animal {
+    sleep() {
+        console.log('Cat sleep')
+    }
+}
+let cat = new Cat()
+
+let animals: Animal[] = [dog, cat]
+animals.forEach(i => {
+    i.sleep() //多态
+})
+```
 * this类型
     * 实现实例方法的链式调用
     * 在继承时，具有多态性，保持父子类之间接口调用的连贯性
+```ts
+class Workflow {
+    step1() {
+        return this
+    }
+    step2() {
+        return this
+    }
+}
+new Workflow().step1().step2()
+
+class MyFlow extends Workflow {
+    next() {
+        return this
+    }
+}
+new MyFlow().next().step1().next().step2()
+```
 
 ### 泛型
 * 支持多种类型的方法
@@ -226,15 +509,57 @@ let g2: G.a = G.a //只能取G.a
         * generic\<type\>(arg)
         * generic(arg)
     * 泛型函数类型：type Generic=\<T\>(arg:T)=>T
+```ts
+function log<T>(value: T): T {
+    console.log(value);
+    return value;
+}
+log<string[]>(['a', ',b', 'c'])
+log(['a', ',b', 'c']) //利用ts类型推断，省略参数类型
+
+type Log = <T>(value: T) => T //泛型函数类型
+let myLog: Log = log
+```
 * 泛型接口
     * 定义：interface Generic\<T\>{ (arg:T):T }
     * 实现：let generic：Generic\<type\>（必须指定类型）
+```ts
+interface Log<T> {
+    (value: T): T
+}
+let myLog: Log<number> = log
+myLog(1)
+```
 * 泛型类
     * 定义：class Generic\<T\>{ method(value:T){} }，泛型不能应用于类的静态成员
     * 实例化
         * let generic = new Generic\<type\>()
         * let generic = new Generic()，T可为任意类型
+```ts
+class Log<T> {
+    run(value: T) {
+        console.log(value)
+        return value
+    }
+}
+let log1 = new Log<number>()
+log1.run(1)
+let log2 = new Log()
+log2.run({ a: 1 })
+```
 * 泛型约束：T extends U （T 必须具有U的属性）
+```ts
+interface Length {
+    length: number
+}
+function logAdvance<T extends Length>(value: T): T {
+    console.log(value, value.length);
+    return value;
+}
+logAdvance([1])
+logAdvance('123')
+logAdvance({ length: 3 })
+```
 
 ### 为什么要使用 TypeScript
 * 类型推演和类型匹配
