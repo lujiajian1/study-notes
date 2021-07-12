@@ -436,7 +436,7 @@ b.bind(a,1,2)()
 ### 微任务和宏任务
 
 * 宏任务：setTimeout，setInterval, Ajax, DOM事件
-* 微任务：Promise async/await
+* 微任务：Promise async/await MutationObserver
 * 微任务执行时机比宏任务要早：微任务（ES6语法规定）DOM渲染前触发，宏任务（浏览器规定）DOM渲染后触发
 
 ### event loop（事件循环/事件轮询）
@@ -767,3 +767,112 @@ export class User extend Component {};
 * 函数默认值
 * Proxy
 * 对象合并（Object.assign）
+* set：ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。Set函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。
+    * Set 实例的属性
+        * Set.prototype.constructor：构造函数，默认就是Set函数
+        * Set.prototype.size：返回Set实例的成员总数。
+    * 操作方法（用于操作数据）
+        * Set.prototype.add(value)：添加某个值，返回 Set 结构本身。
+        * Set.prototype.delete(value)：删除某个值，返回一个布尔值，表示删除是否成功。
+        * Set.prototype.has(value)：返回一个布尔值，表示该值是否为Set的成员。
+        * Set.prototype.clear()：清除所有成员，没有返回值。
+    * 遍历方法（用于遍历成员）
+        * Set.prototype.keys()：返回键名的遍历器
+        * Set.prototype.values()：返回键值的遍历器
+        * Set.prototype.entries()：返回键值对的遍历器
+        * Set.prototype.forEach()：使用回调函数遍历每个成员
+```js
+const items = new Set([1, 2, 3, 4, 5, 5, 5, 5]);
+const set = new Set(document.querySelectorAll('div'));
+
+let s = new Set();
+s.add(1).add(2).add(2); // 注意2被加入了两次
+s.size // 2
+s.has(1) // true
+s.has(2) // true
+s.has(3) // false
+s.delete(2);
+s.has(2) // false
+
+let set = new Set(['red', 'green', 'blue']);
+for (let item of set.keys()) {
+  console.log(item);
+}
+// red
+// green
+// blue
+
+for (let item of set.values()) {
+  console.log(item);
+}
+// red
+// green
+// blue
+
+for (let item of set.entries()) {
+  console.log(item);
+}
+// ["red", "red"]
+// ["green", "green"]
+// ["blue", "blue"]
+
+let set = new Set([1, 4, 9]);
+set.forEach((value, key) => console.log(key + ' : ' + value))
+
+let set = new Set(['red', 'green', 'blue']);
+for (let x of set) {
+  console.log(x);
+}
+```
+* WeakSet：WeakSet 结构与 Set 类似，也是不重复的值的集合。但是，它与 Set 有两个区别。
+    * 首先，WeakSet 的成员只能是对象，而不能是其他类型的值。
+    * 其次，WeakSet 中的对象都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用，也就是说，如果其他对象都不再引用该对象，那么垃圾回收机制会自动回收该对象所占用的内存，不考虑该对象还存在于 WeakSet 之中。
+```js
+const a = [[1, 2], [3, 4]];
+const ws = new WeakSet(a);
+// WeakSet {[1, 2], [3, 4]}
+
+const ws = new WeakSet();
+const obj = {};
+const foo = {};
+ws.add(window);
+ws.add(obj);
+```
+
+* Map：类似于对象，也是键值对的集合，但是“键”的范围不限于字符串，各种类型的值（包括对象）都可以当作键。也就是说，Object 结构提供了“字符串—值”的对应，Map 结构提供了“值—值”的对应，是一种更完善的 Hash 结构实现。如果你需要“键值对”的数据结构，Map 比 Object 更合适。
+    * 属性
+        * size属性返回 Map 结构的成员总数
+    * 操作方法
+        * Map.prototype.set(key, value)
+        * Map.prototype.get(key)
+        * Map.prototype.has(key)
+        * Map.prototype.delete(key)
+        * Map.prototype.clear()
+    * 遍历方法
+        * Map.prototype.keys()：返回键名的遍历器。
+        * Map.prototype.values()：返回键值的遍历器。
+        * Map.prototype.entries()：返回所有成员的遍历器。
+        * Map.prototype.forEach()：遍历 Map 的所有成员。
+```js
+const m = new Map();
+const o = {p: 'Hello World'};
+m.set(o, 'content')
+m.get(o) // "content"
+m.has(o) // true
+m.delete(o) // true
+m.has(o) // false
+
+//也可以接受一个数组作为参数。该数组的成员是一个个表示键值对的数组
+const map = new Map([
+  ['name', '张三'],
+  ['title', 'Author']
+]);
+map.size // 2
+map.has('name') // true
+map.get('name') // "张三"
+map.has('title') // true
+map.get('title') // "Author"
+```
+* WeakMap：WeakMap结构与Map结构类似，也是用于生成键值对的集合。WeakMap与Map的区别有两点。
+    * 首先，WeakMap只接受对象作为键名（null除外），不接受其他类型的值作为键名。
+    * 其次，WeakMap的键名所指向的对象，不计入垃圾回收机制。
