@@ -179,6 +179,179 @@ ajax(url)
 .catch(err => console.error(err))
 ```
 
+### 实现promise
+```js
+const PENDDING = 'PENDDING';
+const FULLFILLED = 'FULLFILLED';
+const REJECTED = 'REJECTED';
+
+function MyPromise(fn) {
+  const that = this;
+  that.state = PENDDING;
+  that.value = null;
+  that.resolvedCallbacks = [];
+  that.rejectedCallbacks = [];
+
+  function resolve(value) {
+    if (value instanceof MyPromise) {
+      return value.then(resolve, reject);
+    }
+
+    setTimeout(() => {
+      that.state = FULLFILLED;
+      that.value = value;
+      that.resolvedCallbacks.forEach(cb => cb(that.value));
+    }, 0);
+  }
+
+  function reject(value) {
+    setTimeout(() => {
+      that.state = REJECTED;
+      that.value = value;
+      that.rejectedCallbacks.forEach(cb => cb(that.value));
+    }, 0);
+  }
+
+  try {
+    fn(resolve, reject);
+  } catch (e) {
+    reject(e);
+  }
+}
+
+MyPromise.prototype.then = function(onFullfilled, onRejected) {
+    const that = this;
+    onFullfilled = typeof onFullfilled === 'function' ? onFullfilled : v => v;
+    onRejected = typeof onRejected === 'function' ? onRejected : v => {throw v};
+    if (that.state === PENDDING) {
+        return (promise2 = new MyPromise((resolve, reject) => {
+            this.resolvedCallbacks.push(() => {
+                try {
+                    const x = onFullfilled(that.value);
+                    resolutionProcedure(promise2, x, resolve, reject);
+                } catch (r) {
+                    reject(r);
+                }
+            });
+            this.rejectedCallbacks.push(() => {
+                try {
+                    const x = onRejected(that.value);
+                    resolutionProcedure(promise2, x, resolve, reject);
+                } catch (r) {
+                    reject(r);
+                }
+            });
+        }));
+    } else if (that.state === FULLFILLED) {
+        return (promise2 = new MyPromise((resolve, reject) => {
+            this.resolvedCallbacks.push(() => {
+                try {
+                    const x = onFullfilled(that.value);
+                    resolutionProcedure(promise2, x, resolve, reject);
+                } catch (r) {
+                    reject(r);
+                }
+            });
+        }));
+    } else if (that.state === REJECTED) {
+        return (promise2 = new MyPromise((resolve, reject) => {
+            this.rejectedCallbacks.push(() => {
+                try {
+                    const x = onRejected(that.value);
+                    resolutionProcedure(promise2, x, resolve, reject);
+                } catch (r) {
+                    reject(r);
+                }
+            });
+        }));
+    }
+}    
+function resolutionProcedure(promose2, x, resolve, reject) {
+    if (x === promose2) {
+        return reject(new TypeError('Error'));
+    }
+    let called = false;
+    if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
+        try {
+            const then = x.then;
+            if (typeof then === 'function') {
+                then.call(
+                    x,
+                    y => {
+                        if (called) return;
+                        called = true;
+                        resolutionProcedure(promose2, y, resolve, reject);
+                    },
+                    e => {
+                        if (called) return;
+                        called = true;
+                        reject(e);
+                    }
+                )
+            } else {
+                resolve(x);
+            }
+        } catch(r) {
+            if (called) return;
+            called = true;
+            reject(r);
+        }
+    } else {
+        resolve(x);
+    }
+}
+```
+
+### 实现一个发布订阅模式
+```js
+class Subjects {
+    constructor() {
+        this.subs = [];
+        this.state = 0;
+    }
+    addSubs(sub) {
+        var isExsit = this.subs.includes(sub);
+        if (isExsit) {
+            return console.log('sub existed');
+        }
+        this.subs.push(sub);
+    }
+    removeSubs(sub) {
+        var index = this.subs.indexOf(sub);
+        if (index === -1) {
+            return console.log('sub not exist');
+        }
+        this.subs.splice(index, 1);
+    }
+    notify() {
+        console.log('sub update');
+        this.subs.forEach(sub => sub.update(this.state));
+    }
+    doSomeLogic() {
+        console.log('doSomeLogic');
+        this.state = Math.floor(Math.random() * 10);
+        this.notify();
+    }
+}
+class Observer {
+    constructor(name) {
+        this.name = name;
+    }
+    update(state) {
+        console.log(this.name + ' Recived state' + state);
+    }
+}
+var observerA = new Observer('A');
+var observerB = new Observer('B');
+var subject = new Subjects();
+subject.addSubs(observerA);
+subject.addSubs(observerB);
+subject.doSomeLogic();
+subject.doSomeLogic();
+subject.removeSubs(observerB);
+subject.doSomeLogic();
+```
+
 ### 手写防抖 debounce
 ```js
 const input1 = document.getElementById('input1')
@@ -390,6 +563,24 @@ class SinglyLinkedList{
 }
 ```
 
+
+### 合并两个有序链表
+```js
+//输入：1->2->4, 1->3->4 输出：1->1->2->3->4->4
+var mergeTwoLists = function(l1, l2) {
+      if ( l1 == null) return l2;
+      if ( l2 == null) return l1;
+    if( l1.val < l2.val){
+        l1.next = mergeTwoLists(l1.next,l2);
+        return l1
+    }else {
+        l2.next = mergeTwoLists(l1,l2.next);
+        return l2
+    }
+ 
+};
+```
+
 ### 二叉树前中后遍历
 ![二叉树前中后遍历](https://github.com/lujiajian1/study-notes/blob/main/img/nodetree.png)
 ```js
@@ -505,6 +696,61 @@ const postorderTraversal = function(root) {
         cur.right && stack.push(cur.right)
     }
     return res.reverse()
+};
+```
+
+### 判断对称二叉树（镜像对称）
+```js
+var isSymmetric = function(root) {
+    if (!root) return true;
+    let flag = true;
+    let queue = [root];
+    
+    while (queue.length !== 0) {
+        const temp = [];
+        for (let v of queue) {
+            temp.push(v);
+        }
+        let copy = [];
+        for (let v of temp) {
+            if (v === null) {
+                copy.push(null);
+                continue;
+            }
+            copy.push(v.val);
+        }
+        copy = copy.reverse();
+        for (let i = 0; i < temp.length;i++) {
+            if (temp[i] === null) {
+                if (temp[i] !== copy[i]) {
+                    flag = false;
+                    return flag;
+                } else {
+                    continue;
+                }
+            }
+            if (temp[i].val !== copy[i]) {
+                flag = false;
+                return flag;
+            }
+        }
+        queue = [];
+        for (let v of temp) {
+            if (v === null) {
+                queue.push(null);
+                queue.push(null);
+                continue;
+            }
+            queue.push(v.left);
+            queue.push(v.right);
+        }
+        const test = queue.every((value) => {
+            return value === null
+        }) 
+        if (test === true) break;
+    }
+
+    return flag;
 };
 ```
 
@@ -627,4 +873,163 @@ function bfs(dom){
 }
 console.log(breathTravalSal(parentDOM));
 ```
-未完成待续......
+
+### 实现[['a', 'b'], ['n', 'm'], ['0', '1']] => ['an0', 'an1, 'am0', 'am1', 'bn0', 'bn1', 'bm0', 'bm1']
+```js
+function changeArr (arr) {
+	// 赋值：赋值给一个新的对象，这样修改之后不会影响之前的值
+	const newArr = [...arr]
+	// 取值：获取数组的第一个值
+	let result = newArr.shift()
+	// 循环这个数组
+	while (newArr.length) {
+		// 取值：从这个数组中再次获取第一个值
+		const other = newArr.shift()
+		// 定义一个新的数组为 []
+		const newResult = []
+		// 循环 result 
+		result.forEach(item => {
+			// 循环 other
+			other.forEach(_item => {
+				// 把数据组合返回给定义的数组
+				newResult.push(item + '' + _item)
+			})
+		})
+		// 把 result 赋值给 newResult
+		result = [...newResult]
+	}
+	return result
+}
+
+const arr = [['a', 'b'], ['m', 'n'], [0, 1]]
+const result = changeArr(arr)
+console.log(result) // ["am0", "am1", "an0", "an1", "bm0", "bm1", "bn0", "bn1"]
+
+const arr2 = [['a', 'b'], ['m', 'n', '0'], [0, 1], ['#', '$']]
+const result2 = changeArr(arr2)
+console.log(result2) 
+// (24) ["am0#", "am0$", "am1#", "am1$", "an0#", "an0$", "an1#", "an1$", "a00#", "a00$", "a01#", "a01$", "bm0#", "bm0$", "bm1#", "bm1$", "bn0#", "bn0$", "bn1#", "bn1$", "b00#", "b00$", "b01#", "b01$"]
+```
+
+### 爬楼梯：假设你现在正在爬楼梯，楼梯有n级。每次你只能爬1级或者2级，那么你有多少种方法爬到楼梯的顶部
+```js
+var sumMethod = 0;
+var floorSum = 4;
+function jisuanFloor(floorsum) {
+    if (floorsum == 0 || floorsum == 1) {
+        sumMethod++;
+    }else{
+        jisuanFloor(floorsum-1);
+        jisuanFloor(floorsum-2);
+    }
+
+}
+
+jisuanFloor(floorSum);
+console.log(sumMethod);
+```
+
+### 解析 URL 参数为对象
+```js
+function parseParam(url) {
+    const paramsStr = /.+\?(.+)$/.exec(url)[1]; // 将 ? 后面的字符串取出来
+    const paramsArr = paramsStr.split('&'); // 将字符串以 & 分割后存到数组中
+    let paramsObj = {};
+    // 将 params 存到对象中
+    paramsArr.forEach(param => {
+        if (/=/.test(param)) { // 处理有 value 的参数
+            let [key, val] = param.split('='); // 分割 key 和 value
+            val = decodeURIComponent(val); // 解码
+            val = /^\d+$/.test(val) ? parseFloat(val) : val; // 判断是否转为数字
+    
+            if (paramsObj.hasOwnProperty(key)) { // 如果对象有 key，则添加一个值
+                paramsObj[key] = [].concat(paramsObj[key], val);
+            } else { // 如果对象没有这个 key，创建 key 并设置值
+                paramsObj[key] = val;
+            }
+        } else { // 处理没有 value 的参数
+            paramsObj[param] = true;
+        }
+    })
+    
+    return paramsObj;
+}
+```
+
+### 实现36进制
+```js
+// 提供36位的表达 0-9 a-z
+function getNums36() {
+  var nums36 = [];
+  for(var i = 0; i < 36 ; i++) {
+    if(i >= 0 && i <= 9) {
+      nums36.push(i)
+    } else {
+      nums36.push(String.fromCharCode(i + 87));
+    }
+  }
+  return nums36;
+}
+function scale36(n) {
+  // 单独的功能函数
+  // 16进制数： 0-9  a-f    36进制数： 0-9  a-z   
+  const arr = [];
+  var nums36 = getNums36();
+  // 36 10
+  if(!Number.isInteger(n)){//浮点数判断，目前不支持小鼠
+    console.warn('不支持小数转换');
+    return n;
+  } 
+  var neg = '';
+  if(n < 0){//对负数的处理
+      neg = '-';
+      n = Math.abs(n)
+  }
+  while(n) {
+    var res = n % 36;
+    console.log(res,'+++++++');
+    arr.unshift(nums36[res]);
+    // 进位
+    n = parseInt(n/36);
+    console.log(n,'---------');
+  }
+  arr.unshift(neg)
+  return arr.join("");
+
+}
+
+console.log(scale36(20)); // 10
+```
+
+### 合并区间
+```js
+//输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
+//输出: [[1,6],[8,10],[15,18]]
+//解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+//思路： 比较intervals[i+1][0]和intervals[i][1]
+var merge = function (intervals) {
+    let result = []
+    if (intervals.length <= 1) {
+        return intervals
+    }
+    for (let i = 0; i < intervals.length; i++) {
+        if (intervals[i+1]) {
+            if (intervals[i+1][0] <= intervals[i][1]) {
+                result.push([intervals[i][0],intervals[i+1][1]])
+                i += 1
+            } else {
+                result.push(intervals[i])
+            }
+        } else {
+            let lastItem = result[result.length-1]
+            if (lastItem[1] >= intervals[i][0]) {
+                result[result.length-1] = [lastItem[0],intervals[i][1]]
+            } else {
+                result.push(intervals[i])
+            }
+        }
+    }
+    return result
+}
+```
+

@@ -8,7 +8,7 @@
 * git checkout -b xxx / git checkout xxx
 * git merge xxx
 
-### webpack 基本配置
+### [webpack](https://juejin.cn/post/6844904038543130637) 基本配置
 * 拆分配置 和 merge
 ```js
 //将配置拆分为webpack.common.js、webpack.dev.js、webpack.prod.js
@@ -417,6 +417,12 @@ import('./data.js').then(() =>{})
 * babel-polyfill 会污染全局
 * babel-runtime 不会污染全局
 * 产出第三方 要用 babel-runtime
+
+### webpack npm node的关系
+* npm：当包引入数量很多时管理就成为了一个问题，这个就是npm为开发者行了方便之处，npm已经为你做好了依赖和版本的控制，也就是说使用npm可以让你从繁杂的依赖安装和版本冲突中解脱出来，进而关注你的业务而不是库的管理。
+* Webpack：webpack是一个工具，这个工具可以帮你处理好各个包/模块之间的依赖关系（modules with dependencies），并将这些复杂依赖关系的静态文件打包成一个或很少的静态文件，提供给浏览器访问使用；除此之外，webpack因为可以提高兼容性，还可以将一些浏览器尚不支持的新特性转换为可以支持格式，进而减少由新特性带来的浏览器的兼容性问题。
+* webpack将你从npm中安装的包打包成更小的浏览器可读的静态资源，这里需要注意的是，webpack只是一个前端的打包工具，打包的是静态资源，和后台没有关系，虽然webpack依赖于node环境。
+* webpack 与 Node 关系：基于node创建的，支持所有Node API和语法。
 
 ### 前端性能优化
 * 优化原则：多使用内存，缓存或者其他方法，减少cpu计算量，减少网络加载耗时（空间换时间）

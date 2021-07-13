@@ -47,6 +47,7 @@
     * Content-type 返回数据的格式，如application/json
     * Content-length 返回数据的大小，多少字节
     * Content-Encoding 返回数据的压缩算法，如gzip
+    * Keep-Alive:timeout=20 长连接超时时间
 * 缓存相关
     * Cache-Control: max-age/no-cache/no-store/private/public（Expires也是控制缓存过期，现被cache-control取代）
     * Last-Modified If-modified-Since
@@ -72,6 +73,11 @@
 * get 请求参数会被完整保留在浏览历史记录里，而 post 中的参数不会被保留。
 * GET 和 POST 本质上就是 TCP 链接，并无差别。但是由于 HTTP 的规定和浏览器/服务器的限制，导致他们在应用过程中体现出一些不同。
 * GET 产生一个 TCP 数据包；POST 产生两个 TCP 数据包。
+
+### [TCP和UDP](https://juejin.cn/post/6972027657047244837#heading-12)
+* TCP向上层提供面向连接的可靠服务 ，UDP向上层提供无连接不可靠服务。
+* 虽然 UDP 并没有 TCP 传输来的准确，但是也能在很多实时性要求高的地方有所作为
+* 对数据准确性要求高，速度可以相对较慢的，可以选用TCP
 
 ### 浏览器多个标签页之间的通信
 
@@ -133,3 +139,6 @@ Response Headers中控制强制缓存的逻辑，例如cache-Control:max-age=315
 * CORS（需服务端设置http-header）
 ![cors](https://github.com/lujiajian1/study-notes/blob/main/img/cors.png)
 * web服务nginx代理
+
+### [PWA](https://zhuanlan.zhihu.com/p/25459319)
+Progressive Web Apps 是 Google 提出的用前沿的 Web 技术为网页提供 App 般使用体验的一系列方案。一个 PWA 应用首先是一个网页, 可以通过 Web 技术编写出一个网页应用. 随后添加上 App Manifest 和 Service Worker 来实现 PWA 的安装和离线等功能。
