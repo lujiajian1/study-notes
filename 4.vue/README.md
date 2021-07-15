@@ -1,5 +1,4 @@
 ### 自定义事件实现兄弟组件通信
-
 ```js
 //event.js
 import Vue from 'vue';
@@ -20,11 +19,9 @@ beforeDestroy(){
 ```
 
 ### 生命周期
-
 ![生命周期](https://github.com/lujiajian1/study-notes/blob/main/img/lifecycle.png)
 
 ### 父子组件生命周期
-
 * 创建
     1. father created
     2. chid created
@@ -119,15 +116,35 @@ export default {
 </script>
 ```
 ##### keep-alive
-缓存组件，适用于频繁切换，不需要重复渲染的组件，\<keep-alive\>\</keep-alive\>
+* 概念：keep-alive是个抽象组件（或称为功能型组件），实际上不会被渲染在DOM树中。它的作用是在内存中缓存组件（不让组件销毁），等到下次再渲染的时候，还会保持其中的所有状态，并且会触发activated钩子函数。适用于频繁切换，不需要重复渲染的组件，\<keep-alive\>\</keep-alive\>
+* 生命周期变化：这里的activated非常有用，因为页面被缓存时，created,mounted等生命周期均失效，你若想进行一些操作，那么可以在activated内完成。activated keep-alive组件激活时调用，该钩子在服务器端渲染期间不被调用。deactivated keep-alive组件停用时调用，该钩子在服务端渲染期间不被调用。
+    * 正常生命周期：beforeRouteEnter --> created --> mounted --> updated -->destroyed
+    * 首次进入缓存页面：beforeRouteEnter --> created --> mounted --> activated --> deactivated
+    * 再次进入缓存页面：beforeRouteEnter --> activated --> deactivated
 ##### mixin
-多个组件有相同的逻辑，抽离出来，但mixin并不是完美的，首先变量来源不明确，不利于阅读，多mixin可能会造成命名冲突，另外mixin和组件可能出现多对多的关系，复杂度较高。
+* 概念：mixins（混入），官方的描述是一种分发 Vue 组件中可复用功能的非常灵活的方式，mixins是一个js对象，它可以包含我们组件中script项中的任意功能选项，如data、components、methods 、created、computed等等。我们只要将共用的功能以对象的方式传入 mixins选项中，当组件使用 mixins对象时所有mixins对象的选项都将被混入该组件本身的选项中来，这样就可以提高代码的重用性，使你的代码保持干净和易于维护。但mixin并不是完美的，首先变量来源不明确，不利于阅读，多mixin可能会造成命名冲突，另外mixin和组件可能出现多对多的关系，复杂度较高。
+* Mixins的特点：
+    * 方法和参数在各组件中不共享，虽然组件调用了mixins并将其属性合并到自身组件中来了，但是其属性只会被当前组件所识别并不会被共享，也就是说当前组件修改mixin的data属性，不会引发其他组件的更改。
+    * 值为对象(components、methods 、computed、data)的选项，混入组件时选项会被合并，键冲突时优先组件，组件中的键会覆盖混入对象的
+    * 值为函数(created、mounted)的选项，混入组件时选项会被合并调用，混合对象里的钩子函数在组件里的钩子函数之前调用
+* 与vuex的区别
+    * vuex：用来做状态管理的，里面定义的变量在每个组件中均可以使用和修改，在任一组件中修改此变量的值之后，其他组件中此变量的值也会随之修改。
+    * Mixins：可以定义共用的变量，在每个组件中使用，引入组件中之后，各个变量是相互独立的，值的修改在组件中不会相互影响。
+* 与公共组件的区别
+    * 在父组件中引入组件，相当于在父组件中给出一片独立的空间供子组件使用，然后根据props来传值，但本质上两者是相对独立的。
+    * 则是在引入组件之后与组件中的对象和方法进行合并，相当于扩展了父组件的对象与方法，可以理解为形成了一个新的组件。
 
 ### vuex：专为 Vue.js 应用程序开发的状态管理模式
-* state
-* getters
-* action
-* mutation
+* 使用：
+    * state
+    * getters
+    * action
+    * mutation
+* [原理](https://juejin.cn/post/6855474001838342151)：
+    1. Vuex本质是一个对象
+    2. Vuex对象有两个属性，一个是install方法，一个是Store这个类
+    3. install方法的作用是将store这个实例挂载到所有的组件上，注意是同一个store实例。
+    4. Store这个类拥有commit，dispatch这些方法，Store类里将用户传入的state包装成data，作为new Vue的参数，从而实现了state 值的响应式。
 ```js
 export default new Vuex.Store({
     state: { 
@@ -204,9 +221,84 @@ export default new VueRouter({
     ]
 })
 ```
+* 导航守卫
+    * 全局守卫：异步执行,每个路由跳转都会按顺序执行
+        * router.beforeEach 全局前置守卫
+        * router.beforeResolve 全局解析守卫(2.5.0+) 在beforeRouteEnter调用之后调用.
+        * router.afterEach 全局后置钩子 进入路由之后 注意:不支持next(),只能写成这种形式
+    ```js
+    //1,可以在main.js 或者在单独的路由配置文件router.js中进行设置
+	router.beforeEach((to, from, next) => { 
+	    ...
+        next();
+    });
+	
+    //2,也可以在组件内部设置
+    this.$router.beforeEach((to, from, next) => { 
+        ...
+        next();
+    });
+    
+    //3,对函数及next()的详细使用说明
+    router.beforeEach((to, from, next) => { 
+        //首先to和from 其实是一个路由对象,所以路由对象的属性都是可以获取到的(具体可以查看官方路由对象的api文档).
+        //例如:我想获取获取to的完整路径就是to.path.获取to的子路由to.matched[0].
+        next();//使用时,千万不能漏写next!!!
+        //next()  表示直接进入下一个钩子.
+        //next(false)  中断当前导航
+        //next('/path路径')或者对象形式next({path:'/path路径'})  跳转到path路由地址
+        //next({path:'/shotcat',name:'shotCat',replace:true,query:{logoin:true}...})  这种对象的写法,可以往里面添加很多.router-link 的 to prop 和 router.push 中的选项(具体可以查看api的官方文档)全都是可以添加进去的,再说明下,replace:true表示替换当前路由地址,常用于权限判断后的路由修改.
+        //next(error)的用法,(需2.4.0+) 
+    }).catch(()=>{
+        //跳转失败页面
+        next({ path: '/error', replace: true, query: { back: false }})
+    })
+    //如果你想跳转报错后,再回调做点其他的可以使用 router.onError()
+    router.onError(callback => { 
+        console.log('出错了!', callback);
+    });
+    ```
+    * 路由独享的守卫: 即路由对象独享的守卫
+        * beforeEnter 路由只独享这一个钩子，在rutes里配置
+    ```js
+    const router = new VueRouter({
+        routes: [
+            {
+                path: '/foo',
+                component: Foo,
+                beforeEnter: (to, from, next) => {
+                    // 使用方法和上面的beforeEach一毛一样
+                }
+            }
+        ]
+    })
+    ```
+    * 组件内的守卫: 注意:这类路由钩子是写在组件内部的
+        * beforeRouteEnter 进入路由前,此时实例还没创建,无法获取到zhis
+        * beforeRouteUpdate (2.2) 路由复用同一个组件时
+        * beforeRouteLeave 离开当前路由,此时可以用来保存数据,或数据初始化,或关闭定时器等等
+    ```js
+    const Foo = {
+        template: `...`,
+        beforeRouteEnter (to, from, next) {
+            // 在渲染该组件的对应路由被 confirm 前调用
+            // 不！能！获取组件实例 `this`
+            // 因为当守卫执行前，组件实例还没被创建
+        },
+        beforeRouteUpdate (to, from, next) {
+            // 在当前路由改变，但是该组件被复用时调用
+            // 举例来说，对于一个带有动态参数的路径 /foo/:id，在 /foo/1 和 /foo/2 之间跳转的时候，
+            // 由于会渲染同样的 Foo 组件，因此组件实例会被复用。而这个钩子就会在这个情况下被调用。
+            // 可以访问组件实例 `this`
+        },
+        beforeRouteLeave (to, from, next) {
+            // 导航离开该组件的对应路由时调用
+            // 可以访问组件实例 `this`
+        }
+    }
+    ```
 
 ### Vue 响应式
-
 * 核心API Object.defineProperty
 * Object.defineProperty的一些缺点 （Vue3.0启用Proxy）
     * 深度监听，需要递归到底，一次性计算量大
@@ -303,7 +395,6 @@ data.nums.push(4) // 监听数组
 ```
 
 ### 虚拟DOM（Virtual DOM）和 diff
-
 * vdom是实现vue和React的重要基石。DOM操作非常耗费性能，js执行速度很快，vdom用JS模拟DOM结构，计算出最小的变更，操作DOM
 * diff算法是vdom中最核心、最关键的部分
     * 只比较同一层级
@@ -312,12 +403,10 @@ data.nums.push(4) // 监听数组
 * vue参考[snabbdom](https://github.com/snabbdom/snabbdom)实现的vdom和diff
 
 ### 模板编译（模板转JS代码）
-
 1. vue-template-complier（with 语法） 将模板编译为render函数（template先转成AST树，然后AST树再转成render函数，render函数再转成VNode）
 2. 执行render函数生成vnode
 
 ### 组件 渲染/更新 过程
-
 * 初次渲染过程
     1. 解析模板为render函数
     2. 触发响应式，监听data属性getter setter
@@ -400,6 +489,32 @@ window.onpopstate = (event) => { // 重要！！
 * webpack层面的优化
 * 前端通用的性能优化，如图片懒加载
 * 使用SSR（服务端渲染）
+
+### 谈一下你对Vue组件化的理解
+* 定义：组件是可复用的 Vue 实例，准确讲它们是VueComponent的实例，继承自Vue。
+```js
+Vue.component('my-component', {
+  template: '<p>我是被全局注册的组件</p>'
+})
+/*
+  Vue.component(组件名称[字符串], 组件对象)
+*/ 
+new Vue({
+  el: '#app',
+  template: '<my-component></my-component>'
+})
+```
+* 官方定义：vue组件系统提供了一种抽象，让我们可以使用独立可复用的组件来构建大型应用，任意类型的应用界面都可以抽象为一个组件树。组件化能提高开发效率，方便重复使用（复用），简化调试步骤，提升项目可维护性，便于多人协同开发。
+* 优点：组件化可以增加代码的复用性、可维护性和可测试性。
+
+### Vue 源码谈谈发布-订阅模式
+* 发布函数，发布的时候执行相应的回调
+    * observer每个对象的属性，添加到订阅者容器Dependency(Dep)中，当数据发生变化的时候发出notice通知。
+* 订阅函数，添加订阅者,传入发布时要执行的函数,可能会携额外参数
+    * Watcher：某个属性数据的监听者/订阅者，一旦数据有变化，它会通知指令(directive)重新编译模板并渲染UI
+* 一个缓存订阅者以及订阅者的回调函数的列表
+    * Dep对象: 订阅者容器，负责维护watcher
+
 ### 查漏补缺
 1. v-for比v-if优先级高，一起使用v-for循环了多少次，v-if就判断了多少次
 2. @click="btnClick('dsds', $event)" $event参数放最后

@@ -8,6 +8,24 @@
 </head>
 <body>
     <input id="input1">
-    <script src="./dom.js"></script>
+    <!-- <script src="./add.js"></script> -->
 </body>
 </html>
+
+<script>
+function lastPromise(promiseFunction) {
+  //todo
+}
+// 示例
+let count = 1;
+let promiseFunction = () =>
+  new Promise(rs =>
+    window.setTimeout(() => {
+      rs(count++);
+    })
+  );
+let lastFn = lastPromise(promiseFunction);
+lastFn().then(console.log(count)); // 无输出
+lastFn().then(console.log(count)); // 无输出
+lastFn().then(console.log(count)); // 3
+</script>
