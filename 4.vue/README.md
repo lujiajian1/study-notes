@@ -140,6 +140,9 @@ export default {
     * getters
     * action
     * mutation
+* mutation和action的区别
+    * Mutation：专注于修改State，理论上是修改State的唯一途径。Action：业务代码、异步请求。
+    * mutation只支持同步操作。想要完成异步操作，比如与后端通信然后将数据赋值给state，就需要通过action的异步回调中再去commit store的mutation。
 * [原理](https://juejin.cn/post/6855474001838342151)：
     1. Vuex本质是一个对象
     2. Vuex对象有两个属性，一个是install方法，一个是Store这个类
@@ -514,6 +517,15 @@ new Vue({
     * Watcher：某个属性数据的监听者/订阅者，一旦数据有变化，它会通知指令(directive)重新编译模板并渲染UI
 * 一个缓存订阅者以及订阅者的回调函数的列表
     * Dep对象: 订阅者容器，负责维护watcher
+(从vue源码看发布订阅模式和观察者模式)[https://www.jianshu.com/p/2571d170191e]
+
+### Vue和React[区别](https://juejin.cn/post/6844903668446134286)
+* 监听数据变化的实现原理不同：Vue 通过 getter/setter 以及一些函数的劫持，能精确知道数据变化，不需要特别的优化就能达到很好的性能。React 默认是通过比较引用的方式进行的，如果不优化（PureComponent/shouldComponentUpdate）可能导致大量不必要的VDOM的重新渲染。
+* 数据流的不同：Vue中默认是支持双向绑定的，React 从诞生之初就不支持双向绑定，React一直提倡的是单向数据流，他称之为 onChange/setState()模式。
+* HoC 和 mixins：在 Vue 中我们组合不同功能的方式是通过 mixin，而在React中我们通过 HoC (高阶组件）。
+* 组件通信的区别：React 本身并不支持自定义事件，Vue中子组件向父组件传递消息有两种方式：事件和回调函数，而且Vue更倾向于使用事件。但是在 React 中我们都是使用回调函数的，这可能是他们二者最大的区别。
+* 模板渲染方式的不同：React 是通过JSX渲染模板，而Vue是通过一种拓展的HTML语法进行渲染。
+
 
 ### 查漏补缺
 1. v-for比v-if优先级高，一起使用v-for循环了多少次，v-if就判断了多少次

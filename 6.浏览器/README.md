@@ -54,15 +54,35 @@
     * Etag If-None-Match
 
 ### http请求中的8种请求方法
+* 简单请求
+    * HEAD：类似于 get 请求，只不过返回的响应中没有具体的内容，用户获取报头
+    * GET：获取数据
+    * POST：新建数据
+* 复杂请求
+    * PUT：更新数据
+    * DELETE：删除数据
+    * OPTIONS：允许客户端查看服务器的性能，比如说服务器支持的请求方式，或者当前是否允许跨域等
 
-* GET：获取数据
-* POST：新建数据
-* PUT：更新数据
-* HEAD：类似于 get 请求，只不过返回的响应中没有具体的内容，用户获取报头
-* DELETE：删除数据
-* OPTIONS：允许客户端查看服务器的性能，比如说服务器支持的请求方式，或者当前是否允许跨域等
-* TRACE：
-* CONNECT：
+### HTTP和HTTPS的[区别](https://mp.weixin.qq.com/s/UE7Zw0aSbxLuFFSraSUIOQ)
+* HTTP：是互联网上应用最为广泛的一种网络协议，是一个客户端和服务器端请求和应答的标准（TCP），用于从WWW服务器传输超文本到本地浏览器的传输协议，它可以使浏览器更加高效，使网络传输减少。
+* HTTPS：是以安全为目标的HTTP通道，简单讲是HTTP的安全版，即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL。
+* HTTPS协议的主要作用可以分为两种：一种是建立一个信息安全通道，来保证数据传输的安全；另一种就是确认网站的真实性。 
+* 区别
+    * https协议需要到ca申请证书，一般免费证书较少，因而需要一定费用。
+    * http是超文本传输协议，信息是明文传输，https则是具有安全性的ssl加密传输协议。
+    * http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。
+    * http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。
+
+### [HTTP1、HTTP2、HTTP3](https://juejin.cn/post/6855470356657307662)
+* HTTP1.1
+    * 持久连接：keep-alive
+    * 提供虚拟主机的支持：在HTTP/1.0中，每个域名绑定了一个唯一的IP地址，因此一个服务器只能支持一个域名。但是随着虚拟主机技术的发展，需要实现在一台物理主机上绑定多个虚拟主机，每个虚拟主机都有自己的单独的域名，这些单独的域名都公用同一个IP地址。 因此，HTTP/1.1的请求头中增加了Host字段，用来表示当前的域名地址，这样服务器就可以根据不同的Host值做不同的处理。
+    * 客戶端Cookie
+* HTTP2
+    * 多路复用：通过在协议栈中添加二进制分帧层来实现的，有了二进制分帧层还能够实现请求的优先级、服务器推送、头部压缩等特性，从而大大提升了文件传输效率。
+* HTTP3
+    * 基于QUIC协议：解决TCP的队头阻塞、建立TCP连接的延时、TCP协议 僵化等问题
+
 
 ###  GET 和 POST 的区别
 * get 参数通过 url 传递，post 放在 request body 中。
@@ -78,6 +98,7 @@
 * TCP向上层提供面向连接的可靠服务 ，UDP向上层提供无连接不可靠服务。
 * 虽然 UDP 并没有 TCP 传输来的准确，但是也能在很多实时性要求高的地方有所作为
 * 对数据准确性要求高，速度可以相对较慢的，可以选用TCP
+![udp](https://github.com/lujiajian1/study-notes/blob/main/img/udp.png)
 
 ### 浏览器多个标签页之间的通信
 
@@ -139,6 +160,20 @@ Response Headers中控制强制缓存的逻辑，例如cache-Control:max-age=315
 * CORS（需服务端设置http-header）
 ![cors](https://github.com/lujiajian1/study-notes/blob/main/img/cors.png)
 * web服务nginx代理
+* [document.domain](https://blog.csdn.net/zhuchunyan_aijia/article/details/51426220)
 
 ### [PWA](https://zhuanlan.zhihu.com/p/25459319)
 Progressive Web Apps 是 Google 提出的用前沿的 Web 技术为网页提供 App 般使用体验的一系列方案。一个 PWA 应用首先是一个网页, 可以通过 Web 技术编写出一个网页应用. 随后添加上 App Manifest 和 Service Worker 来实现 PWA 的安装和离线等功能。
+
+### [微服务](https://juejin.cn/post/6844904162509979662)
+一种类似于微服务的架构，它将微服务的理念应用于浏览器端，即将 Web 应用由单一的单体应用转变为多个小型前端应用聚合为一的应用。各个前端应用还可以独立运行、独立开发、独立部署。微前端不是单纯的前端框架或者工具，而是一套架构体系，
+
+### [文件上传](https://juejin.cn/post/6980142557066067982)
+
+### [V8垃圾回收机制](https://juejin.cn/post/6844904182512615432)
+* 引用计数法
+* 标记清除算法
+* V8优化
+    * 并行垃圾回收 (parallel)
+    * 增量垃圾回收 (incremental)
+    * 并发垃圾回收 (concurrent)

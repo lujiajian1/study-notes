@@ -65,6 +65,10 @@ ws.onmessage = function (e) {
     console.log('from server: ' + e.data);
 };
 ```
+### 有了http1.1的keeplive长连接后为什么还需要websocket
+* 开销：http长连接的每次请求仍然需要发送头信息；而websocket仅需要在发起请求时发送头信息。
+* 真正意义的长连接：http长连接仅仅是为了复用tcp连接，只是一种口头约定，服务端可以不遵守；而websocket是完全意义上的长连接。
+* 是否平等：http长连接依旧无法摆脱一个request对应一个response的模式，且仅允许客户端往服务端发送request，所以对于实时通信的实现依旧只能是轮询；而websocket双方是对等的，可以相互发送消息，可以实现真正意义的实时通信。
 
 ### [webworker](https://juejin.cn/post/6844903725249593352)
 ```js
@@ -128,7 +132,7 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
     <meta name="format-detection" content="telephone=no"><!-- 电话号码不显示为拨号的超链接 -->
     <meta charset="UTF-8"><!-- 字符编码 -->
     <meta http-equiv="refresh" content="30"><!-- 每30秒刷新页面 -->
-    <meta http-equiv="Cache-Control" name="no-store" /><!-- 禁止浏览器从本地计算机的缓存中访问页面内容 -->
+    <meta http-equiv="Cache-Control" name="no-store" /><!-- 禁止浏览器从本地计算机的缓存中访问页面内容(仅html，不包括外联资源) -->
     <meta name="’viewport’" content="”width=device-width," initial-scale="1." maximum-scale="1,user-scalable=no”"/><!-- 为移动设备添加 viewport -->
     <!-- <title> 元素可定义文档的标题 -->
     <title>文档的标题</title>
@@ -166,7 +170,7 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
 * visibilityChange：这是一个事件，当文档的可见性发生变化时触发。
 
 ### preload、prefetch、preconnect 和 dns-prefetch
-* preload：提升了资源加载的优先级，使得它提前开始加载（预加载），但是资源加载完成后并不会执行。
+* preload：提升了资源加载的优先级，使得它提前开始加载（预加载），但是资源加载完成后并不会执行。将加载和执行分离开，可不阻塞渲染和 document 的 onload 事件，提前加载指定资源，不再出现依赖的 font 字体隔了一段时间才刷出。
 ```html
 <script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
 <script rel="preload" src="./main.js"></script><!--优先加载-->

@@ -95,13 +95,20 @@
         * 当遇到行内级盒或者文字：首先尝试排入行内级格式化上下文，如果排不下，那么创建一个行盒，先将行盒排版（行盒是块级，由一行中所有的内联元素所组成，所以到第一种情况），行盒会创建一个行内级格式化上下文。
         * 遇到float：把盒的顶部跟当前行内级上下文上边缘对齐，然后根据float的方向把盒的对应边缘对到块级格式化上下文的边缘，之后重排当前行盒。
     * 原理：块级格式化上下文（Block Formatting Contexts）和行内级格式化上下文（Inline Formatting Contexts）
-        * BFC：块级排布，一个独立的布局环境，其中的元素布局是不受外界的影响
+        * [BFC](https://blog.csdn.net/sinat_36422236/article/details/88763187)：块级排布，一个独立的布局环境，其中的元素布局是不受外界的影响
+            * BFC布局规则
+                * 内部的Box会在垂直方向，一个接一个地放置。
+                * Box垂直方向的距离由margin决定。属于同一个BFC的两个相邻Box的margin会发生重叠。
+                * 每个盒子（块盒与行盒）的margin box的左边，与包含块border box的左边相接触(对于从左往右的格式化，否则相反)。即使存在浮动也是如此。
+                * BFC的区域不会与float box重叠。
+                * BFC就是页面上的一个隔离的独立容器，容器里面的子元素不会影响到外面的元素。反之也如此。
+                * 计算BFC的高度时，浮动元素也参与计算。
             * 设置方法
                 * 根元素（<html>），这里就可以理解正常流的逻辑
-                * float 不是 none
+                * float的值不是none
                 * position 是 absolute 或者 fixed
+                * display的值是inline-block、table-cell、flex、table-caption或者inline-flex
                 * overflow 不是 visible
-                * display 是 flex 或者 inline-block等
             * 应用
                 * 避免外边距折叠
                 * 清除浮动
@@ -134,7 +141,7 @@
     * stretch（默认值）：如果项目未设置高度或设为auto，将占满整个容器的高度
 * flex-wrap：定义，如果一条轴线排不下，如何换行
     * nowrap（默认）：不换行
-    * 换行，第一行在上方
+    * wrap：换行，第一行在上方
     * wrap-reverse：换行，第一行在下方
 * align-self：允许单个项目有与其他项目不一样的对齐方式，可覆盖align-items属性。默认值为auto，表示继承父元素的align-items属性，如果没有父元素，则等同于stretch
     * 该属性可能取6个值，除了auto，其他都与align-items属性完全一致
@@ -262,3 +269,15 @@ CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(
 ### 优雅降级和渐进增强
 * 渐进增强：一开始就针对低版本浏览器进行构建页面，完成基本的功能，然后再针对高级浏览器进行效果、交互、追加功能达到更好的体验。
 * 优雅降级：一开始就构建站点的完整功能，然后针对浏览器测试和修复。比如一开始使用 CSS3 的特性构建了一个应用，然后逐步针对各大浏览器进行 hack 使其可以在低版本浏览器上正常浏览。
+
+
+### 实现动画requestAnimationFrame和setTimeout有什么[区别](https://blog.csdn.net/weixin_40851188/article/details/89669416)？
+* 引擎层面：
+    * setTimeout 属于 JS 引擎，存在事件轮询，存在事件队列。
+    * requestAnimationFrame 属于 GUI 引擎，发生在渲 染过程的中重绘重排部分，与电脑分辨路保持一致。
+* 性能层面：
+    * 当页面被隐藏或最小化时，定时器 setTimeout 仍在后台执行动画任 务。
+    * 当页面处于未激活的状态下，该页面的屏幕刷新任 务会被系统暂停，requestAnimationFrame 也会停止。
+* 应用层面：
+    * 利用 setTimeout，这种定时机制去做动画，模拟固定时间刷新页面。
+    * requestAnimationFrame 由浏览器专门为动画提供 的 API，在运行时浏览器会自动优化方法的调用，在特定性环境下可以有效节省了 CPU 开销。

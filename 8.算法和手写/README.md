@@ -181,124 +181,125 @@ ajax(url)
 
 ### 实现promise
 ```js
-const PENDDING = 'PENDDING';
-const FULLFILLED = 'FULLFILLED';
-const REJECTED = 'REJECTED';
+function Promise(fn) {
+  // Promise resolve时的回调函数集
+  this.cbs = [];
 
-function MyPromise(fn) {
-  const that = this;
-  that.state = PENDDING;
-  that.value = null;
-  that.resolvedCallbacks = [];
-  that.rejectedCallbacks = [];
-
-  function resolve(value) {
-    if (value instanceof MyPromise) {
-      return value.then(resolve, reject);
-    }
-
+  // 传递给Promise处理函数的resolve
+  // 这里直接往实例上挂个data
+  // 然后把onResolvedCallback数组里的函数依次执行一遍就可以
+  const resolve = (value) => {
+    // 注意promise的then函数需要异步执行
     setTimeout(() => {
-      that.state = FULLFILLED;
-      that.value = value;
-      that.resolvedCallbacks.forEach(cb => cb(that.value));
-    }, 0);
+      this.data = value;
+      this.cbs.forEach((cb) => cb(value));
+    });
   }
 
-  function reject(value) {
-    setTimeout(() => {
-      that.state = REJECTED;
-      that.value = value;
-      that.rejectedCallbacks.forEach(cb => cb(that.value));
-    }, 0);
-  }
-
-  try {
-    fn(resolve, reject);
-  } catch (e) {
-    reject(e);
-  }
+  // 执行用户传入的函数 
+  // 并且把resolve方法交给用户执行
+  fn(resolve);
 }
 
-MyPromise.prototype.then = function(onFullfilled, onRejected) {
-    const that = this;
-    onFullfilled = typeof onFullfilled === 'function' ? onFullfilled : v => v;
-    onRejected = typeof onRejected === 'function' ? onRejected : v => {throw v};
-    if (that.state === PENDDING) {
-        return (promise2 = new MyPromise((resolve, reject) => {
-            this.resolvedCallbacks.push(() => {
-                try {
-                    const x = onFullfilled(that.value);
-                    resolutionProcedure(promise2, x, resolve, reject);
-                } catch (r) {
-                    reject(r);
-                }
-            });
-            this.rejectedCallbacks.push(() => {
-                try {
-                    const x = onRejected(that.value);
-                    resolutionProcedure(promise2, x, resolve, reject);
-                } catch (r) {
-                    reject(r);
-                }
-            });
-        }));
-    } else if (that.state === FULLFILLED) {
-        return (promise2 = new MyPromise((resolve, reject) => {
-            this.resolvedCallbacks.push(() => {
-                try {
-                    const x = onFullfilled(that.value);
-                    resolutionProcedure(promise2, x, resolve, reject);
-                } catch (r) {
-                    reject(r);
-                }
-            });
-        }));
-    } else if (that.state === REJECTED) {
-        return (promise2 = new MyPromise((resolve, reject) => {
-            this.rejectedCallbacks.push(() => {
-                try {
-                    const x = onRejected(that.value);
-                    resolutionProcedure(promise2, x, resolve, reject);
-                } catch (r) {
-                    reject(r);
-                }
-            });
-        }));
+Promise.prototype.then = function (onResolved) {
+  // 这里叫做promise2
+  return new Promise((resolve) => {
+    this.cbs.push(() => {
+      const res = onResolved(this.data);
+      if (res instanceof Promise) {
+        // resolve的权力被交给了user promise
+        res.then(resolve);
+      } else {
+        // 如果是普通值 就直接resolve
+        // 依次执行cbs里的函数 并且把值传递给cbs
+        resolve(res);
+      }
+    });
+  });
+};
+
+new Promise((resolve) => {
+  setTimeout(() => {
+    resolve(1);
+  }, 500);
+})
+.then((res) => {
+    console.log(res);
+    return new Promise((resolve) => {
+        setTimeout(() => {
+        resolve(2);
+        }, 500);
+    });
+})
+.then(console.log);
+```
+
+### 实现 Promise.all 方法
+```js
+function promiseAll(promises) {
+  return new Promise(function(resolve, reject) {
+    if (!isArray(promises)) {
+      return reject(new TypeError('arguments must be an array'));
     }
-}    
-function resolutionProcedure(promose2, x, resolve, reject) {
-    if (x === promose2) {
-        return reject(new TypeError('Error'));
+    var resolvedCounter = 0;
+    var promiseNum = promises.length;
+    var resolvedValues = new Array(promiseNum);
+    for (var i = 0; i < promiseNum; i++) {
+      (function(i) {
+        Promise.resolve(promises[i]).then(function(value) {
+          resolvedCounter++
+          resolvedValues[i] = value
+          if (resolvedCounter == promiseNum) {
+            return resolve(resolvedValues)
+          }
+        }, function(reason) {
+          return reject(reason)
+        })
+      })(i)
     }
-    let called = false;
-    if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
-        try {
-            const then = x.then;
-            if (typeof then === 'function') {
-                then.call(
-                    x,
-                    y => {
-                        if (called) return;
-                        called = true;
-                        resolutionProcedure(promose2, y, resolve, reject);
-                    },
-                    e => {
-                        if (called) return;
-                        called = true;
-                        reject(e);
-                    }
-                )
-            } else {
-                resolve(x);
-            }
-        } catch(r) {
-            if (called) return;
-            called = true;
-            reject(r);
-        }
-    } else {
-        resolve(x);
+  })
+}
+```
+
+### 利用promise sleep函数实现
+```js
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+
+const repeatedGreetings = async () => {
+  await sleep(1000)
+  console.log(1)
+  await sleep(1000)
+  console.log(2)
+  await sleep(1000)
+  console.log(3)
+}
+repeatedGreetings()
+```
+
+### 手动控制并发请求
+```js
+function fetchWithLimit(urls, max, callback) {
+  const urlCount = urls.length;
+  const requestsQueue = [];
+  const results = [];
+  let i = 0;
+  const handleRequest = (url) => {
+    const req = fetch(url).then(res => {
+      const len = results.push(res);
+      if (len < urlCount && i + 1 < urlCount) {
+        requestsQueue.shift();
+        handleRequest(urls[++i])
+      } else if (len === urlCount) {
+        'function' === typeof callback && callback(results)
+      }
+    }).catch(e => {
+      results.push(e)
+    });
+    if (requestsQueue.push(req) < max) {
+      handleRequest(urls[++i])
     }
+  };
+  handleRequest(urls[i])
 }
 ```
 
@@ -492,6 +493,7 @@ function bubbleSort(arr) {
 ### 快速排序
 在数组中选取一个参考点（pivot），然后对于数组中的每一项，大于pivot的项都放到数组右边，小于pivot的项都放到左边，左右两边的数组项可以构成两个新的数组（left和right），然后继续分别对left和right进行分解，直到数组长度为1，最后合并（其实没有合并，因为是在原数组的基础上操作的，只是理论上的进行了数组分解）。
 ```js
+//递归
 function quickSort(arr) {
     // 当数组长度不大于1时，返回结果，防止callstack溢出。
     if(arr.length <= 1) return arr;
@@ -502,6 +504,68 @@ function quickSort(arr) {
         ...quickSort(arr.slice(1).filter(item => item >= arr[0]))
     ];
 }
+//非递归
+const quickSort1 = arr => {
+	if (arr.length <= 1) {
+		return arr;
+	}
+	//取基准点
+	const midIndex = Math.floor(arr.length / 2);
+	//取基准点的值，splice(index,1) 则返回的是含有被删除的元素的数组。
+	const valArr = arr.splice(midIndex, 1);
+	const midIndexVal = valArr[0];
+	const left = []; //存放比基准点小的数组
+	const right = []; //存放比基准点大的数组
+	//遍历数组，进行判断分配
+	for (let i = 0; i < arr.length; i++) {
+		if (arr[i] < midIndexVal) {
+			left.push(arr[i]); //比基准点小的放在左边数组
+		} else {
+			right.push(arr[i]); //比基准点大的放在右边数组
+		}
+	}
+	//递归执行以上操作，对左右两个数组进行操作，直到数组长度为 <= 1
+	return quickSort1(left).concat(midIndexVal, quickSort1(right));
+};
+const array2 = [5, 4, 3, 2, 1];
+console.log('quickSort1 ', quickSort1(array2));
+// quickSort1: [1, 2, 3, 4, 5]
+```
+
+###  归并排序
+排序一个数组，我们先把数组从中间分成前后两部分，然后对前后两部分分别排序，再将排好序的两部分合并在一起，这样整个数组就都有序了。
+```js
+const mergeSort = arr => {
+	//采用自上而下的递归方法
+	const len = arr.length;
+	if (len < 2) {
+		return arr;
+	}
+	// length >> 1 和 Math.floor(len / 2) 等价
+	let middle = Math.floor(len / 2),
+		left = arr.slice(0, middle),
+		right = arr.slice(middle); // 拆分为两个子数组
+	return merge(mergeSort(left), mergeSort(right));
+};
+
+const merge = (left, right) => {
+	const result = [];
+
+	while (left.length && right.length) {
+		// 注意: 判断的条件是小于或等于，如果只是小于，那么排序将不稳定.
+		if (left[0] <= right[0]) {
+			result.push(left.shift());
+		} else {
+			result.push(right.shift());
+		}
+	}
+
+	while (left.length) result.push(left.shift());
+
+	while (right.length) result.push(right.shift());
+
+	return result;
+};
 ```
 
 ### 链表（插入，删除，反转）
@@ -563,6 +627,92 @@ class SinglyLinkedList{
 }
 ```
 
+### 判断回文链表
+```js
+var isPalindrome = function(head) {
+    let left = head;
+    function traverse(right) {
+        if (right == null) return true;
+        let res = traverse(right.next);
+        res = res && (right.val === left.val);
+        left = left.next;
+        return res;
+    }
+    return traverse(head);
+};
+```
+
+### K 个一组翻转链表（输入：head = [1,2,3,4,5], k = 2 ; 输出：[2,1,4,3,5]）
+```js
+var reverseKGroup = function(head, k) {
+    let a = head, b = head;
+    for (let i = 0; i < k; i++) {
+        if (b == null) return head;
+        b = b.next;
+    }
+    const newHead = reverse(a, b);
+    a.next = reverseKGroup(b, k);
+    return newHead;
+};
+function reverse(a, b) {
+    let prev = null, cur = a, nxt = a;
+    while (cur != b) {
+        nxt = cur.next;
+        cur.next = prev;
+        prev = cur;
+        cur = nxt;
+    }
+    return prev;
+}
+```
+
+### 判断环形链表
+```js
+var hasCycle = function(head) {
+    if (head == null || head.next == null) return false;
+    let slower = head, faster = head;
+    while (faster != null && faster.next != null) {
+        slower = slower.next;
+        faster = faster.next.next;
+        if (slower === faster) return true;
+    }
+    return false;
+};
+```
+
+### 判断相交链表
+```js
+var getIntersectionNode = function(headA, headB) {
+    let lastHeadA = null;
+    let lastHeadB = null;
+    let originHeadA = headA;
+    let originHeadB = headB;
+    if (!headA || !headB) {
+        return null;
+    }
+    while (true) {
+        if (headB == headA) {
+            return headB;
+        }
+        if (headA && headA.next == null) {
+            lastHeadA = headA;
+            headA = originHeadB;
+        } else {
+            headA = headA.next;
+        }
+        if (headB && headB.next == null) {
+            lastHeadB = headB
+            headB = originHeadA;
+        } else {
+            headB = headB.next;
+        }
+        if (lastHeadA && lastHeadB && lastHeadA != lastHeadB) {
+            return null;
+        }
+    }
+    return null;
+};
+```
 
 ### 合并两个有序链表
 ```js
@@ -673,14 +823,13 @@ const preorderTraversal = function(root) {
     const res = [], stack = []
     let node = root;
     while (stack.length > 0 || node !== null) {
-        // 这里用当前节点node是否存在，简化代码，
-        if (node) {
-            stack.push(node);
-            node = node.left
-        } else {
-            node = stack.pop();
-            res.push(node.val);
-            node = node.right;
+        if (node) {//node存在
+            stack.push(node);//当前节点push
+            node = node.left;//找left
+        } else {//node不存在
+            node = stack.pop();//弹出最深的left
+            res.push(node.val);//res push
+            node = node.right;//找right
         }
     }
     return res;
@@ -701,80 +850,23 @@ const postorderTraversal = function(root) {
 
 ### 判断对称二叉树（镜像对称）
 ```js
-var isSymmetric = function(root) {
-    if (!root) return true;
-    let flag = true;
-    let queue = [root];
-    
-    while (queue.length !== 0) {
-        const temp = [];
-        for (let v of queue) {
-            temp.push(v);
-        }
-        let copy = [];
-        for (let v of temp) {
-            if (v === null) {
-                copy.push(null);
-                continue;
-            }
-            copy.push(v.val);
-        }
-        copy = copy.reverse();
-        for (let i = 0; i < temp.length;i++) {
-            if (temp[i] === null) {
-                if (temp[i] !== copy[i]) {
-                    flag = false;
-                    return flag;
-                } else {
-                    continue;
-                }
-            }
-            if (temp[i].val !== copy[i]) {
-                flag = false;
-                return flag;
-            }
-        }
-        queue = [];
-        for (let v of temp) {
-            if (v === null) {
-                queue.push(null);
-                queue.push(null);
-                continue;
-            }
-            queue.push(v.left);
-            queue.push(v.right);
-        }
-        const test = queue.every((value) => {
-            return value === null
-        }) 
-        if (test === true) break;
-    }
-
-    return flag;
-};
-```
-
-### 请写出一个可以生成整形随机数数组(内部元素不重复)的函数，并可以根据参数设置随机数生成的范围和数量，例如：函数madeRandomList(a, b, c)，可以生成 [a, b] 范围内，长度为 c 的随机数数组。
-```js
-function madeRandomList(a, b, c){
-    if (b - a + 1 < c) {
-        alert('长度过长');
-        return false;
-    }
-    let res = [];
-    for (let i = 0; i<c;i++) {
-        let randomNum = random();
-        if (res.indexOf(randomNum) === -1) {
-            res.push(randomNum);
-        } else {
-            i--;
-        }
-    }
-    return res;
-    function random(min = a, max = b) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+ // 用于递归的helper函数，接收参数为左节点和右节点。
+const helper = (left: TreeNode | null, right: TreeNode | null) => {
+    // 如果传入的左节点和右节点都不存在 也是镜像
+    if(left == right) return true 
+    // 如果左节点和右节点有一个的值不存在，那就不是对称的两个节点
+    else if (left.val === 0 || right.val === 0) return false 
+    // 最后判断并递归，左节点和右节点都存在并且值为相等，那就递归他们的子节点。
+    return (left.val === right.val) && (helper(left.left, right.right)) && (helper(left.right, right.left))
 }
+function isSymmetric(root: TreeNode | null): boolean {
+    //传入的root可能为null，做下判断。
+    if(root === null || root === undefined) return true 
+    else {
+        
+        return helper(root.left, root.right)
+    }
+};
 ```
 
 ### [函数柯里化](https://www.jianshu.com/p/2975c25e4d71)
@@ -913,20 +1005,23 @@ console.log(result2)
 
 ### 爬楼梯：假设你现在正在爬楼梯，楼梯有n级。每次你只能爬1级或者2级，那么你有多少种方法爬到楼梯的顶部
 ```js
-var sumMethod = 0;
-var floorSum = 4;
-function jisuanFloor(floorsum) {
-    if (floorsum == 0 || floorsum == 1) {
-        sumMethod++;
-    }else{
-        jisuanFloor(floorsum-1);
-        jisuanFloor(floorsum-2);
+var climbStairs = function (n) {  
+    if (n === 1 || n === 2) { 
+        return n;  
     }
-
+    // 前一个值  
+    let pre = 2;  
+    // 前一个的前一个的值  
+    let beforePre = 1;  
+    // 中间变量  
+    let temp = null;  
+    for (let index = 3; index <= n; index++) {    
+        temp = pre;    
+        pre = pre + beforePre;    
+        beforePre = temp;  
+    }  
+    return pre;
 }
-
-jisuanFloor(floorSum);
-console.log(sumMethod);
 ```
 
 ### 解析 URL 参数为对象
@@ -965,7 +1060,7 @@ function getNums36() {
     if(i >= 0 && i <= 9) {
       nums36.push(i)
     } else {
-      nums36.push(String.fromCharCode(i + 87));
+      nums36.push(String.fromCharCode(i + 87));//将 Unicode 编码转为一个字符
     }
   }
   return nums36;
@@ -998,7 +1093,7 @@ function scale36(n) {
 
 }
 
-console.log(scale36(20)); // 10
+console.log(scale36(20)); // k
 ```
 
 ### 合并区间
@@ -1006,30 +1101,72 @@ console.log(scale36(20)); // 10
 //输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
 //输出: [[1,6],[8,10],[15,18]]
 //解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
-//思路： 比较intervals[i+1][0]和intervals[i][1]
-var merge = function (intervals) {
-    let result = []
-    if (intervals.length <= 1) {
-        return intervals
-    }
-    for (let i = 0; i < intervals.length; i++) {
-        if (intervals[i+1]) {
-            if (intervals[i+1][0] <= intervals[i][1]) {
-                result.push([intervals[i][0],intervals[i+1][1]])
-                i += 1
-            } else {
-                result.push(intervals[i])
-            }
-        } else {
-            let lastItem = result[result.length-1]
-            if (lastItem[1] >= intervals[i][0]) {
-                result[result.length-1] = [lastItem[0],intervals[i][1]]
-            } else {
-                result.push(intervals[i])
-            }
+var merge = function(intervals) {
+  if(intervals.length <= 1) {
+      return intervals
+  }
+  
+  // 先将数组按照区间最左边的大小顺序排序（升序）
+  let arr = intervals.sort((a, b) => a[0] - b[0]);
+  function unite(arr, i) {
+      if(i == arr.length - 1) {
+          return arr
+      }
+      // 如果下一个区间的左区间在本区间之间，则合并一次
+      if(arr[i + 1][0] <= arr[i][1]) {
+          arr[i] = [ 
+            arr[i][0],
+            Math.max(arr[i][1], arr[i + 1][1])
+          ];
+          // 合并之后删除冗余区间
+          arr.splice(i + 1, 1);
+      } else {
+          // 如果没有合并，则找到下一个待合并区间
+          i ++;
+      }
+      return unite(arr, i)
+  }
+  
+  return unite(arr, 0)
+};
+```
+### 两数之和：给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。输入：nums = [2,7,11,15], target = 9 输出：[0,1]
+```js
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var twoSum = function(nums, target) {
+    for(let i = 0; i<nums.length; i++){
+        let onitem = nums[i];
+        let next = nums.indexOf(target-onitem);
+        if (next !== -1 && next !== i){
+            return [i, next];
         }
     }
-    return result
-}
+};
 ```
 
+### 三数之和
+```js
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var threeSum = function(nums, target) {
+    for(let i = 0; i<nums.length - 1; i++){
+        let onitem = nums[i];
+        let nexitem = nums[i+1];
+        let next = nums.indexOf(target-onitem-nexitem);
+        if (next !== -1 && next !== i){
+            return [i, i+1, next];
+        }
+    }
+};
+```
+
+小知识
+* [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大O阶表示，即T(n)=O(f(n))，其中n为问题规模，也就是问题的大小。
+* [归并排序、快速排序、希尔排序、堆排序](https://juejin.cn/post/6844903895789993997)

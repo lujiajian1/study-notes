@@ -587,7 +587,7 @@ class MyFlow extends Workflow {
 new MyFlow().next().step1().next().step2()
 ```
 
-### 泛型
+### 泛型：一种创建可复用代码组件的工具
 * 支持多种类型的方法
     * 函数重载
     * 联合类型
@@ -1073,6 +1073,7 @@ type T8 = ReturnType<() => string>
 * 支持Javascript的最新特性（包括ES6\7\8）
 
 ### vue2 + typescript
+我们知道Vue是一个object-based框架，而不是class-based。TypeScript作为一个编译时的检查工具，它的能力范围仅限于class/function的校验。因此，TypeScript和基于object的Vue的开发方式是[不兼容且没有意义的](https://juejin.cn/post/6844904144881319949)。而vue-class-component提供了一个修饰器，它内部会把class的属性和方法转化为Vue options，这样我们就能用class去写Vue组件，使用TypeScript也因此变得有意义了。
 * vue-class-component： Vue 官方推出的一个支持使用 class 方式来开发 vue 单文件组件的库
     * methods 可以直接声明为类的成员方法
     * 计算属性可以被声明为类的属性访问器

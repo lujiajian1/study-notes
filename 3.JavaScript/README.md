@@ -432,6 +432,24 @@ b.bind(a,1,2)()
 2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
 3. 执行构造函数中的代码（为这个新对象添加属性）
 4. 返回新对象
+```js
+function _new(ctor, ...args) {
+  if (typeof ctor !== 'function') {
+    throw 'ctor must be a function';
+  }
+  // 创建新的对象
+  let newObj = new Object();
+  // 让新创建的对象可以访问构造函数原型（constructor.prototype）所在原型链上的属性；
+  newObj.__proto__ = Object.create(ctor.prototype);
+  // 将构造函数的作用域赋给新对象（this指向新对象）；
+  // 执行构造函数中的代码
+  let res = ctor.apply(newObj, [...args]);
+
+  let isObject = typeof res === 'object' && res !== null;
+  let isFunction = typeof res === 'function';
+  return isObject || isFunction ? res : newObj;
+}
+```
 
 ### 微任务和宏任务
 
@@ -589,6 +607,75 @@ loadImg(url1).then(img1 => {
 
 * then正常返回resolved，里面有报错则返回rejected
 * catch正常返回resolved，里面有报错则返回rejected
+
+#### Promise.then方法中的reject回调和catch中的回调有什么区别？
+* reject后的东西，一定会进入then中的第二个回调，如果then中没有写第二个回调，则进入catch
+```js
+var p1=new Promise((resolve,rej) => {
+    console.log('没有resolve')
+    rej('失败了')
+ 
+ })
+ p1.then(data =>{
+    console.log('data::',data);
+ },err=> {
+    console.log('err::',err)
+ }).catch(
+    res => {
+    console.log('catch data::', res)
+ })
+
+//结果
+//没有resolve
+//err:: 失败了
+
+var p1=new Promise((resolve,rej) => {
+    console.log('没有resolve')
+    rej('失败了')
+ })
+ p1.then(data =>{
+    console.log('data::',data);
+ }).catch(
+    res => {
+    console.log('catch data::', res)
+ })
+
+//结果：
+//没有resolve
+//catch data:: 失败了
+
+var p1=new Promise((resolve,rej) => {
+    console.log('没有 resolve')
+    rej('失败了')
+ 
+ })
+ p1.catch(
+    res => {
+    console.log('catch data::', res)
+ })
+
+//结果：
+//没有resolve
+//catch data:: 失败了
+```
+* resolve的东西，一定会进入then的第一个回调，肯定不会进入catch
+```js
+var p1=new Promise((resolve,rej) => {
+    console.log('resolve')
+    resolve('成功了')
+ 
+ })
+ p1.then(data =>{
+    console.log('data::',data);
+ }).catch(
+    res => {
+    console.log('catch data::', res)
+ })
+//结果：
+//resolve
+//data:: 成功了
+```
+
 
 ##### async/await
 
@@ -890,3 +977,46 @@ map.get('title') // "Author"
     * Es Module是静态的，不可以动态加载语句，只能声明在该文件的最顶部，代码发生在编译时
     * Es Module混合导出，单个导出，默认导出，完全互不影响
     * Es Module导出是引用值之前都存在映射关系，并且值都是可读的，不能修改
+
+### [设计模式](https://blog.csdn.net/song_mou_xia/article/details/80763833)
+* 单例模式：提供了一种将代码组织为一个逻辑单元的手段，这个逻辑单元中的代码可以通过单一变量进行访问。
+```js
+
+// 单体模式
+var Singleton = function(name){
+    this.name = name;
+    this.instance = null;
+};
+Singleton.prototype.getName = function(){
+    return this.name;
+}
+// 获取实例对象
+function getInstance(name) {
+    if(!this.instance) {
+        this.instance = new Singleton(name);
+    }
+    return this.instance;
+}
+// 测试单体模式的实例
+var a = getInstance("aa");
+var b = getInstance("bb");
+console.log(a === b); // true
+console.log(a.getName());// aa
+console.log(b.getName());// aa
+```
+* 发布—订阅模式：又叫观察者模式，它定义对象间的一种一对多的依赖关系，当一个对象的状态发生改变时，所有依赖于它的对象都将得到通知。
+* 工厂模式：类似于现实生活中的工厂可以产生大量相似的商品，去做同样的事情，实现同样的效果。
+```js
+function CreatePerson(name,age,sex) {
+    var obj = new Object();
+    obj.name = name;
+    obj.age = age;
+    obj.sex = sex;
+    obj.sayName = function(){
+        return this.name;
+    }
+    return obj;
+}
+var p1 = new CreatePerson("longen",'28','男');
+var p2 = new CreatePerson("tugenhua",'27','女');
+``

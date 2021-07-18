@@ -205,5 +205,5 @@ export default {
     * 初始化的时候深度监听需要一次性递归，造成短暂的卡顿
     * 无法监听新增/删除属性
     * 无法原生监听数组，需要特殊处理
-* Proxy 的基本使用
+* [Proxy](https://juejin.cn/post/6861725116389130254) 对象用于创建一个对象的代理，从而实现基本操作的拦截和自定义（如属性查找、赋值、枚举、函数调用等）。
 ![proxy](https://github.com/lujiajian1/study-notes/blob/main/img/proxy.jpg)
