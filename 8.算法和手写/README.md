@@ -1,3 +1,4 @@
+## 手写
 ### 深拷贝
 ```js
 function deepClone(obj = {}){    
@@ -437,6 +438,129 @@ function isEqual(obj1, obj2) {
 }
 ```
 
+### [函数柯里化](https://www.jianshu.com/p/2975c25e4d71)
+```js
+//add(1)(2)(3) = 6;
+//add(1, 2, 3)(4) = 10;
+//add(1)(2)(3)(4)(5) = 15;
+function add(...args) {
+    let allArg = args;
+    var _adder = function (){
+        allArg.push(...arguments);
+        return _adder;
+    }
+    _adder.toString = function() {
+        return allArg.reduce(function (a, b) {
+            return a + b;
+        }, 0);
+    }
+    return _adder
+}
+console.log(add(1)(2)(3).toString()) //6
+console.log(add(1, 2, 3)(4).toString()) //10
+console.log(add(1)(2)(3)(4)(5).toString()) //15
+console.log(add(2, 6)(1).toString()) //9
+```
+
+### 解析 URL 参数为对象
+```js
+function parseParam(url) {
+    const paramsStr = /.+\?(.+)$/.exec(url)[1]; // 将 ? 后面的字符串取出来
+    const paramsArr = paramsStr.split('&'); // 将字符串以 & 分割后存到数组中
+    let paramsObj = {};
+    // 将 params 存到对象中
+    paramsArr.forEach(param => {
+        if (/=/.test(param)) { // 处理有 value 的参数
+            let [key, val] = param.split('='); // 分割 key 和 value
+            val = decodeURIComponent(val); // 解码
+            val = /^\d+$/.test(val) ? parseFloat(val) : val; // 判断是否转为数字
+    
+            if (paramsObj.hasOwnProperty(key)) { // 如果对象有 key，则添加一个值
+                paramsObj[key] = [].concat(paramsObj[key], val);
+            } else { // 如果对象没有这个 key，创建 key 并设置值
+                paramsObj[key] = val;
+            }
+        } else { // 处理没有 value 的参数
+            paramsObj[param] = true;
+        }
+    })
+    
+    return paramsObj;
+}
+```
+
+### 实现36进制
+```js
+// 提供36位的表达 0-9 a-z
+function getNums36() {
+  var nums36 = [];
+  for(var i = 0; i < 36 ; i++) {
+    if(i >= 0 && i <= 9) {
+      nums36.push(i)
+    } else {
+      nums36.push(String.fromCharCode(i + 87));//将 Unicode 编码转为一个字符
+    }
+  }
+  return nums36;
+}
+function scale36(n) {
+  // 单独的功能函数
+  // 16进制数： 0-9  a-f    36进制数： 0-9  a-z   
+  const arr = [];
+  var nums36 = getNums36();
+  // 36 10
+  if(!Number.isInteger(n)){//浮点数判断，目前不支持小鼠
+    console.warn('不支持小数转换');
+    return n;
+  } 
+  var neg = '';
+  if(n < 0){//对负数的处理
+      neg = '-';
+      n = Math.abs(n)
+  }
+  while(n) {
+    var res = n % 36;
+    console.log(res,'+++++++');
+    arr.unshift(nums36[res]);
+    // 进位
+    n = parseInt(n/36);
+    console.log(n,'---------');
+  }
+  arr.unshift(neg)
+  return arr.join("");
+
+}
+
+console.log(scale36(20)); // k
+```
+
+### 实现一个对象被for of遍历
+```js
+let obj2 = {
+    name: "XX",
+    age: 20,
+    job: 'teacher',
+    [Symbol.iterator]() {
+        const self = this;
+        const keys = Object.keys(self);
+        let index = 0;
+        return {
+            next() {
+                if (index < keys.length) {
+                    return {
+                        value: self[keys[index++]],
+                        done: false
+                    };
+                } else {
+                    return { value: undefined, done: true };
+                }
+            }
+        };
+    }
+};
+```
+
+## 字符串/数组
 ### 手写数组 flatern（数组拍平）
 ```js
 //使用apply
@@ -568,6 +692,284 @@ const merge = (left, right) => {
 };
 ```
 
+### 实现[['a', 'b'], ['n', 'm'], ['0', '1']] => ['an0', 'an1, 'am0', 'am1', 'bn0', 'bn1', 'bm0', 'bm1']
+```js
+function changeArr (arr) {
+	// 赋值：赋值给一个新的对象，这样修改之后不会影响之前的值
+	const newArr = [...arr]
+	// 取值：获取数组的第一个值
+	let result = newArr.shift()
+	// 循环这个数组
+	while (newArr.length) {
+		// 取值：从这个数组中再次获取第一个值
+		const other = newArr.shift()
+		// 定义一个新的数组为 []
+		const newResult = []
+		// 循环 result 
+		result.forEach(item => {
+			// 循环 other
+			other.forEach(_item => {
+				// 把数据组合返回给定义的数组
+				newResult.push(item + '' + _item)
+			})
+		})
+		// 把 result 赋值给 newResult
+		result = [...newResult]
+	}
+	return result
+}
+
+const arr = [['a', 'b'], ['m', 'n'], [0, 1]]
+const result = changeArr(arr)
+console.log(result) // ["am0", "am1", "an0", "an1", "bm0", "bm1", "bn0", "bn1"]
+
+const arr2 = [['a', 'b'], ['m', 'n', '0'], [0, 1], ['#', '$']]
+const result2 = changeArr(arr2)
+console.log(result2) 
+// (24) ["am0#", "am0$", "am1#", "am1$", "an0#", "an0$", "an1#", "an1$", "a00#", "a00$", "a01#", "a01$", "bm0#", "bm0$", "bm1#", "bm1$", "bn0#", "bn0$", "bn1#", "bn1$", "b00#", "b00$", "b01#", "b01$"]
+```
+
+### 合并区间
+```js
+//输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
+//输出: [[1,6],[8,10],[15,18]]
+//解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+var merge = function(intervals) {
+  if(intervals.length <= 1) {
+      return intervals
+  }
+  
+  // 先将数组按照区间最左边的大小顺序排序（升序）
+  let arr = intervals.sort((a, b) => a[0] - b[0]);
+  function unite(arr, i) {
+      if(i == arr.length - 1) {
+          return arr
+      }
+      // 如果下一个区间的左区间在本区间之间，则合并一次
+      if(arr[i + 1][0] <= arr[i][1]) {
+          arr[i] = [ 
+            arr[i][0],
+            Math.max(arr[i][1], arr[i + 1][1])
+          ];
+          // 合并之后删除冗余区间
+          arr.splice(i + 1, 1);
+      } else {
+          // 如果没有合并，则找到下一个待合并区间
+          i ++;
+      }
+      return unite(arr, i)
+  }
+  
+  return unite(arr, 0)
+};
+```
+
+### 两数之和：给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。输入：nums = [2,7,11,15], target = 9 输出：[0,1]
+```js
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var twoSum = function(nums, target) {
+    for(let i = 0; i<nums.length; i++){
+        let onitem = nums[i];
+        let next = nums.indexOf(target-onitem);
+        if (next !== -1 && next !== i){
+            return [i, next];
+        }
+    }
+};
+```
+
+### 三数之和：给你一个包含 n 个整数的数组 nums，判断 nums 中是否存在三个元素 a，b，c ，使得 a + b + c = 0 ？请你找出所有和为 0 且不重复的三元组。
+```js
+var threeSum = function (nums) {
+    // 如果元素的个数小于4，直接返回空数组
+    if (nums.length < 3) {
+        return [];
+    }
+    let res = [];
+    let temp = [];
+    nums.sort((num1, num2) => num1 - num2);
+    for (let i = 0; i < nums.length - 2; i++) {
+        if (i > 0 && (nums[i] === nums[i - 1])) {
+            continue;
+        }
+        let left = i + 1;
+        let right = nums.length - 1;
+        while (left < right) {
+            if (nums[i] + nums[left] + nums[right] === 0) {
+                if (nums[left] === nums[left + 1] && right > left+1) {
+                    left++
+                    continue;
+                } else if (nums[right] === nums[right - 1] && right > left + 1) {
+                    right--;
+                    continue;
+                }
+                temp.push(nums[i]);
+                temp.push(nums[left]);
+                temp.push(nums[right]);
+                res.push(temp);
+                temp = [];
+                left++
+            } else if (nums[i] + nums[left] + nums[right] < 0) {
+                left++;
+            } else {
+                right--;
+            }
+        }
+    }
+    return res
+};
+```
+
+### [搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+```js
+ /**
+ * 二分法
+ */
+public int search(int[] nums, int target) {
+    int len = nums.length;
+    int left = 0;   // 左边界
+    int right = len -1; // 右边界
+    while (left <= right) {
+        int mid = (right + left) / 2;
+        if (nums[mid] == target) {
+            return mid;
+        }
+        // 右半边为升序
+        else if (nums[mid] < nums[right]) {
+            if (nums[mid] < target && target <= nums[right]) {
+                // 如果值在右半边，则丢弃左半边
+                left = mid + 1;
+            } else {
+                // 其他情况
+                right = mid - 1;
+            }
+        }
+        // 左半边升序
+        else {
+            if (nums[left] <= target && target < nums[mid]) {
+                // 如果值在左半边，则丢弃右半边
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+    }
+    return -1;
+}
+```
+### [字符串中的第一个唯一字符](https://leetcode-cn.com/problems/first-unique-character-in-a-string/)
+```js
+var firstUniqChar = function(s) {
+    for(let i in s){
+        if(s.indexOf(s[i]) == s.lastIndexOf(s[i])){
+            return i
+        }
+    }
+    return -1;
+};
+```
+
+### 数字 n 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 有效的 括号组合，输入：n = 3，输出：["((()))","(()())","(())()","()(())","()()()"]
+```js
+function generateParenthesis(n: number): string[] {
+    const result:string [] = []
+    const dfs = (path: string, count1: number, count2: number) => {
+        // path为递归的字符串，count1为左括号的数量，count2为右括号的数量
+        // 当左括号或右括号大于传入的n，括号生成后的岁数，那这个递归函数就不跑了。
+        if(count1 > n || count2 > n) return
+        // 如果右括号的数量大于左括号的数量，也不符合题意，也不跑了。
+        if(count2 > count1) return 
+        // 左括号和右括号的数量都对了 那就把正确结果推出去
+        if(count1 === n && count2 === n) {
+            result.push(path)
+            return 
+        }
+
+        //这边处理第一次传入空字符串的情况
+        if(count1 === 0) {
+            dfs(path + '(', count1 + 1, count2)
+        }
+        else {
+            // 只有这两种结果
+            dfs(path + '(', count1 + 1, count2)
+            dfs(path + ')', count1, count2 + 1)
+        }
+    }
+    dfs('', 0, 0)
+    return result
+};
+```
+
+### [有效括号](https://leetcode-cn.com/problems/valid-parentheses/)
+```js
+/**
+ * @param {string} s
+ * @return {boolean}
+ */
+var isValid = function(s) {
+    let sObj = {
+        '(':')',
+        '[':']',
+        '{':'}',
+    }
+    let que = [];
+    for(let i = 0; i<s.length; i++){
+        if(que.length ===0){
+            que.push(s[i]);
+        }else if(sObj[que[que.length-1]] === s[i]){
+            que.pop();
+        } else {
+            que.push(s[i]);
+        }
+    }
+    if(que.length === 0){
+        return true;
+    } else {
+        return false;
+    }
+};
+```
+
+
+### [数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
+```js
+/**
+ * @param {number[]} nums
+ * @return {number}
+ */
+var majorityElement = function(nums) {
+    let newNums = nums.sort((a,b)=>a-b);
+    let length = Math.floor(newNums.length / 2);
+    for (let i = 0; i<length+1; i++){
+        if (newNums[i] === newNums[i + length]){
+            return newNums[i];
+        }
+    }
+    return -1;
+};
+```
+
+### 返回该数组中出现频率>=n的元素列表
+```js
+Array.prototype.findDup = function (count) {
+  return this.reduce((re, val) => {
+    let index = re.findIndex(o => o.val === val)
+    if (index >= 0) {
+      re[index].count++
+    } else {
+      re.push({ count: 1, val })
+    }
+    return re
+  }, []).filter(o => o.count >= count).map(o => o.val)
+}
+```
+
+
+## 链表
 ### 链表（插入，删除，反转）
 ```js
 //节点类
@@ -731,6 +1133,7 @@ var mergeTwoLists = function(l1, l2) {
 };
 ```
 
+## 二叉树
 ### 二叉树前中后遍历
 ![二叉树前中后遍历](https://github.com/lujiajian1/study-notes/blob/main/img/nodetree.png)
 ```js
@@ -869,28 +1272,101 @@ function isSymmetric(root: TreeNode | null): boolean {
 };
 ```
 
-### [函数柯里化](https://www.jianshu.com/p/2975c25e4d71)
+### [平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
 ```js
-//add(1)(2)(3) = 6;
-//add(1, 2, 3)(4) = 10;
-//add(1)(2)(3)(4)(5) = 15;
-function add(...args) {
-    let allArg = args;
-    var _adder = function (){
-        allArg.push(...arguments);
-        return _adder;
+function isBalanced(root){
+    if(root === null){
+        return true;
     }
-    _adder.toString = function() {
-        return allArg.reduce(function (a, b) {
-            return a + b;
-        }, 0);
-    }
-    return _adder
+    return Math.abs(tree_height(root.left) - tree_height(root.right)) <= 1 &&  isBalanced(root.left) &&  isBalanced(root.right);
+
 }
-console.log(add(1)(2)(3).toString()) //6
-console.log(add(1, 2, 3)(4).toString()) //10
-console.log(add(1)(2)(3)(4)(5).toString()) //15
-console.log(add(2, 6)(1).toString()) //9
+function tree_height(root){
+    var deep = -Infinity;
+    if(root === null){
+        return -1;
+    }
+    deep = Math.max(deep,tree_height(root.left));
+    deep = Math.max(deep,tree_height(root.right));
+    return deep+1;
+
+}
+```
+
+### [路径总和](https://leetcode-cn.com/problems/path-sum/submissions/)
+```js
+//通过递归方法来解决
+var hasPathSum = function(root, targetSum) {
+    if(!root) {
+        return false;
+    }
+    if(root.val == targetSum&&root.left == null &&root.right == null) {
+        return true;
+    } 
+    let left = hasPathSum(root.left, targetSum - root.val);
+    let right = hasPathSum(root.right, targetSum - root.val);
+    return left||right;
+};
+```
+
+### [路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
+```js
+ /**
+  * @param {TreeNode} root
+  * @param {number} targetSum
+  * @return {number[][]}
+  */
+ var pathSum = function (root, targetSum) {
+     var res = [];
+     var array = [];
+     function doFind(root, targetSum) {
+         if (root == null) return;
+         targetSum = targetSum - root.val;
+         array.push(root.val)
+         if (root.left == null && root.right == null && targetSum == 0) {
+             res.push([...array]);
+         }
+         doFind(root.left, targetSum)
+         doFind(root.right, targetSum)
+         array.pop();
+     }
+     doFind(root, targetSum);
+     return res
+ };
+```
+
+### [翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
+```js
+/**
+ * Definition for a binary tree node.
+ * function TreeNode(val, left, right) {
+ *     this.val = (val===undefined ? 0 : val)
+ *     this.left = (left===undefined ? null : left)
+ *     this.right = (right===undefined ? null : right)
+ * }
+ */
+/**
+ * @param {TreeNode} root
+ * @return {TreeNode}
+ */
+var invertTree = function(root) {
+   if (root) {
+    [root.left, root.right] = [invertTree(root.right), invertTree(root.left)]
+  }
+  return root
+};
+```
+
+### [合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
+```js
+var mergeTrees = function(t1, t2) {
+    if(!t1) return t2;
+    if(!t2) return t1;
+    t1.val = t1.val + t2.val;
+    t1.left = mergeTrees(t1.left, t2.left);
+    t1.right = mergeTrees(t1.right, t2.right);
+    return t1;
+};
 ```
 
 ### DOM树的DFS(深度优先遍历)
@@ -966,43 +1442,7 @@ function bfs(dom){
 console.log(breathTravalSal(parentDOM));
 ```
 
-### 实现[['a', 'b'], ['n', 'm'], ['0', '1']] => ['an0', 'an1, 'am0', 'am1', 'bn0', 'bn1', 'bm0', 'bm1']
-```js
-function changeArr (arr) {
-	// 赋值：赋值给一个新的对象，这样修改之后不会影响之前的值
-	const newArr = [...arr]
-	// 取值：获取数组的第一个值
-	let result = newArr.shift()
-	// 循环这个数组
-	while (newArr.length) {
-		// 取值：从这个数组中再次获取第一个值
-		const other = newArr.shift()
-		// 定义一个新的数组为 []
-		const newResult = []
-		// 循环 result 
-		result.forEach(item => {
-			// 循环 other
-			other.forEach(_item => {
-				// 把数据组合返回给定义的数组
-				newResult.push(item + '' + _item)
-			})
-		})
-		// 把 result 赋值给 newResult
-		result = [...newResult]
-	}
-	return result
-}
-
-const arr = [['a', 'b'], ['m', 'n'], [0, 1]]
-const result = changeArr(arr)
-console.log(result) // ["am0", "am1", "an0", "an1", "bm0", "bm1", "bn0", "bn1"]
-
-const arr2 = [['a', 'b'], ['m', 'n', '0'], [0, 1], ['#', '$']]
-const result2 = changeArr(arr2)
-console.log(result2) 
-// (24) ["am0#", "am0$", "am1#", "am1$", "an0#", "an0$", "an1#", "an1$", "a00#", "a00$", "a01#", "a01$", "bm0#", "bm0$", "bm1#", "bm1$", "bn0#", "bn0$", "bn1#", "bn1$", "b00#", "b00$", "b01#", "b01$"]
-```
-
+## 动态规划
 ### 爬楼梯：假设你现在正在爬楼梯，楼梯有n级。每次你只能爬1级或者2级，那么你有多少种方法爬到楼梯的顶部
 ```js
 var climbStairs = function (n) {  
@@ -1024,172 +1464,124 @@ var climbStairs = function (n) {  
 }
 ```
 
-### 解析 URL 参数为对象
+### [编辑距离](https://leetcode-cn.com/problems/edit-distance/)
 ```js
-function parseParam(url) {
-    const paramsStr = /.+\?(.+)$/.exec(url)[1]; // 将 ? 后面的字符串取出来
-    const paramsArr = paramsStr.split('&'); // 将字符串以 & 分割后存到数组中
-    let paramsObj = {};
-    // 将 params 存到对象中
-    paramsArr.forEach(param => {
-        if (/=/.test(param)) { // 处理有 value 的参数
-            let [key, val] = param.split('='); // 分割 key 和 value
-            val = decodeURIComponent(val); // 解码
-            val = /^\d+$/.test(val) ? parseFloat(val) : val; // 判断是否转为数字
-    
-            if (paramsObj.hasOwnProperty(key)) { // 如果对象有 key，则添加一个值
-                paramsObj[key] = [].concat(paramsObj[key], val);
-            } else { // 如果对象没有这个 key，创建 key 并设置值
-                paramsObj[key] = val;
-            }
-        } else { // 处理没有 value 的参数
-            paramsObj[param] = true;
-        }
-    })
-    
-    return paramsObj;
-}
-```
-
-### 实现36进制
-```js
-// 提供36位的表达 0-9 a-z
-function getNums36() {
-  var nums36 = [];
-  for(var i = 0; i < 36 ; i++) {
-    if(i >= 0 && i <= 9) {
-      nums36.push(i)
-    } else {
-      nums36.push(String.fromCharCode(i + 87));//将 Unicode 编码转为一个字符
+var minDistance = function(word1, word2) {
+	let row = word1.length;
+    let col = word2.length;
+    //创建dp矩阵
+    const dp = [];
+    //为了创建二维矩阵，所用到的辅助的矩阵
+    let tmp = new Array(col+1).fill(0);
+    for(let i=0; i<row+1; i++){
+    	dp[i] = [...tmp]; 
     }
-  }
-  return nums36;
+    // dp矩阵的第一行
+    for (let j = 1; j <= col; j++) dp[0][j] = dp[0][j - 1] + 1;
+    // dp矩阵的第一列
+    for (let i = 1; i <= row; i++) dp[i][0] = dp[i - 1][0] + 1;
+    // dp矩阵的其它元素
+    for (let i = 1; i <= row; i++) {
+        for (let j = 1; j <= col; j++) {
+            //当前字母相等时
+            if (word1[i - 1] === word2[j - 1]){
+            	dp[i][j] = dp[i - 1][j - 1];
+            //如果当前字母不等
+            }else{
+             dp[i][j] = Math.min(Math.min(dp[i - 1][j - 1], dp[i][j - 1]), dp[i - 1][j]) + 1;            	
+            } 
+        }
+    }
+    return dp[row][col];  
 }
-function scale36(n) {
-  // 单独的功能函数
-  // 16进制数： 0-9  a-f    36进制数： 0-9  a-z   
-  const arr = [];
-  var nums36 = getNums36();
-  // 36 10
-  if(!Number.isInteger(n)){//浮点数判断，目前不支持小鼠
-    console.warn('不支持小数转换');
-    return n;
-  } 
-  var neg = '';
-  if(n < 0){//对负数的处理
-      neg = '-';
-      n = Math.abs(n)
-  }
-  while(n) {
-    var res = n % 36;
-    console.log(res,'+++++++');
-    arr.unshift(nums36[res]);
-    // 进位
-    n = parseInt(n/36);
-    console.log(n,'---------');
-  }
-  arr.unshift(neg)
-  return arr.join("");
-
-}
-
-console.log(scale36(20)); // k
 ```
+[参考原文](https://juejin.cn/post/6844903823270477837)
 
-### 合并区间
+### [买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/submissions/)
 ```js
-//输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
-//输出: [[1,6],[8,10],[15,18]]
-//解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
-var merge = function(intervals) {
-  if(intervals.length <= 1) {
-      return intervals
-  }
-  
-  // 先将数组按照区间最左边的大小顺序排序（升序）
-  let arr = intervals.sort((a, b) => a[0] - b[0]);
-  function unite(arr, i) {
-      if(i == arr.length - 1) {
-          return arr
-      }
-      // 如果下一个区间的左区间在本区间之间，则合并一次
-      if(arr[i + 1][0] <= arr[i][1]) {
-          arr[i] = [ 
-            arr[i][0],
-            Math.max(arr[i][1], arr[i + 1][1])
-          ];
-          // 合并之后删除冗余区间
-          arr.splice(i + 1, 1);
-      } else {
-          // 如果没有合并，则找到下一个待合并区间
-          i ++;
-      }
-      return unite(arr, i)
-  }
-  
-  return unite(arr, 0)
+var maxProfit = function(prices) {
+    if (prices.length === 0 || prices.length === 1) {
+        return 0
+    }
+    // dp1数组存储第`i`天，持有股票的最大利润
+    const dp1 = []
+    dp1[0] = -prices[0]
+    // dp2数组存储第`i`天，不持有股票的最大利润
+    const dp2 = []
+    dp2[0] = 0
+    
+    for (let i = 1; i < prices.length; i++) {
+        dp1[i] = Math.max(dp1[i - 1], -prices[i])
+        dp2[i] = Math.max(dp2[i - 1], prices[i] + dp1[i - 1])
+    }
+    
+    return dp2[dp2.length - 1]
 };
 ```
-### 两数之和：给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。输入：nums = [2,7,11,15], target = 9 输出：[0,1]
+
+### [买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
 ```js
 /**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
+ * @param {number[]} prices
+ * @return {number}
  */
-var twoSum = function(nums, target) {
-    for(let i = 0; i<nums.length; i++){
-        let onitem = nums[i];
-        let next = nums.indexOf(target-onitem);
-        if (next !== -1 && next !== i){
-            return [i, next];
-        }
+var maxProfit = function(prices) {
+    if (prices.length === 0 || prices.length === 1) {
+        return 0
     }
+    
+    const dp1 = []
+    dp1[0] = -prices[0]
+    
+    const dp2 = []
+    dp2[0] = 0
+    
+    for (let i = 1; i < prices.length; i++) {
+        dp1[i] = Math.max(dp1[i - 1], dp2[i - 1] - prices[i])
+        dp2[i] = Math.max(dp2[i - 1], prices[i] + dp1[i - 1])
+    }
+    
+    return dp2[prices.length - 1]
 };
 ```
-
-### 三数之和：给你一个包含 n 个整数的数组 nums，判断 nums 中是否存在三个元素 a，b，c ，使得 a + b + c = 0 ？请你找出所有和为 0 且不重复的三元组。
+### [买卖股票的最佳时机 III](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/)
 ```js
-var threeSum = function (nums) {
-    // 如果元素的个数小于4，直接返回空数组
-    if (nums.length < 3) {
-        return [];
+/**
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function(prices) {
+    if (prices.length === 0 || prices.length === 1) {
+        return 0
     }
-    let res = [];
-    let temp = [];
-    nums.sort((num1, num2) => num1 - num2);
-    for (let i = 0; i < nums.length - 2; i++) {
-        if (i > 0 && (nums[i] === nums[i - 1])) {
-            continue;
-        }
-        let left = i + 1;
-        let right = nums.length - 1;
-        while (left < right) {
-            if (nums[i] + nums[left] + nums[right] === 0) {
-                if (nums[left] === nums[left + 1] && right > left+1) {
-                    left++
-                    continue;
-                } else if (nums[right] === nums[right - 1] && right > left + 1) {
-                    right--;
-                    continue;
-                }
-                temp.push(nums[i]);
-                temp.push(nums[left]);
-                temp.push(nums[right]);
-                res.push(temp);
-                temp = [];
-                left++
-            } else if (nums[i] + nums[left] + nums[right] < 0) {
-                left++;
-            } else {
-                right--;
-            }
-        }
+    
+    // 持有股票
+    const dp1 = [
+        [-prices[0]], // 还剩下两次交易机会
+        [-prices[0]] // 还剩下一次交易机会
+    ]
+    // 不持有股票
+    const dp2 = [
+        [0], // 还剩下两次交易机会
+        [0] // 还剩下一次交易机会
+    ]
+    
+    for (let i = 1; i < prices.length; i++) {
+        // 持有股票，还有两次交易机会
+        dp1[0][i] = Math.max(dp1[0][i - 1], -prices[i])
+        // 持有股票，还有一次交易机会
+        dp1[1][i] = Math.max(dp1[1][i - 1], dp2[0][i - 1] - prices[i])
+        // 不持有股票，还有两次交易机会
+        dp2[0][i] = Math.max(dp2[0][i - 1], prices[i] + dp1[0][i - 1]) 
+        // 不持有股票，还有一次交易机会
+        dp2[1][i] = Math.max(dp2[1][i - 1], prices[i] + dp1[1][i - 1])
     }
-    return res
+    
+    return dp2[1][prices.length - 1]
 };
 ```
+[参考原文](https://juejin.cn/post/6844903955030343694)
 
-小知识
+## 小知识
 * [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大O阶表示，即T(n)=O(f(n))，其中n为问题规模，也就是问题的大小。
 * [归并排序、快速排序、希尔排序、堆排序](https://juejin.cn/post/6844903895789993997)

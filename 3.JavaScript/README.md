@@ -363,6 +363,8 @@ class B extends A {
 let b = new B();
 ```
 
+##### ES6 与 ES5 继承的[区别](https://juejin.cn/post/6844903924015120397)
+
 ### this
 this的值不是在函数定义的时候决定的，而是在函数执行的时候决定的
 
