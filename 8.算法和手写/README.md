@@ -1148,22 +1148,45 @@ var twoSum = function(nums, target) {
 };
 ```
 
-### 三数之和
+### 三数之和：给你一个包含 n 个整数的数组 nums，判断 nums 中是否存在三个元素 a，b，c ，使得 a + b + c = 0 ？请你找出所有和为 0 且不重复的三元组。
 ```js
-/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var threeSum = function(nums, target) {
-    for(let i = 0; i<nums.length - 1; i++){
-        let onitem = nums[i];
-        let nexitem = nums[i+1];
-        let next = nums.indexOf(target-onitem-nexitem);
-        if (next !== -1 && next !== i){
-            return [i, i+1, next];
+var threeSum = function (nums) {
+    // 如果元素的个数小于4，直接返回空数组
+    if (nums.length < 3) {
+        return [];
+    }
+    let res = [];
+    let temp = [];
+    nums.sort((num1, num2) => num1 - num2);
+    for (let i = 0; i < nums.length - 2; i++) {
+        if (i > 0 && (nums[i] === nums[i - 1])) {
+            continue;
+        }
+        let left = i + 1;
+        let right = nums.length - 1;
+        while (left < right) {
+            if (nums[i] + nums[left] + nums[right] === 0) {
+                if (nums[left] === nums[left + 1] && right > left+1) {
+                    left++
+                    continue;
+                } else if (nums[right] === nums[right - 1] && right > left + 1) {
+                    right--;
+                    continue;
+                }
+                temp.push(nums[i]);
+                temp.push(nums[left]);
+                temp.push(nums[right]);
+                res.push(temp);
+                temp = [];
+                left++
+            } else if (nums[i] + nums[left] + nums[right] < 0) {
+                left++;
+            } else {
+                right--;
+            }
         }
     }
+    return res
 };
 ```
 
