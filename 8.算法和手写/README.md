@@ -517,8 +517,7 @@ function getNums36() {
   return nums36;
 }
 function scale36(n) {
-  // 单独的功能函数
-  // 16进制数： 0-9  a-f    36进制数： 0-9  a-z   
+  // 单独的功能函数 // 16进制数： 0-9  a-f    36进制数： 0-9  a-z   
   const arr = [];
   var nums36 = getNums36();
   // 36 10
@@ -541,7 +540,6 @@ function scale36(n) {
   }
   arr.unshift(neg)
   return arr.join("");
-
 }
 
 console.log(scale36(20)); // k
