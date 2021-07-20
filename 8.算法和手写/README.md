@@ -801,7 +801,6 @@ var threeSum = function (nums) {
         return [];
     }
     let res = [];
-    let temp = [];
     nums.sort((num1, num2) => num1 - num2);
     for (let i = 0; i < nums.length - 2; i++) {
         if (i > 0 && (nums[i] === nums[i - 1])) {
@@ -817,13 +816,10 @@ var threeSum = function (nums) {
                 } else if (nums[right] === nums[right - 1] && right > left + 1) {
                     right--;
                     continue;
+                } else {
+                    res.push([nums[i],nums[left],nums[right]])
+                    left++   
                 }
-                temp.push(nums[i]);
-                temp.push(nums[left]);
-                temp.push(nums[right]);
-                res.push(temp);
-                temp = [];
-                left++
             } else if (nums[i] + nums[left] + nums[right] < 0) {
                 left++;
             } else {
