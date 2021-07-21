@@ -703,6 +703,43 @@ const merge = (left, right) => {
 };
 ```
 
+### [下一个排列](https://leetcode-cn.com/problems/next-permutation/)
+```js
+var nextPermutation = function(nums) {
+    // 从又往左找到第一个降序的位置
+    let right = nums.length-1;
+    let flag = false;
+    while (right) {
+        if (nums[right] > nums[right-1]) {
+            right--;
+            flag = true;
+            break;
+        } else {
+            right--;
+        }
+    }
+    if (!flag) {
+        nums.sort((next,pre) => next - pre)
+    } else {
+
+        let sorted = nums.splice(right+1).sort((next,pre) => next - pre)
+        let move;
+        for (let i = 0; i < sorted.length;i++) {
+            if (sorted[i] > nums[right]) {
+                move = i;
+                break;
+            }
+        }
+        let temp = sorted[move];
+        sorted[move] = nums[right];
+        nums[right] = temp;
+        sorted.sort((next,pre) => next - pre);
+        nums.push(...sorted)
+    }
+    nums
+};
+```
+
 ### 实现[['a', 'b'], ['n', 'm'], ['0', '1']] => ['an0', 'an1, 'am0', 'am1', 'bn0', 'bn1', 'bm0', 'bm1']
 ```js
 function changeArr (arr) {
@@ -868,6 +905,56 @@ public int search(int[] nums, int target) {
     return -1;
 }
 ```
+
+### [寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+```js
+var findMedianSortedArrays = function(nums1, nums2) {
+    let res = [];
+    if (nums1.length < 1){
+        res = nums2;
+    }
+    if (nums2.length < 1){
+        res = nums1;
+    }
+    res = nums2.concat(nums1);
+    res = res.sort((a,b)=> a-b);
+    let i1 = Math.ceil(res.length/2);
+    let i2 = Math.floor(res.length/2);
+    if (i1 === i2){
+        return (res[i1 -1] + res[i1])/2
+    } else {
+        return res[i2]
+    }
+};
+```
+
+### [全排列](https://leetcode-cn.com/problems/permutations/)
+```js
+var permute = function(nums) {
+    const res = []
+    
+    // 回溯
+    const backtrack = (path) => {
+        // 终点，当 path 的 length 和 nums 的 length 相等的时候，记录这一次的 path 并结束递归
+        if(path.length === nums.length) {
+            return res.push(path)
+        }
+        
+        // 通过循环加递归的形式，模拟出所有的排列情况
+        nums.forEach(v => {
+            // 当 path 中，包含这一次的循环的值的时候，进行回溯(中断递归)
+            if(path.includes(v)) return 
+            
+            // 递归
+            backtrack(path.concat(v))
+        })
+    }
+    backtrack([])
+    
+    return res
+};
+```
+
 ### [字符串中的第一个唯一字符](https://leetcode-cn.com/problems/first-unique-character-in-a-string/)
 ```js
 var firstUniqChar = function(s) {
@@ -878,6 +965,64 @@ var firstUniqChar = function(s) {
     }
     return -1;
 };
+```
+
+### [无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+```js
+function lengthOfLongestSubstring(str) {
+    if (str === "") return 0;
+    let start = 0, maxLen = 0;
+    const map = new Map();
+    const len = str.length;
+    for(let i = 0; i < len; i++) {
+        const c = str[i];
+        if (map.has(c)) {
+            start = Math.max(map.get(c) + 1, start)
+        }
+        map.set(c, i);
+        maxLen = Math.max(i - start + 1, maxLen);
+    }
+    return maxLen;
+}
+```
+
+### [最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+```js
+var longestPalindrome = function (s) {
+  let n = s.length;
+  if(n == 0) return ''; //字符串为空则返回空
+  if(n == 1) return s;  //字符串为一个字符, 显然返回自身
+  let result = ''
+  for (let i = 0; i < n; i++) { //字符串长度超过2
+    for (let j = i + 1; j <= n; j++) {
+      let str = s.slice(i, j); //可得到所有子串
+      let f = str.split('').reverse().join(''); //对字符串利用数组方法倒序
+
+      if (str == f) { //判断是否为回文
+        result = str.length > result.length ? str : result;
+      }
+    }
+  }
+  return result;
+}
+```
+
+### [整数反转](https://leetcode-cn.com/problems/reverse-integer/)
+```js
+var reverse = function(x) {
+
+    const symbol = String(x).split("").reverse().join("")
+    let result;
+    if(x>=0){
+     result =  Number(symbol) 
+    }else{
+     result = Number(symbol.slice(-1)+symbol.slice(0,-1)) 
+    }
+    if(result < (-2)**31 || result > (2**31 -1)){
+        result = 0
+    }
+    return result
+}
 ```
 
 ### 数字 n 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 有效的 括号组合，输入：n = 3，输出：["((()))","(()())","(())()","()(())","()()()"]
@@ -1137,6 +1282,26 @@ var mergeTwoLists = function(l1, l2) {
         return l2
     }
  
+};
+```
+
+### [两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
+```js
+var addTwoNumbers = function(l1, l2) {
+    let addOne = 0
+    let sum = new ListNode('0')
+    let head = sum
+    while (addOne || l1 || l2) {
+        let val1 = l1 !== null ? l1.val : 0
+        let val2 = l2 !== null ? l2.val : 0
+        let r1 = val1 + val2 + addOne
+        addOne = r1 >= 10 ? 1 : 0
+        sum.next = new ListNode(r1 % 10)
+        sum = sum.next 
+        if (l1) l1 = l1.next 
+        if (l2) l2 = l2.next 
+    }
+    return head.next
 };
 ```
 
