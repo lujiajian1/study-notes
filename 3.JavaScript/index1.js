@@ -1,0 +1,13 @@
+// import mod from './es6m.js';
+// console.log(mod);
+// console.log(mod.num);
+// mod.add();
+// console.log(mod.num);
+// mod.add1();
+// console.log(mod.num);
+import {num, add, add1} from './es6m.js';
+console.log(num);
+add();
+console.log(num);
+add1();
+console.log(num);

@@ -571,6 +571,48 @@ let obj2 = {
 };
 ```
 
+### 实现洋葱模型
+```js
+let middleware = []
+middleware.push((next) => {
+    console.log(1)
+    next()
+    console.log(1.1)
+})
+middleware.push((next) => {
+    console.log(2)
+    next()
+    console.log(2.1)
+})
+middleware.push((next) => {
+    console.log(3)
+    next()
+    console.log(3.1)
+})
+//实现compose函数
+// /* 输出
+// 1
+// 2
+// 3
+// 3.1
+// 2.1
+// 1.1
+// */
+function compose(fnArr){
+    let onIndex = -1;
+    let next = function (){
+        onIndex++;
+        if (onIndex < fnArr.length){
+            fnArr[onIndex](next);
+        }
+    };
+    return next;
+}
+
+let fn = compose(middleware)
+fn()
+```
+
 ## 字符串/数组
 ### 手写数组 flatern（数组拍平）
 ```js
@@ -1023,6 +1065,35 @@ var reverse = function(x) {
     }
     return result
 }
+```
+
+### 退格
+```js
+// 比较含有退格的字符串，"<-"代表退格键，"<"和"-"均为正常字符
+// 输入："a<-b<-", "c<-d<-"，结果：true，解释：都为""
+// 输入："<-<-ab<-", "<-<-<-<-a"，结果：true，解释：都为"a"
+// 输入："<-<ab<-c", "<<-<a<-<-c"，结果：false，解释："<ac" !== "c"
+function isEqual(str1, str2){
+    function getResStr(str){
+        let res = [];
+        for(let i = 0; i<str.length; i++){
+            if(str[i] === '<' && str[i+1] === '-'){
+                res.pop();
+                i++;
+            } else {
+                res.push(str[i]);
+            }
+        }
+        console.log(res.join(''))
+        return res.join('');
+    }
+    let restBo = (getResStr(str1) === getResStr(str2));
+    console.log(restBo);
+    return restBo;
+}
+isEqual('a<-b<-', 'c<-d<-');
+isEqual('<-<-ab<-', '<-<-<-<-a');
+isEqual('<-<ab<-c', '<<-<a<-<-c');
 ```
 
 ### 数字 n 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 有效的 括号组合，输入：n = 3，输出：["((()))","(()())","(())()","()(())","()()()"]

@@ -1,0 +1,16 @@
+{
+  "name": "3.javascript",
+  "version": "1.0.0",
+  "description": "| 语法（Grammar）           | 语义 | 运行时（Runtime）  |\r | ------------------------- | ---- | ----------------- |\r | 字面量（LIteral）         |      | 类型（Types）      |\r | 变量（Variable）          |      | Execution Context |\r | 关键字（Keywords）        |      |                   |\r | 空白符（Whitespace）      |      |                   |\r | 换行符（Line Terminator） |      |                   |\r | 语法树与运算符（Grammar Tree vs Priority） |      | 类型转换（Type Convertion） |\r | Left hand side & Right hand side |      | 引用类型（Reference） |\r | 简单语句 |      | Completion Record （执行结果记录） |\r | 组合语句 |      | Lexical Environment（作用域） |\r | 声明 |      |                   |",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0"
+  }
+}
