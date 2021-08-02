@@ -1322,6 +1322,45 @@ Array.prototype.findDup = function (count) {
 };
 ```
 
+### 对象查找值，返回路径
+```js
+let obj = {
+    a: {
+        a_1: {
+            a_1_1: 'a11',
+            a_1_2: 'a12'
+        },
+        a_2: {
+            a_2_1: 'a21',
+            a_2_2: 'a22'
+        }
+    },
+    b: {
+        b_1: 'b1',
+        b_2: 'b2'
+    },
+    c: 'c'
+} 
+function findPath(obj, val) {
+    let keys = Object.keys(obj);
+    let result = [];
+    for (let i = 0; i < keys.length; i++) {
+        let _ = keys[i];
+        if (typeof obj[_] === 'object' && obj[_] !== null) {
+            let res = findPath(obj[_], val);
+            if (res.length > 0) {
+                result = result.concat([_], res);
+            }
+        } else if (obj[_] === val) {
+            result = result.concat([_]);
+            break;
+        }
+    }
+    return result;
+}
+console.log(findPath(obj, 'a22')); // ['a', 'a_2', 'a_2_2']
+```
+
 ## 链表
 
 ### 链表（插入，删除，反转）
@@ -1851,6 +1890,7 @@ console.log(breathTravalSal(parentDOM));
 ### [二叉树右视图](https://leetcode-cn.com/problems/binary-tree-right-side-view/)
 
 ```js
+//方法1
 var rightSideView = function (root) {
   if (!root) return [];
   let arrList = [];
@@ -1868,6 +1908,33 @@ function DFS(root, depth, res) {
     DFS(root.left, depth + 1, res);
   }
 }
+//方法2
+var rightSideView = function(root) {
+    let nums = [];
+    if (!root) return nums;
+
+    let stack = [];
+    let p = root;
+    let maxDepth = 0;
+    let currentDepth = 0;
+    while(p || stack.length > 0) {
+        while(p) {      //遍历节点的右分支
+            currentDepth++;
+            if (currentDepth > maxDepth) {    //推入节点
+                maxDepth++;
+                nums.push(p.val);
+            }
+            stack.push([p, currentDepth]);
+            p = p.right;
+        }
+
+        let node = stack.pop();    //回溯
+        p = node[0].left;     //对节点的左分支进行遍历
+        currentDepth = node[1];  //当前深度也要回溯
+    }
+
+    return nums;
+};
 ```
 
 ## 动态规划
@@ -2022,5 +2089,7 @@ var maxProfit = function (prices) {
 
 ## 小知识
 
-- [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大 O 阶表示，即 T(n)=O(f(n))，其中 n 为问题规模，也就是问题的大小。
-- [归并排序、快速排序、希尔排序、堆排序](https://juejin.cn/post/6844903895789993997)
+* [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大 O 阶表示，即 T(n)=O(f(n))，其中 n 为问题规模，也就是问题的大小。
+* [归并排序、快速排序、希尔排序、堆排序](https://juejin.cn/post/6844903895789993997)
+* 常用排序算法稳定性、时间复杂度分析
+![on](https://github.com/lujiajian1/study-notes/blob/main/img/on.jpg)
