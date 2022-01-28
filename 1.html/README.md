@@ -1,5 +1,5 @@
 ### HTML5新特性
-* 拖拽释放(Drag and drop) API
+* [拖拽释放(Drag and drop) API（源对象和目标对象）](https://developer.mozilla.org/zh-CN/docs/Web/API/HTML_Drag_and_Drop_API)
     * ondragstart:源对象开始被拖动
     * ondrag:源对象被拖动的过程中
     * ondragend:源对象被拖动结束
@@ -9,14 +9,14 @@
     * ondrop:源对象拖动着在目标对象上方松手
 * 语义化更好的内容标签（header, nav, footer, aside, article, section）;
 * 音频、视频API(audio, video);
-* 画布[Canvas](https://www.jianshu.com/p/7bb4896be61c) API;
+* 画布[Canvas](https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API) API;
     * 示例
     ```js
-    var c = document.getElementById("mycanvas");
-    var cts = c.getContext("2d"); //2d context
+    var c = document.getElementById("mycanvas"); // 方法获取HTML <canvas> 元素的引用
+    var ctx = c.getContext("2d"); //2d context
     var gl = getContext('webgl'); //3d
-    ctx.fillStyle = "#ff0000";
-    ctx.fillRect(0,0,150,75);
+    ctx.fillStyle = "#ff0000"; // 将长方形变成红色
+    ctx.fillRect(0,0,150,75); // 左上角放在(0, 0)，把它的大小设置成宽150高75，画一个长方形
     ```
     * [Canvas和SVG](https://www.w3school.com.cn/html/html5_canvas_vs_svg.asp)
         * SVG 是一种使用 XML 描述 2D 图形的语言
@@ -25,11 +25,11 @@
         * Canvas 通过 JavaScript 来绘制 2D 图形。
         * Canvas 是逐像素进行渲染的。
         * 在 canvas 中，一旦图形被绘制完成，它就不会继续得到浏览器的关注。如果其位置发生变化，那么整个场景也需要重新绘制，包括任何或许已被图形覆盖的对象。
-* 地理(Geolocation) API;
-* 本地离线存储 localStorage 长期存储数据，浏览器关闭后数据不丢失；
-* sessionStorage 的数据在浏览器关闭后自动删除;
+* 地理([Geolocation](https://developer.mozilla.org/zh-CN/docs/Web/API/Geolocation)) API;
+* 本地离线存储 [localStorage](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/localStorage) 长期存储数据，浏览器关闭后数据不丢失；
+* [sessionStorage](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/sessionStorage) 的数据在浏览器关闭后自动删除;
 * 表单控件:calendar、date、time、email、url、search ;
-* 新的技术webworker, websocket等；
+* 新的技术[webworker](https://developer.mozilla.org/zh-CN/docs/Web/API/Worker), [websocket](https://developer.mozilla.org/zh-CN/docs/Web/API/WebSocket)等；
 * 支持[离线应用](https://mp.weixin.qq.com/s/Q-Z8kYWSUJpkpAkTBv1Igw)
     1. 首次访问页面，浏览器加载页面和所需资源
     2. 解析到html元素的manifest文件，加载CACHE以及FALLBACK对应的资源到缓存中
@@ -188,14 +188,13 @@ HTML文件引用扩展名为.css的HTML文件引用扩展名为.css的样式表�
 * https://juejin.cn/post/6915204591730556935#heading-3
 
 ### 对WEB标准以及W3C的理解与认识
-网页主要由三个部分组成，表现、结构和行为。html是结构，css是表现，javascript是行为。以上这三个就形成了一个完整的网页，但是js改变时，可以会造成css和html的混乱，让这三个的界限不是那么清晰。这个时候，web标准就出来了，web标准一般是将该三部分独立分开，使其更具有模块化。W3C对web标准提出了规范化的要求，也就是在实际编程中的一些代码规范：包含如下几点
-1. 对于结构要求：（标签规范可以提高搜索引擎对页面的抓取效率，对SEO很有帮助）
-    * 标签字母要小写
-    * 标签要闭合
-    * 标签不允许随意嵌套
-2. 对于css和js来说
-尽量使用外链css样式表和js脚本。是结构、表现和行为分为三块，符合规范。同时提高页面渲染速度，提高用户的体验。
-样式尽量少用行间样式表，使结构与表现分离，标签的id和class等属性命名要做到见文知义，标签越少，加载越快，用户体验提高，代码维护简单，便于改版。
+#### 什么是WEB标准
+Web 标准也称网页标准，它由一系列标准组成，这些标准大部分由 W3C 负责制订，也有一些标准由其他标准组织制定的，如 ECMA 的 ECMAScript 标准等。狭义的 Web 标准是指网页设计的 DIV+CSS 化，广义的 Web 标准是指网页设计要符合 W3C 和 ECMA 规范。在符合标准的网页设计中，CSS 与 HTML、JavaScript 并列称为网页前端设计的 3 种基本语言，其中：HTML 负责构建网页的基本结构；CSS 负责设计网页的表现效果；JavaScript 负责开发网页的交互效果。
+#### 为什么使用WEB标准
+由于存在不同的浏览器版本，web 开发者常常需要为耗时的多版本开发而艰苦工作。当新的硬件（比如移动电话）和软件（比如微浏览器）开始浏览 web 时，这种情况开始会变得更加严重。为了 web 更好地发展，对于开发人员和最终用户而言非常重要的事情是，在开发新的应用程序时，浏览器开发商和站点开发商共同遵守标准。web 的不断壮大，使得越来越有必要依靠标准实现其全部潜力。web 标准可确保每个人都有权利访问相同的信息。如果没有 web 标准，那么未来的 web 应用，包括我们所梦想的应用程序，都是不可能实现的。同时，Web 标准也可以使站点开发更快捷，更令人愉快。为了缩短开发和维护时间，未来的网站将不得不根据标准来进行编码。开发人员不必为了得到相同的结果，而挣扎于多版本的开发。
+另外，一旦 web 开发人员遵守了 web 标准，由于开发人员可以更容易地理解彼此的编码，web 开发的团队协作将得到简化。同时，标准的 web 文档更易被搜索引擎访问，也更易被准确地索引。标准的 web 文档更易被转换为其他格式。标准的 web 文档更易被程序代码访问（比如 JavaScript 和 DOM）。
+#### 什么是W3C
+W3C，这个建立于 1994 年的组织，其宗旨是通过促进通用协议的发展并确保其通用型，以激发 web 世界的全部潜能。W3C 最重要的工作是发展 Web 规范（称为推荐，Recommendations），这些规范描述了 Web 的通信协议（比如 HTML 和 XHTML）和其他的构建模块。每项 W3C 推荐的发展是通过由会员和受邀专家组成的工作组来完成的。工作组的经费来自公司和其他组织，并会创建一个工作草案，最后是一份提议推荐。一般来说，为了获得正式的批准，推荐都会被提交给 W3C 会员和主任。W3C 标准只是推荐标准（Recommendation），并没有强制执行的效力。不过，鉴于 W3C 在 Web 标准领域的影响力和强大号召力，W3C 发布的推荐标准，通常浏览器厂商们都很重视，并积极支持。
 
 ### 使用http-server开启一个本地服务器，方便本地调试
 
