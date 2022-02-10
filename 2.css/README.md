@@ -1,61 +1,76 @@
 ### CSS
-
 * at-rules（css@规则）
     * [@charset](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@charset)（指定样式表中使用的字符编码）
-    * @import
-    * @media(重要)
-    * @page
-    * @counter-style
-    * @keyframes(重要)
-    * @fontface(重要)
-    * @supports(不推荐)
-    * @namespace
+    * [@import](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@import)（用于从其他样式表导入样式规则）
+    * [@media](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@media)（重要，媒体查询）
+    * [@page](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@page)（用于在打印文档时修改某些CSS属性）
+    * [@counter-style](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@counter-style)（可以自定义counter的样式）
+    * [@keyframes](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@keyframes)（重要，可以控制动画序列的中间步骤）
+    * [@font-face](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@font-face)（重要，指定一个用于显示文本的自定义字体）
+    * [@supports](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@supports)（不推荐，指定依赖于浏览器中的一个或多个特定的CSS功能的支持声明）
+    * [@namespace](https://developer.mozilla.org/zh-CN/docs/Web/CSS/@namespace)（定义使用在CSS样式表中的XML命名空间的@规则）
 * rule（CSS普通规则）
     * 选择器（Selector）
-        * selector_group
+        * selector_group（组）
+        ```css
+        /* no grouping */
+        h1 {color:blue;}
+        h2 {color:blue;}
+        h3 {color:blue;}
+        h4 {color:blue;}
+        h5 {color:blue;}
+        h6 {color:blue;}
+        /* grouping */
+        h1, h2, h3, h4, h5, h6 {color:blue;}
+        ```
         * selector
             * \> (子元素)
             * \<sp\> (空格，后代选择器)
             * \+ (相邻兄弟选择器)
             * \~ (普通兄弟选择器)
-            * ||
         * simple_selector
             * type (div|a)
             * \* (全部)
             * \. (clas)
             * \# (id)
             * \[\] (属性选择器)
-            * : (伪类)伪类是操作文档中已有的元素
+            * : ([伪类](https://www.runoob.com/cssref/css-selectors.html))伪类是操作文档中已有的元素
                 * :any-link
-                * :visited
-                * :hover
-                * :active
-                * :focus
+                * :visited（选择所有访问过的链接，a:visited）
+                * :hover（选择鼠标在链接上面时，a:hover）
+                * :active（选择活动链接，a:active）
+                * :focus（选择具有焦点的输入元素，input:focus）
                 * :target (选取当前活动的目标元素)
                 * :empty (选择没有子元素的元素)
-                * :nth-child(n) ( 匹配父元素下指定子元素，在所有子元素中排序第n)
-                * :nth-last-child()
-                * :first-child:last-child:only-child
+                * :nth-child(n) (匹配父元素下指定子元素，在所有子元素中排序第n)
+                * :nth-last-child(n)（选择其父级的第n个子元素，从最后一个子项计数）
+                * :first-child（匹配父元素下第一个子级的样式）
+                * :last-child（匹配父元素下最后一个子级的样式）
+                * :only-child（匹配父元素下唯一子元素）
                 * :not(selector) (选择除 selector 元素意外的元素)
-                * :where:has
                 * :root (选择文档的根元素，等同于html元素)
-            * :: (伪元素选择器)伪元素是创建了一个文档外的元素
-                * ::before
-                * ::after
-                * ::first-line
-                * ::first-letter
+            * :: ([伪元素选择器](https://www.w3school.com.cn/css/css_pseudo_elements.asp))伪元素是创建了一个文档外的元素
+                * ::before（在当前元素之前插入内容）
+                * ::after（在当前元素之后插入内容）
+                * ::first-line（选择当前元素的首行）
+                * ::first-letter（选择当前元素的首字母）
     * 声明（Declaration）
         * Key
-            * Properties
-            * Variables
+            * Properties（属性的名）
+            * [Variables](http://www.ruanyifeng.com/blog/2017/05/css-variables.html)（变量）
+            ```css
+            body{
+                --bg-color: lightblue;
+                background-color: var(--bg-color);
+            }
+            ```
         * Value
-            * calc
+            * calc（函数，width:calc(100% - 100px)）
             * number
             * length
             * ......
 
 ### px，em，rem，vw，vh，vmax，vmin
-
 * px：相对长度单位。像素px是相对于显示器屏幕分辨率而言的
 * em：相对长度单位，相对于父元素设定font-size的尺寸
 * rem：相对于根元素，常用语响应式布局
@@ -68,8 +83,7 @@
 * window.innerHeight // 网页视口高度
 * document.body.clientHeight // body 高度
 
-### 常见的页面布局实现
-
+### [常见的页面布局实现](https://juejin.cn/post/7063066630422528030/)
 * 两栏布局（边栏定宽主栏自适应）
 * 三栏布局（两侧栏定宽主栏自适应）
 * 多列等高布局
@@ -85,10 +99,9 @@
 * 利用UI框架实现响应式布局（比如；elementUi的\<row\>\<col\>）
 
 ### 盒模型
-就是用来装页面上的元素的矩形区域。CSS 中的盒子模型包括 IE 盒子模型和标准的 W3C 盒子模型。
+就是用来装页面上的元素的矩形区域。CSS盒子模型组成：外边距（margin）、边框（border）、内边距（padding）、内容（content）。CSS 中的盒子模型包括 IE 盒子模型和标准的 W3C 盒子模型。W3C模型中：CSS中的宽（width）=内容（content）的宽，CSS中的高（height）=内容（content）的高。IE模型中：CSS中的宽（width）= 内容（content）的宽 +（border + padding）* 2，CSS中的高（height）= 内容（content）的高 +（border + padding）* 2。
 
 ### CSS排版（layout）技术
-
 * 1代 正常流（放置盒的格式化上下文）
     * 行为：依次排列，排不下了换行。
         * 当遇到块级盒：排入块级格式化上下文，没有块格式化上下文，则创建一个
@@ -120,8 +133,7 @@
     * GFC(网格布局格式化上下文)
 * 3.5代 [CSS Houdini](https://juejin.cn/post/6844903701971206158)
 
-### flex常用语法
-
+### [flex](https://www.ruanyifeng.com/blog/2015/07/flex-grammar.html)常用语法
 * flex-direction：决定主轴的方向（即项目的排列方向）
     * row（默认值）：主轴为水平方向，起点在左端
     * row-reverse：主轴为水平方向，起点在右端
@@ -148,14 +160,13 @@
 
 ### [视觉格式化模型](https://juejin.cn/post/6844903855847637005)
 CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(CSS basic box model) 将 文档(doucment) 中的元素转换一个个盒子的实际算法。官方说法就是： 它规定了用户端在媒介中如何处理文档树( document tree )。
-### line-height的继承问题
 
+### line-height的继承问题
 * 写具体数值，如30px， 则继承该值
 * 写比例，如2/1.5,则继承该比例
 * 写百分比，如200%，则继承计算出来的值
 
 ### 手写clearFloat
-
 ```css
 .clear-float::after{
     content: '';
@@ -174,20 +185,17 @@ CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(
 }
 ```
 ### margin负值问题
-
 * margin-left和margin-top负值，元素向左和向上移动
 * margin-right负值，右侧元素左移，自身不受影响
 * margin-bottom负值，下方元素上移，自身不受影响
 
 ### 水平居中
-
 * inine 元素: text-align: center
 * block元素: margin: auto;
 * absolute元素: left 50% + margin-left 负值
 * display: flex, justify-content: center
 
 ### 垂直居中
-
 * inline元素: line-height 的值等于height值
 * absolute元素: top 50% +margin-top负值
 * absolute元素: transform:translate(-50%, -50%)
@@ -195,7 +203,6 @@ CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(
 * display: flex; align-items: center;
 
 ### 1px边框解决方案
-
 * 产生的原因是DPR（设备像素比，window.devicePixelRatio=物理像素 /CSS像素）
 * IOS 8+，非安卓：border:0.5px solid #E5E5E5
 * 使用边框图片：border-image: url('./../../image/96.jpg') 2 repeat;
@@ -256,7 +263,6 @@ CSS 的视觉格式化模型(visual formatting model) 是根据 基础盒模型(
         border-color: @borderColor;
     }
 }
-
 .border-all(
 	@borderWidth: 1px; 
 	@borderStyle: solid; 
