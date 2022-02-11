@@ -1,5 +1,4 @@
 ### javascript
-
 | 语法（Grammar）           | 语义 | 运行时（Runtime）  |
 | ------------------------- | ---- | ----------------- |
 | 字面量（LIteral）         |      | 类型（Types）      |
@@ -14,43 +13,57 @@
 | 声明 |      |                   |
 
 ### 类型
+* 七种基本数据类型
+    * 数字（Number），整数或浮点数，例如： 42 或者 3.14159
+    * 字符串（String），字符串是一串表示文本值的字符序列，例如："Howdy" 
+    * 布尔值（Boolean），有2个值分别是：true 和 false
+    * null ， 一个表明 null 值的特殊关键字。 JavaScript 是大小写敏感的，因此 null 与 Null、NULL或变体完全不同
+    * undefined ，和 null 一样是一个特殊的关键字，undefined 表示变量未赋值时的属性
+    * 代表（[Symbol](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol)）(在 ECMAScript 6 中新添加的类型)，一种实例是唯一且不可改变的数据类型
+    * 任意精度的整数 ([BigInt](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt)) ，可以安全地存储和操作大整数，甚至可以超过数字的安全整数限制
+    ```js
+    //创建 bigint 的方式有两种:
+    //1.在一个整数字面量后面加 n
+    const bigint = 1234567890123456789012345678901234567890n; 
+    //2.调用 BigInt 函数
+    const sameBigint = BigInt("1234567890123456789012345678901234567890");
+    ```
+* 以及对象（Object）
 
-* Number（精度丢失问题）
-* String（字符集，编码方式）
-* Boolean
-* Object
-* Null
-* Undefined（void 0 生成undefined）
-* Symbol
-* BigInt： 是一种特殊的数字类型，它提供了对任意长度整数的支持
-```js
-//创建 bigint 的方式有两种:
+### [undefined与null的区别](https://www.ruanyifeng.com/blog/2014/03/undefined-vs-null.html)
+简单总结就是一句话，null：变量有值，这个值就是null，undefined：变量声明了，但没有赋值。
 
-//在一个整数字面量后面加 n
-const bigint = 1234567890123456789012345678901234567890n; 
-//调用 BigInt 函数
-const sameBigint = BigInt("1234567890123456789012345678901234567890");
-```
+### 类型转换
+* 定义：JavaScript是一种动态类型语言(dynamically typed language)。这意味着你在声明变量时可以不必指定数据类型，而数据类型会在代码执行时会根据需要自动转换。
+* 触发类型转换
+    * 字符串拼接
+    * ==
+    * if语句和逻辑运算
+* 类型转换规则
+![类型转换规则](https://github.com/lujiajian1/study-notes/blob/main/img/type-change.jpg)
 
 ### 判断数据类型的方法及原理
-
-* typeof 运算符
+* [typeof 运算符](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/typeof)
     * 识别所有值类型
     * 识别函数
     * 判断是否引用数据类型（不可在细分）
-* instanceof 运算符
+    ```js
+    console.log(typeof 42); //"number"
+    console.log(typeof 'blubber'); //"string"
+    console.log(typeof(true)); //"boolean"
+    console.log(typeof undeclaredVariable); //"undefined"
+    ```
+* [instanceof 运算符](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/instanceof)
     * instanceof 运算符用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上，所有说instanceof是基于原型链实现的
     ```js
     xialuo instanceof Stutent //true
     xialuo instanceof People //true
     xialuo instanceof Object //true
-
     [] instanceof Array //true
     [] instanceof Object //true
-
     {} instanceof Object //true
     ```
-* prototype
+* [prototype.toString()](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/toString) 方法返回一个表示该对象的字符串
     ```js
     alert(Object.prototype.toString.call(a) === ‘[object String]’) -------> true;
     alert(Object.prototype.toString.call(b) === ‘[object Number]’) -------> true;
@@ -61,32 +74,19 @@ const sameBigint = BigInt("1234567890123456789012345678901234567890");
     ```
 * jquery.type()
     ```js
-    jQuery.type( true ) === "boolean"
-    jQuery.type( 3 ) === "number"
-    jQuery.type( "test" ) === "string"
-    jQuery.type( function(){} ) === "function"
-    jQuery.type( [] ) === "array"
-    jQuery.type( new Date() ) === "date"
+    jQuery.type(true) === "boolean"
+    jQuery.type(3) === "number"
+    jQuery.type("test") === "string"
+    jQuery.type(function(){}) === "function"
+    jQuery.type([]) === "array"
+    jQuery.type(new Date()) === "date"
     ```
 
-### 精度丢失问题(0.2+0.1==! 0.3)
-
-https://github.com/haizlin/fe-interview/issues/80
-
-### 表达式
-
-* 运算符（优先级）和表达式
-* 类型转换
-    * 字符串拼接
-    * ==
-    * if语句和逻辑运算
-* 类型转换规则
-![类型转换规则](https://github.com/lujiajian1/study-notes/blob/main/img/type-change.jpg)
+### [精度丢失问题(0.2+0.1 !== 0.3)](https://github.com/haizlin/fe-interview/issues/80)
+简单概括就是：计算内部存储数据使用的是二进制，二进制能精确地表示位数有限且分母是2的倍数的小数，比如，1/2，1/4，1/6，1/8，1/10 等。但是我们日常生活中使用的是十进制，所以十进制中的0.2也就是1/5是无法在计算机二进制中精确表示的，所以 0.2+0.1 有精度丢失问题。
 
 ### 闭包
-
 ##### 闭包原理：[执行上下文和作用域链](https://juejin.cn/post/6844903858636849159#heading-0)
-
 ##### 作用域应用的特殊情况，有两种表现：
 
 * 函数作为返回值（闭包）
