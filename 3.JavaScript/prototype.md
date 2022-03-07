@@ -52,12 +52,12 @@ var newp = new People('张三');
 ##### 原型关系
 
 * 每个函数（构造函数、class） 都有显示原型 prototype
-* 每个实例都有隐式原型 \_\_proto\__ 
-* 实例的 __proto__ 指向对应函数（构造函数、class）的 prototype
+* 每个实例都有隐式原型 \__proto\__ 
+* 实例的 \__proto\__ 指向对应函数（构造函数、class）的 prototype
 ![原型关系](https://github.com/lujiajian1/study-notes/blob/main/img/prototype.png)
 
 #### 基于原型的执行规则
-现在自身属性和方法中寻找，如果找不到则自动去 __proto__ 中查找
+现在自身属性和方法中寻找，如果找不到则自动去 \__proto\__ 中查找
 
 ### 原型链
 原型对象等于另一个类型的实例，就形成原型链。
