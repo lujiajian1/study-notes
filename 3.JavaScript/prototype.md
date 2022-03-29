@@ -23,8 +23,9 @@ function people(name){
     return o;
 }
 var newp = people('张三');
+var newp = people('李四');
 ```
-* 构造函数：解决对象无法识别问题
+* 构造函数：解决工厂模式创建的对象无法识别问题
 ```js
 function People(name){
     this.name = name；
@@ -33,7 +34,7 @@ var newp = new People('张三');
 
 newp.constructor == People; // 以确保实例被标识为特定类型，相比于工厂模式，这是一个很大的好处
 ```
-* 原型模式: 每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含应该由特定引用类型的实例共享的属性和方法。实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。原来在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型。
+* 原型模式: 每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含所有实例共享的属性和方法。实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。构造函数模式中在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型。
 ```js
 function People(){
 }
@@ -42,7 +43,7 @@ People.prototype.sayName = function() { console.log(this.name)};
 var newp = new People();
 newp.sayName(); // "张三"
 ```
-* 构造函数 + 原型模式：构造函数模式用于定义实例属性，而原型模式用于定义方法和共享的属性。这样最大限度的节省了内存，又支持了向构造函数传参的能力，可谓是集两种模式之长。
+* 构造函数 + 原型模式：构造函数模式用于定义实例属性，而原型模式用于定义共享的属性和方法。这样最大限度的节省了内存，又支持了向构造函数传参的能力，可谓是集两种模式之长。
 ```js
 function People(name){
     this.name = name;
@@ -56,15 +57,43 @@ var newp = new People('张三');
 ```js
 // 假如我们想要创建一个具有额外方法的特殊数组，不能直接修改构造函数，就可以使用寄生模式
 function SpecialArray() {
+  // 创建数组
   var values = new Array();
+  // 添加值
   valuse.push.apply(values, arguments);
+  // 添加方法，不会污染原生构造函数 Array
   values.toPipedString = function() {
     return this.join('|');
   }
+  // 返回数组
   return values;
 }
 var colors = new SpecialArray('red', 'blue', 'green');
 console.log(colors.toPipedString()); // red|blue|green
+```
+
+#### 补充：new操作符具体干了什么
+1. 创建一个新对象
+2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
+3. 执行构造函数中的代码（为这个新对象添加属性）
+4. 返回新对象
+```js
+function _new(ctor, ...args) {
+  if (typeof ctor !== 'function') {
+    throw 'ctor must be a function';
+  }
+  // 创建新的对象
+  let newObj = new Object();
+  // 让新创建的对象可以访问构造函数原型（constructor.prototype）所在原型链上的属性；
+  newObj.__proto__ = Object.create(ctor.prototype);
+  // 将构造函数的作用域赋给新对象（this指向新对象）；
+  // 执行构造函数中的代码
+  let res = ctor.apply(newObj, [...args]);
+
+  let isObject = typeof res === 'object' && res !== null;
+  let isFunction = typeof res === 'function';
+  return isObject || isFunction ? res : newObj;
+}
 ```
 ##### 原型关系
 
@@ -74,10 +103,21 @@ console.log(colors.toPipedString()); // red|blue|green
 ![原型关系](https://github.com/lujiajian1/study-notes/blob/main/img/prototype.png)
 
 #### 基于原型的执行规则
-现在自身属性和方法中寻找，如果找不到则自动去 \_\_proto\_\_ 中查找
+先在实例自身属性和方法中寻找，如果找不到则自动去 \_\_proto\_\_ 中查找
 
 ### 原型链
 原型对象等于另一个类型的实例，就形成原型链。
+```js
+function People(){}
+People.prototype.eat = function(){}
+
+function Student(){}
+Student.prototype = new People();
+Student.prototype.sayHi = function(){}
+
+var xialuo = new Student()
+xialuo.eat();
+```
 ![原型链](https://github.com/lujiajian1/study-notes/blob/main/img/prototype-line.jpg)
 
 ### js实现继承的方法
@@ -298,40 +338,5 @@ const zhangsan = {
             console.log(this); //zhangsan 对象
         })
     }
-}
-```
-
-### bind,call,apply的[区别](https://juejin.cn/post/6844903496253177863)
-* apply 和 call 的区别：其实 apply 和 call 基本类似，他们的区别只是传入的参数不同，call 方法接受的是若干个参数列表，而 apply 接收的是一个包含多个参数的数组。
-```js
- b.apply(a,[1,2]); 
- b.call(a,1,2);
-```
-* bind 和 apply、call 区别：bind()方法创建一个新的函数, 当被调用时，将其this关键字设置为提供的值，在调用新函数时，在任何提供之前提供一个给定的参数序列，所以bind 是创建一个新的函数，我们必须要手动去调用，bind和apply一样也是接受的若干个参数列表。
-```js
-b.bind(a,1,2)() 
-```
-
-### new操作符具体干了什么
-1. 创建一个新对象
-2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
-3. 执行构造函数中的代码（为这个新对象添加属性）
-4. 返回新对象
-```js
-function _new(ctor, ...args) {
-  if (typeof ctor !== 'function') {
-    throw 'ctor must be a function';
-  }
-  // 创建新的对象
-  let newObj = new Object();
-  // 让新创建的对象可以访问构造函数原型（constructor.prototype）所在原型链上的属性；
-  newObj.__proto__ = Object.create(ctor.prototype);
-  // 将构造函数的作用域赋给新对象（this指向新对象）；
-  // 执行构造函数中的代码
-  let res = ctor.apply(newObj, [...args]);
-
-  let isObject = typeof res === 'object' && res !== null;
-  let isFunction = typeof res === 'function';
-  return isObject || isFunction ? res : newObj;
 }
 ```
