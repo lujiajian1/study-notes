@@ -6,8 +6,8 @@
 ##### 创建对象的方式
 * 使用原生构造函数创建对象
 ```js
-var o = new Object();
-o.name = '张三'；
+var o = new Object(); // 创建 Object 的一个新的实例
+o.name = '张三'; // 添加属性或者方法
 ```
 * 使用对象字面量
 ```js
@@ -15,30 +15,34 @@ var o = {
     name: '张三'
 }
 ```
-* 工厂模式
+* 工厂模式：使用构造函数或对象字面量创建对象，创建具有同样接口的多个对象需要重复编写很多代码，所以产生了工厂模式。
 ```js
-function people(){
+function people(name){
     var o = new Object();
-    o.name = '张三'；
+    o.name = name；
     return o;
 }
-var newp = people();
+var newp = people('张三');
 ```
 * 构造函数：解决对象无法识别问题
 ```js
-function People(){
-    this.name = '张三'；
+function People(name){
+    this.name = name；
 }
-var newp = new People();
+var newp = new People('张三');
+
+newp.constructor == People; // 以确保实例被标识为特定类型，相比于工厂模式，这是一个很大的好处
 ```
-* 原型模式（每一个函数都有一个prototype 原型对象）：解决公共属性重复声明问题
+* 原型模式: 每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含应该由特定引用类型的实例共享的属性和方法。实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。原来在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型。
 ```js
 function People(){
 }
 People.prototype.name = '张三'；
+People.prototype.sayName = function() { console.log(this.name)};
 var newp = new People();
+newp.sayName(); // "张三"
 ```
-* 构造函数 + 原型模式
+* 构造函数 + 原型模式：构造函数模式用于定义实例属性，而原型模式用于定义方法和共享的属性。这样最大限度的节省了内存，又支持了向构造函数传参的能力，可谓是集两种模式之长。
 ```js
 function People(name){
     this.name = name;
@@ -48,7 +52,20 @@ People.prototype.sayName = function() {
 }；
 var newp = new People('张三');
 ```
-* 寄生构造函数模式（类似工厂模式，目的是防止污染原生构造函数时如：Array、Object）
+* 寄生构造函数模式（类似工厂模式，目的是防止污染原生构造函数如：Array、Object）
+```js
+// 假如我们想要创建一个具有额外方法的特殊数组，不能直接修改构造函数，就可以使用寄生模式
+function SpecialArray() {
+  var values = new Array();
+  valuse.push.apply(values, arguments);
+  values.toPipedString = function() {
+    return this.join('|');
+  }
+  return values;
+}
+var colors = new SpecialArray('red', 'blue', 'green');
+console.log(colors.toPipedString()); // red|blue|green
+```
 ##### 原型关系
 
 * 每个函数（构造函数、class） 都有显示原型 prototype
