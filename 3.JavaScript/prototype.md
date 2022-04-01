@@ -8,11 +8,21 @@
 ```js
 var o = new Object(); // 创建 Object 的一个新的实例
 o.name = '张三'; // 添加属性或者方法
+var o1 = new Object();
+o1.name = '李四';
+var o2 = new Object();
+o2.name = '王五';
 ```
 * 使用对象字面量
 ```js
 var o = {
     name: '张三'
+}
+var o1 = {
+    name: '李四'
+}
+var o2 = {
+    name: '王五'
 }
 ```
 * 工厂模式：使用构造函数或对象字面量创建对象，创建具有同样接口的多个对象需要重复编写很多代码，所以产生了工厂模式。
@@ -22,26 +32,37 @@ function people(name){
     o.name = name；
     return o;
 }
-var newp = people('张三');
-var newp = people('李四');
+var newp1 = people('张三');
+var newp2 = people('李四');
+var newp3 = people('王五');
 ```
 * 构造函数：解决工厂模式创建的对象无法识别问题
 ```js
 function People(name){
-    this.name = name；
+    this.name = name;
+    this.sayName = function(){
+      console.log(this.name);
+    }
 }
 var newp = new People('张三');
+var newp1 = new People('李四');
 
 newp.constructor == People; // 以确保实例被标识为特定类型，相比于工厂模式，这是一个很大的好处
+
+newp.sayName === newp1.sayName; // false 同样的function，内存中被创建了多次，每个实例都会创建，所有有了原型模式
 ```
 * 原型模式: 每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含所有实例共享的属性和方法。实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。构造函数模式中在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型。
 ```js
 function People(){
 }
-People.prototype.name = '张三'；
+People.prototype.name = '张三';
 People.prototype.sayName = function() { console.log(this.name)};
 var newp = new People();
 newp.sayName(); // "张三"
+
+var newp1 = new People();
+
+newp.sayName === newp1.sayName; // true sayName内存中只创建了一次
 ```
 * 构造函数 + 原型模式：构造函数模式用于定义实例属性，而原型模式用于定义共享的属性和方法。这样最大限度的节省了内存，又支持了向构造函数传参的能力，可谓是集两种模式之长。
 ```js
@@ -52,6 +73,7 @@ People.prototype.sayName = function() {
     console.log(this.name);
 }；
 var newp = new People('张三');
+var newp1 = new People('李四');
 ```
 * 寄生构造函数模式（类似工厂模式，目的是防止污染原生构造函数如：Array、Object）
 ```js
@@ -94,6 +116,17 @@ function _new(ctor, ...args) {
   let isFunction = typeof res === 'function';
   return isObject || isFunction ? res : newObj;
 }
+
+function people(name, age) {
+  this.name = name;
+  this.age = age;
+  this.saySome = function(){
+    console.log(this.name + '今年' + this.age);
+  }
+};
+
+var newp = _new(people, '张三', 18);
+newp.saySome(); // 张三今年18
 ```
 ##### 原型关系
 
@@ -109,10 +142,12 @@ function _new(ctor, ...args) {
 原型对象等于另一个类型的实例，就形成原型链。
 ```js
 function People(){}
-People.prototype.eat = function(){}
+People.prototype.eat = function(){
+  console.log('People 的 eat 方法被执行');
+}
 
 function Student(){}
-Student.prototype = new People();
+Student.prototype = new People(); // Student 的原型对象是 People 的实例
 Student.prototype.sayHi = function(){}
 
 var xialuo = new Student()
@@ -124,12 +159,19 @@ xialuo.eat();
 
 * 原型链继承：将父类的实例作为子类的原型
 ```js
-function Cat(){ 
+function Animal() {
+  this.sayHi = function(){
+    console.log('hello, world!');
+  }
+}
+function Cat(){
+  this.name = 'cat';
 }
 Cat.prototype = new Animal();
-Cat.prototype.name = 'cat';
+var newCat = new Cat();
+newCat.sayHi(); // hello, world!
 ```
-* class 继承
+* class 继承：class 用 extends 实现继承
 ```js
 class People { //类首字母要大写
     constructor(name) {
@@ -141,32 +183,67 @@ class People { //类首字母要大写
 }
 //子类
 class Student extends People {
-    constructor(number){
+    constructor(name,number){
         super(name);
         this.number = number;
     }
     sayHi(){
-        console.log(`姓名：${this.name} 学号：${this.Number}`)
+        console.log(`姓名：${this.name} 学号：${this.number}`)
     }
 }
+
+var xialuo = new Student('夏洛','001');
+xialuo.sayHi(); // 姓名：夏洛 学号：001
+xialuo.eat(); // 夏洛 eat something
 ```
 * 构造继承：使用父类的构造函数来增强子类实例，等于是复制父类的实例属性给子类（没用到原型）
 ```js
+function Animal(){
+  this.sayHi = function(){
+    console.log(this.name + 'hello, world!');
+  }
+}
+Animal.prototype.sayName = function(){
+  console.log(this.name)
+}
 function Cat(name){
   Animal.call(this);
   this.name = name || 'Tom';
 }
+
+var newCat = new Cat('夏洛');
+newCat.sayHi(); // 夏洛hello, world!
+newCat.sayName(); // 报错：newCat.sayName is not a function 没用到原型
 ```
-* 实例继承：为父类实例添加新特性，作为子类实例返回
+* 实例继承：为父类实例添加新特性，作为子类实例返回，可以访问父类原型中的属性和方法
 ```js
+function Animal(){
+  this.sayHi = function(){
+    console.log(this.name + 'hello, world!');
+  }
+}
+Animal.prototype.sayName = function(){
+  console.log(this.name)
+}
 function Cat(name){
   var instance = new Animal();
   instance.name = name || 'Tom';
   return instance;
 }
+var newCat = new Cat('夏洛');
+newCat.sayHi(); // 夏洛hello, world!
+newCat.sayName(); // 夏洛
 ```
 * 拷贝继承
 ```js
+function Animal(){
+  this.sayHi = function(){
+    console.log(this.name + 'hello, world!');
+  }
+}
+Animal.prototype.sayName = function(){
+  console.log(this.name)
+}
 function Cat(name){
   var animal = new Animal();
   for(var p in animal){
@@ -174,18 +251,34 @@ function Cat(name){
   }
   Cat.prototype.name = name || 'Tom';
 }
+var newCat = new Cat('夏洛');
+newCat.sayHi(); // 夏洛hello, world!
+newCat.sayName(); // 夏洛
 ```
 * 组合继承：通过调用父类构造，继承父类的属性并保留传参的优点，然后通过将父类实例作为子类原型，实现函数复用
 ```js
+function Animal(){}
+Animal.prototype.sayHi = function(){
+  console.log(this.name + 'hello, world!');
+}
 function Cat(name){
   Animal.call(this);
   this.name = name || 'Tom';
 }
 Cat.prototype = new Animal();
 Cat.prototype.constructor = Cat;
+var newCat = new Cat('夏洛');
+newCat.sayHi(); // 夏洛hello, world!
+var newCat1 = new Cat('马冬梅');
+newCat1.sayHi(); // 马冬梅hello, world!
+newCat.sayHi === newCat1.sayHi; // true
 ```
 * 寄生组合继承：通过寄生方式，砍掉父类的实例属性，这样，在调用两次父类的构造的时候，就不会初始化两次实例方法/属性，避免的组合继承的缺点
 ```js
+function Animal(){}
+Animal.prototype.sayHi = function(){
+  console.log(this.name + 'hello, world!');
+}
 function Cat(name){
   Animal.call(this);
   this.name = name || 'Tom';
@@ -197,6 +290,8 @@ function Cat(name){
   //将实例作为子类的原型
   Cat.prototype = new Super();
 })();
+var newCat = new Cat('夏洛');
+newCat.sayHi(); // 夏洛hello, world!
 ```
 
 ### ES6 class
@@ -219,14 +314,17 @@ class People { //类首字母要大写
 }
 //子类
 class Student extends People {
-    constructor(number){
+    constructor(name,number){
         super(name);
         this.number = number;
     }
     sayHi(){
-        console.log(`姓名：${this.name} 学号：${this.Number}`)
+        console.log(`姓名：${this.name} 学号：${this.number}`)
     }
 }
+var xialuo = new Student('夏洛','001');
+xialuo.sayHi(); // 姓名：夏洛 学号：001
+xialuo.eat(); // 夏洛 eat something
 ```
 
 ##### [class语法糖](https://juejin.cn/post/6844903638674980872)
