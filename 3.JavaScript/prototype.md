@@ -25,7 +25,7 @@ var o2 = {
     name: '王五'
 }
 ```
-* 工厂模式：使用构造函数或对象字面量创建对象，创建具有同样接口的多个对象需要重复编写很多代码，所以产生了工厂模式。
+* 工厂模式：使用原生构造函数或对象字面量创建对象，创建具有同样接口的多个对象需要重复编写很多代码，所以产生了工厂模式。
 ```js
 function people(name){
     var o = new Object();
@@ -47,7 +47,7 @@ function People(name){
 var newp = new People('张三');
 var newp1 = new People('李四');
 
-newp.constructor == People; // 以确保实例被标识为特定类型，相比于工厂模式，这是一个很大的好处
+newp.constructor == People; // true 以确保实例被标识为特定类型，相比于工厂模式，这是一个很大的好处
 
 newp.sayName === newp1.sayName; // false 同样的function，内存中被创建了多次，每个实例都会创建，所有有了原型模式
 ```
@@ -63,6 +63,7 @@ newp.sayName(); // "张三"
 var newp1 = new People();
 
 newp.sayName === newp1.sayName; // true sayName内存中只创建了一次
+newp.name === newp1.name; // true '张三' 实例属性无法定制，这是原型模式的缺点
 ```
 * 构造函数 + 原型模式：构造函数模式用于定义实例属性，而原型模式用于定义共享的属性和方法。这样最大限度的节省了内存，又支持了向构造函数传参的能力，可谓是集两种模式之长。
 ```js
@@ -74,6 +75,8 @@ People.prototype.sayName = function() {
 }；
 var newp = new People('张三');
 var newp1 = new People('李四');
+newp.sayName === newp1.sayName; // true
+newp.name === newp1.name; // false
 ```
 * 寄生构造函数模式（类似工厂模式，目的是防止污染原生构造函数如：Array、Object）
 ```js
@@ -94,7 +97,7 @@ var colors = new SpecialArray('red', 'blue', 'green');
 console.log(colors.toPipedString()); // red|blue|green
 ```
 
-#### 补充：new操作符具体干了什么
+#### 补充：构造函数 new 操作符具体干了什么
 1. 创建一个新对象
 2. 将构造函数的作用域赋给新对象（因此this指向了这个新对象）
 3. 执行构造函数中的代码（为这个新对象添加属性）
@@ -135,7 +138,7 @@ newp.saySome(); // 张三今年18
 * 实例的 \_\_proto\_\_ 指向对应函数（构造函数、class）的 prototype
 ![原型关系](https://github.com/lujiajian1/study-notes/blob/main/img/prototype.png)
 
-#### 基于原型的执行规则
+#### 实例基于原型的执行规则
 先在实例自身属性和方法中寻找，如果找不到则自动去 \_\_proto\_\_ 中查找
 
 ### 原型链
@@ -383,8 +386,6 @@ class B extends A {
 
 let b = new B();
 ```
-
-##### ES6 与 ES5 继承的[区别](https://juejin.cn/post/6844903924015120397)
 
 ### this
 this的值不是在函数定义的时候决定的，而是在函数执行的时候决定的
