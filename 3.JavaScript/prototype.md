@@ -327,7 +327,7 @@ xialuo.sayHi(); // 姓名：夏洛 学号：001
 xialuo.eat(); // 夏洛 eat something
 ```
 
-##### [class语法糖](https://juejin.cn/post/6844903638674980872)
+##### [class语法糖](https://juejin.cn/post/7085726930808340510/)
 * constructor 方法是类的构造函数，是一个默认方法，通过 new 命令创建对象实例时，自动调用该方法。一个类必须有 constructor 方法，如果没有显式定义，一个默认的 consructor 方法会被默认添加。
 ```js
 function Point(x, y) {
