@@ -2092,4 +2092,4 @@ var maxProfit = function (prices) {
 * [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大 O 阶表示，即 T(n)=O(f(n))，其中 n 为问题规模，也就是问题的大小。
 * [归并排序、快速排序、希尔排序、堆排序](https://juejin.cn/post/6844903895789993997)
 * 常用排序算法稳定性、时间复杂度分析
-![on](https://github.com/lujiajian1/study-notes/blob/main/img/on.jpg)
+![on](https://github.com/lujiajian1/study-notes/blob/main/img/on.png)
