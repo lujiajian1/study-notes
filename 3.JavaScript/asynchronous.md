@@ -2,24 +2,25 @@
 
 # 了解异步
 ### 单线程和异步
-* js是单线程语言，只能同时做一件事
-* 浏览器和node.js支持js启动 进程（webWorker），但是js依然是单线程
-* js和DOM渲染共用同一线程，因为js可修改DOM结构
-* 遇到等待（定时器，网络请求）不能卡住，启动异步，回调callback函数
+* js 是单线程语言，只能同时做一件事
+* 浏览器和 node.js 支持 js 启动进程（webWorker），但是 js 依然是单线程
+* js 和 DOM 渲染共用同一线程，因为 js 可修改 DOM 结构
+* 遇到等待（定时器，网络请求）不能卡住，启动异步，回调 callback 函数
 
 ### 异步和同步
-* JS是单线程语言
+* JS 是单线程语言
 * 异步不会阻塞代码执行
-* 同步会阻塞代码执行。
+* 同步会阻塞代码执行
 
 ### 异步应用场景
-* 网络请求，如ajax、图片加载
-* 定时任务，如setTimeout
+* 网络请求，如 ajax、图片加载
+* 定时任务，如 setTimeout
 
 ### 异步的本质
+* js 还是单线程，异步还是基于 event loop
 * async/await 是消灭异步回调的终极武器
-* js还是单线程，异步还是基于 event loop
 * async/await 是一个语法糖，但是这个语法糖特别香
+
 ### XMLHttpRequest
 ```js
 const xhr = new XMLHttpRequest()
@@ -45,14 +46,44 @@ xhr.readuState
 3：交互，正在解析响应内容
 4：完成，响应内容解析完成，可以再客户端调用
 
-# promise
+# Promise
 
-### 什么是promise：promise解决callback hell的问题
+### 什么是promise：promise解决 callback hell（回调地狱）的问题
 ```js
+const url1 = 'https://img.mukewang.com/5a9fc8070001a82402060220-100-100.jpg'
+const url2 = 'https://img.mukewang.com/5a9fc8070001a82402060220-160-140.jpg'
+const url3 = 'https://img.mukewang.com/5a9fc8070001a82402060220-100-100.jpg'
+const url4 = 'https://img.mukewang.com/5a9fc8070001a82402060220-160-140.jpg'
+
+// 使用回调
+const loadImg = (src, callback) => {
+    const img = document.createElement('img');
+    img.onload = (e) => {
+        callback(e.target);
+    }
+    img.src = src
+}
+loadImg(url1, (img) => {
+    console.log(img.width);
+    loadImg(url2, (img) => {
+        console.log(img.width)
+        loadImg(url3, (img) => {
+            console.log(img.width)
+            loadImg(url4, (img) => {
+                console.log(img.width)
+                console.log('done');
+                // 如果继续回调的话，会一直嵌套下去，形成回调地狱
+            })
+        })
+    })
+})
+
+
+// 使用Promise
 function loadImg(src) {
     const p = new Promise(
         (resolve, reject) => {
-            const img = document.createElement('img')
+            const img = document.createElement('img');
             img.onload = () => {
                 resolve(img)
             }
@@ -65,9 +96,6 @@ function loadImg(src) {
     )
     return p
 }
-
-const url1 = 'https://img.mukewang.com/5a9fc8070001a82402060220-140-140.jpg'
-const url2 = 'https://img3.mukewang.com/5a9fc8070001a82402060220-100-100.jpg'
 
 loadImg(url1).then(img1 => {
     console.log(img1.width)
@@ -82,17 +110,17 @@ loadImg(url1).then(img1 => {
     console.log(img2.height)
 }).catch(ex => console.error(ex))
 ```
-### 三种状态
-* pending resolved rejected
-* pending ----->resolved 或 pending ----->rejected
+### Promise 三种状态
+* 三种状态：pending resolved rejected
+* 状态变化：pending ----->resolved 或 pending ----->rejected
 * 变化不可逆
 
-### 状态表现
+### Promise 状态表现
 * pending状态，不会出发then和catch
 * resolved状态，会触发后续的then回调函数
 * rejected状态，会出发后续的catch回调函数
 
-### then和catch改变状态
+### Promise 的 then 和 catch 改变状态
 * then正常返回resolved，里面有报错则返回rejected
 * catch正常返回resolved，里面有报错则返回rejected
 
@@ -166,10 +194,20 @@ var p1=new Promise((resolve,rej) => {
 
 ### async/await
 * 执行 async 函数返回的是 Promise 对象
-* await 相当于 Promise的 then
+* await 相当于 Promise 的 then
 * try...catch...可捕获异常，代替 Promise 的 catch
-# 微任务和宏任务
+```js
+const getData = async () => {
+    try {
+        const res = await fetchData();
+        const { data } = res;
+    } catch (e) {
+        console.log('page data fetch error ', e);
+    }
+}
+```
 
+# 微任务和宏任务
 * 宏任务：setTimeout，setInterval, Ajax, DOM事件
 * 微任务：Promise async/await MutationObserver
 * 微任务执行时机比宏任务要早：微任务（ES6语法规定）DOM渲染前触发，宏任务（浏览器规定）DOM渲染后触发
@@ -188,8 +226,8 @@ var p1=new Promise((resolve,rej) => {
 * 同步代码，一行一行放在 call stack(调用栈) 中执行
 * 遇到异步，先“记录”下，等待时间（定时，网络请求等）
 * 时机到了，就移动到 calllback queue（回调队列）
-* 如果call stack 为空（即同步代码执行完），event loop开始工作
-* 轮询查找callback queue，如有则移动到call stack 执行
+* 如果call stack 为空（即同步代码执行完），event loop 开始工作
+* 轮询查找 callback queue，如有则移动到call stack 执行
 * 继续轮询查找（永动机一样） 
 
 ```js
@@ -214,7 +252,7 @@ console.log('Bye');
 
 ### event loop  和 DOM 渲染
 * 每次 Call Stack 清空（即每次轮询结束），即同步任务执行完成
-* 都是DOM重新渲染的机会，DOM结构如有改变则重新渲染
+* 都是DOM重新渲染的机会（DOM结构如有改变则重新渲染）
 * 然后再去触发下一次的 event loop
 
 ### 结合DOM渲染，微任务执行的 event loop 示意图
