@@ -1,5 +1,6 @@
 ## React 基本概念
 总的来说：React 的中文含义是“反应”或“响应”，它描述了 React 这样一个前端框架的核心原理：当数据发生变化时，UI 能够自动把变化反映出来。在react之前，更新 UI 的方式是通过基于浏览器 DOM 的 API，去精细地控制 DOM 节点的创建、修改和删除，为了保证 UI 和数据的一致性，我们需要非常繁琐并且小心的处理 DOM 节点的变更。
+
 React核心的三个概念：组件、状态和 JSX。下面我们分别来看。
 ## JSX 简介
 ### 什么是JSX
@@ -10,6 +11,7 @@ const element = <h1>Hello, world!</h1>;
 
 ### 理解 JSX 语法的本质
 从本质上来说，JSX 并不是一个新的模板语言，而可以认为是一个语法糖。也就是说，不用 JSX 的写法，使用React.createElement也是能够写React 的。
+
 React.createElement 这样一个 API，它的作用就是创建一个组件的实例。此外，这个 API 会接收一组参数：
 * 第一个参数表示组件的类型；
 * 第二个参数是传给组件的属性，也就是 props；
@@ -480,6 +482,7 @@ const listItems = numbers.map((number) =>
 ```
 ### key
 key 帮助 React 识别哪些元素改变了，比如被添加或删除。因此你应当给数组中的每一个元素赋予一个确定的标识。key 值在兄弟节点之间必须唯一。一个元素的 key 最好是这个元素在列表中拥有的一个独一无二的字符串。通常，我们使用数据中的 id 来作为元素的 key。当元素没有确定 id 的时候，万不得已你可以使用元素索引 index 作为 key。如果列表项目的顺序可能会变化，我们不建议使用索引来用作 key 值，因为这样做会导致性能变差，还可能引起组件状态的问题。
+
 [深度解析使用索引作为 key 的负面影响](https://robinpokorny.medium.com/index-as-a-key-is-an-anti-pattern-e0349aece318)
 [深入解析为什么 key 是必须的](https://zh-hans.reactjs.org/docs/reconciliation.html#recursing-on-children)
 ```jsx
