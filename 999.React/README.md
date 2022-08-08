@@ -187,7 +187,7 @@ State 与 props 类似，但是 state 是私有的，并且完全受控于当前
 * [static getDerivedStateFromError()](https://zh-hans.reactjs.org/docs/react-component.html#static-getderivedstatefromerror)
 * [componentDidCatch()](https://zh-hans.reactjs.org/docs/react-component.html#componentdidcatch)
 
-![lifecycles](https://github.com/lujiajian1/study-notes/blob/main/img/lifecycles.jpg)
+![lifecycles](https://github.com/lujiajian1/study-notes/blob/main/img/lifecycles.png)
 ### 正确使用State
 1. 不要直接修改 State，而是应该使用 setState()，另外构造函数是唯一可以给 this.state 赋值的地方
 2. State 的更新可能是异步的。出于性能考虑，React 可能会把多个 setState() 调用合并成一个调用。因为 this.props 和 this.state 可能会异步更新，所以你不要依赖他们的值来更新下一个状态。要解决这个问题，可以让 setState() 接收一个函数。这个函数用上一个 state 作为第一个参数，将此次更新被应用时的props 做为第二个参数。
