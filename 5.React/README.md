@@ -6,7 +6,7 @@ React核心的三个概念：组件、状态和 JSX。下面我们分别来看�
 ### 什么是JSX
 这个有趣的标签语法既不是字符串也不是 HTML，它是 JSX，是一个 JavaScript 的语法扩展，JSX 可以生成 React “元素”
 ```jsx
-const element = <h1>Hello, world!</h1>;
+const element = <h1>Hello, world!!</h1>;
 ```
 
 ### 理解 JSX 语法的本质
