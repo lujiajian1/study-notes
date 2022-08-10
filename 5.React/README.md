@@ -749,7 +749,35 @@ class MyComponent extends React.Component {
 }
 ```
 
-## Refs 转发
+## Refs and the DOM
+Refs 提供了一种方式，允许我们访问 DOM 节点或在 render 方法中创建的 React 元素。
+
+在典型的 React 数据流中，props 是父组件与子组件交互的唯一方式。要修改一个子组件，你需要使用新的 props 来重新渲染它。但是，在某些情况下，你需要在典型数据流之外强制修改子组件。被修改的子组件可能是一个 React 组件的实例，也可能是一个 DOM 元素。
+### 何时使用 Refs
+* 管理焦点，文本选择或媒体播放。
+* 触发强制动画。
+* 集成第三方 DOM 库。
+### 勿过度使用 Refs
+你可能首先会想到使用 refs 在你的 app 中“让事情发生”。如果是这种情况，请花一点时间，认真再考虑一下 state 属性应该被安排在哪个组件层中。通常你会想明白，让更高的组件层级拥有这个 state，是更恰当的。
+```jsx
+// 创建 Refs
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+  render() {
+    return <div ref={this.myRef} />;
+  }
+}
+// 访问 Refs
+const node = this.myRef.current;
+```
+
+### 将 DOM Refs 暴露给父组件
+在极少数情况下，你可能希望在父组件中引用子节点的 DOM 节点。通常不建议这样做，因为它会打破组件的封装，但它偶尔可用于触发焦点或测量子 DOM 节点的大小或位置。如果你使用 16.3 或更高版本的 React, 这种情况下我们推荐使用 ref 转发。Ref 转发使组件可以像暴露自己的 ref 一样暴露子组件的 ref。
+
+### Refs 转发
 Ref 转发是一项将 ref 自动地通过组件传递到其一子组件的技巧。对于大多数应用中的组件来说，这通常不是必需的。但其对某些组件，尤其是可重用的组件库是很有用的。
 ```jsx
 // 我们通过调用 React.createRef 创建了一个 React ref 并将其赋值给 ref 变量。
@@ -768,20 +796,238 @@ const ref = React.createRef();
 <FancyButton ref={ref}>Click me!</FancyButton>;
 ```
 
+## 高阶组件（HOC）
+高阶组件是参数为组件，返回值为新组件的函数。HOC 不会修改传入的组件，也不会使用继承来复制其行为。相反，HOC 通过将组件包装在容器组件中来组成新组件。HOC 是纯函数，没有副作用。被包装组件接收来自容器组件的所有 prop，同时也接收一个新的用于 render 的 data prop。HOC 不需要关心数据的使用方式或原因，而被包装组件也不需要关心数据是怎么来的。
+```js
+const EnhancedComponent = higherOrderComponent(WrappedComponent);
+```
 
+## Portals
+Portal 提供了一种将子节点渲染到存在于父组件以外的 DOM 节点的优秀的方案。一个 portal 的典型用例是当父组件有 overflow: hidden 或 z-index 样式时，但你需要子组件能够在视觉上“跳出”其容器。例如，对话框、悬浮卡以及提示框。
+```js
+// 第一个参数（child）是任何可渲染的 React 子元素，例如一个元素，字符串或 fragment。第二个参数（container）是一个 DOM 元素。
+ReactDOM.createPortal(child, container)
 
+// 示例
+render() {
+  // React 并*没有*创建一个新的 div。它只是把子元素渲染到 `domNode` 中。
+  // `domNode` 是一个可以在任何位置的有效 DOM 节点。
+  return ReactDOM.createPortal(
+    this.props.children,
+    domNode
+  );
+}
+```
 
+### 通过 Portal 进行事件冒泡
+尽管 portal 可以被放置在 DOM 树中的任何地方，但在任何其他方面，其行为和普通的 React 子节点行为一致。由于 portal 仍存在于 React 树， 且与 DOM 树 中的位置无关，那么无论其子节点是否是 portal，像 context 这样的功能特性都是不变的。
 
+这包含事件冒泡。一个从 portal 内部触发的事件会一直冒泡至包含 React 树的祖先，即便这些元素并不是 DOM 树 中的祖先。假设存在如下 HTML 结构：
+```jsx
+<html>
+  <body>
+    <div id="app-root"></div>
+    <div id="modal-root"></div>
+  </body>
+</html>
 
+// 在 #app-root 里的 Parent 组件能够捕获到未被捕获的从兄弟节点 #modal-root 冒泡上来的事件。
 
+// 在 DOM 中有两个容器是兄弟级 （siblings）
+const appRoot = document.getElementById('app-root');
+const modalRoot = document.getElementById('modal-root');
 
+class Modal extends React.Component {
+  constructor(props) {
+    super(props);
+    this.el = document.createElement('div');
+  }
 
+  componentDidMount() {
+    // 在 Modal 的所有子元素被挂载后，
+    // 这个 portal 元素会被嵌入到 DOM 树中，
+    // 这意味着子元素将被挂载到一个分离的 DOM 节点中。
+    // 如果要求子组件在挂载时可以立刻接入 DOM 树，
+    // 例如衡量一个 DOM 节点，
+    // 或者在后代节点中使用 ‘autoFocus’，
+    // 则需添加 state 到 Modal 中，
+    // 仅当 Modal 被插入 DOM 树中才能渲染子元素。
+    modalRoot.appendChild(this.el);
+  }
 
+  componentWillUnmount() {
+    modalRoot.removeChild(this.el);
+  }
 
+  render() {
+    return ReactDOM.createPortal(
+      this.props.children,
+      this.el
+    );
+  }
+}
 
+class Parent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {clicks: 0};
+    this.handleClick = this.handleClick.bind(this);
+  }
 
+  handleClick() {
+    // 当子元素里的按钮被点击时，
+    // 这个将会被触发更新父元素的 state，
+    // 即使这个按钮在 DOM 中不是直接关联的后代
+    this.setState(state => ({
+      clicks: state.clicks + 1
+    }));
+  }
 
+  render() {
+    return (
+      <div onClick={this.handleClick}>
+        <p>Number of clicks: {this.state.clicks}</p>
+        <p>
+          Open up the browser DevTools
+          to observe that the button
+          is not a child of the div
+          with the onClick handler.
+        </p>
+        <Modal>
+          <Child />
+        </Modal>
+      </div>
+    );
+  }
+}
 
+function Child() {
+  // 这个按钮的点击事件会冒泡到父元素
+  // 因为这里没有定义 'onClick' 属性
+  return (
+    <div className="modal">
+      <button>Click</button>
+    </div>
+  );
+}
+
+ReactDOM.render(<Parent />, appRoot);
+```
+
+## Profiler API
+Profiler 测量渲染一个 React 应用多久渲染一次以及渲染一次的“代价”。 它的目的是识别出应用中渲染较慢的部分。Profiling 增加了额外的开支，所以它在生产构建中会被禁用。
+
+### 用法
+Profiler 能添加在 React 树中的任何地方来测量树中这部分渲染所带来的开销。 它需要两个 prop ：一个是 id(string)，一个是当组件树中的组件“提交”更新的时候被React调用的回调函数 onRender(function)。
+```jsx
+// 分析 Navigation 组件和它的子代
+render(
+  <App>
+    <Profiler id="Navigation" onRender={callback}>
+      <Navigation {...props} />
+    </Profiler>
+    <Main {...props} />
+  </App>
+);
+```
+
+### onRender 回调
+Profiler 需要一个 onRender 函数作为参数。 React 会在 profile 包含的组件树中任何组件 “提交” 一个更新的时候调用这个函数。 它的参数描述了渲染了什么和花费了多久。
+```js
+function onRenderCallback(
+  id, // 发生提交的 Profiler 树的 “id”
+  phase, // "mount" （如果组件树刚加载） 或者 "update" （如果它重渲染了）之一
+  actualDuration, // 本次更新 committed 花费的渲染时间
+  baseDuration, // 估计不使用 memoization 的情况下渲染整颗子树需要的时间
+  startTime, // 本次更新中 React 开始渲染的时间
+  commitTime, // 本次更新中 React committed 的时间
+  interactions // 属于本次更新的 interactions 的集合
+) {
+  // 合计或记录渲染时间。。。
+}
+```
+
+## React 的 “diffing” 算法
+### 设计动力
+在某一时间节点调用 React 的 render() 方法，会创建一棵由 React 元素组成的树。在下一次 state 或 props 更新时，相同的 render() 方法会返回一棵不同的树。React 需要基于这两棵树之间的差别来判断如何有效率的更新 UI 以保证当前 UI 与最新的树保持同步。
+
+这个算法问题有一些通用的解决方案，即生成将一棵树转换成另一棵树的最小操作数。 然而，即使在[最前沿的算法](https://grfia.dlsi.ua.es/ml/algorithms/references/editsurvey_bille.pdf)中，该算法的复杂程度为 O(n 3 )，其中 n 是树中元素的数量。
+
+如果在 React 中使用了该算法，那么展示 1000 个元素所需要执行的计算量将在十亿的量级范围。这个开销实在是太过高昂。于是 React 在以下两个假设的基础之上提出了一套 O(n) 的启发式算法：
+1. 两个不同类型的元素会产生出不同的树；
+2. 开发者可以通过 key prop 来暗示哪些子元素在不同的渲染下能保持稳定；
+
+在实践中，我们发现以上假设在几乎所有实用的场景下都成立。
+### Diffing 算法
+当对比两颗树时，React 首先比较两棵树的根节点。不同类型的根节点元素会有不同的形态。
+1. 比对不同类型的元素
+当根节点为不同类型的元素时，React 会拆卸原有的树并且建立起新的树。举个例子，当一个元素从 <a> 变成 <img>，从 <Article> 变成 <Comment>，或从 <Button> 变成 <div> 都会触发一个完整的重建流程。
+
+当拆卸一棵树时，对应的 DOM 节点也会被销毁。组件实例将执行 componentWillUnmount() 方法。当建立一棵新的树时，对应的 DOM 节点会被创建以及插入到 DOM 中。组件实例将执行 componentWillMount() 方法，紧接着 componentDidMount() 方法。所有跟之前的树所关联的 state 也会被销毁。
+2. 比对同一类型的元素
+当比对两个相同类型的 React 元素时，React 会保留 DOM 节点，仅比对及更新有改变的属性。
+```jsx
+// 通过比对这两个元素，React 知道只需要修改 DOM 元素上的 className 属性。
+<div className="before" title="stuff" />
+<div className="after" title="stuff" />
+```
+3. 比对同类型的组件元素
+当一个组件更新时，组件实例保持不变，这样 state 在跨越不同的渲染时保持一致。React 将更新该组件实例的 props 以跟最新的元素保持一致，并且调用该实例的 componentWillReceiveProps() 和 componentWillUpdate() 方法。
+
+下一步，调用 render() 方法，diff 算法将在之前的结果以及新的结果中进行递归。
+
+4. 对子节点进行递归
+在默认条件下，当递归 DOM 节点的子元素时，React 会同时遍历两个子元素的列表；当产生差异时，生成一个 mutation。
+
+在子元素列表末尾新增元素时，更变开销比较小。
+
+如果简单实现的话，那么在列表头部插入会很影响性能，那么更变开销会比较大。
+
+5. Keys
+为了解决列表头部插入会很影响性能的问题，React 支持 key 属性。当子元素拥有 key 时，React 使用 key 来匹配原有树上的子元素以及最新树上的子元素。
+
+## Render Props
+术语 “render prop” 是指一种在 React 组件之间使用一个值为函数的 prop 共享代码的简单技术
+
+具有 render prop 的组件接受一个函数，该函数返回一个 React 元素并调用它而不是实现自己的渲染逻辑。
+
+使用 Props 而非 render，重要的是要记住，render prop 是因为模式才被称为 render prop ，你不一定要用名为 render 的 prop 来使用这种模式。事实上， 任何被用于告知组件需要渲染什么内容的函数 prop 在技术上都可以被称为 “render prop”。
+```jsx
+<DataProvider render={data => (
+  <h1>Hello {data.target}</h1>
+)}/>
+```
+
+## 非受控组件
+在大多数情况下，我们推荐使用 受控组件 来处理表单数据。在一个受控组件中，表单数据是由 React 组件来管理的。另一种替代方案是使用非受控组件，这时表单数据将交由 DOM 节点来处理。
+
+要编写一个非受控组件，而不是为每个状态更新都编写数据处理函数，你可以 使用 ref 来从 DOM 节点中获取表单数据。
+```jsx
+class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.input = React.createRef();
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.input.current.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          Name:
+          <input type="text" ref={this.input} />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+    );
+  }
+}
+```
 
 ## React 为什么要发明 Hooks？
 首先要重新思考 React 组件的本质。React 组件的模型其实很直观，就是从 Model 到 View 的映射，这里的 Model 对应到 React 中就是 state 和 props。在过去，我们需要处理当 Model 变化时，DOM 节点应该如何变化的细节问题。而现在，我们只需要通过 JSX，根据 Model 的数据用声明的方式去描述 UI 的最终展现就可以了，因为 React 会帮助你处理所有 DOM 变化的细节。而且，当 Model 中的状态发生变化时，UI 会自动变化，即所谓的数据绑定。
