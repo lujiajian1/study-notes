@@ -1096,24 +1096,245 @@ export default function Counter() {
 2. 仅第一次 render 后执行：提供一个空数组作为依赖项。比如useEffect(() => {}, [])。
 3. 第一次以及依赖项发生变化后执行：提供依赖项数组。比如useEffect(() => {}, [deps])。
 4. 组件 unmount 后执行：返回一个回调函数。比如useEffect() => { return () => {} }, [])。
+### 理解 Hooks 的依赖
+依赖项时，我们需要注意以下三点：
+1. 依赖项中定义的变量一定是会在回调函数中用到的，否则声明依赖项其实是没有意义的。
+2. 依赖项一般是一个常量数组，而不是一个变量。因为一般在创建 callback 的时候，你其实非常清楚其中要用到哪些依赖项了。
+3. React 会使用浅比较来对比依赖项是否发生了变化，所以要特别注意数组或者对象类型。如果你是每次创建一个新对象，即使和之前的值是等价的，也会被认为是依赖项发生了变化。这是一个刚开始使用 Hooks 时很容易导致 Bug 的地方。
+### 掌握 Hooks 的使用规则
+Hooks 本身作为纯粹的 JavaScript 函数，不是通过某个特殊的 API 去创建的，而是直接定义一个函数。它需要在降低学习和使用成本的同时，还需要遵循一定的规则才能正常工作。
 
+因而 Hooks 的使用规则包括以下两个：
+1. 只能在函数组件的顶级作用域使用：第一，所有 Hook 必须要被执行到。第二，必须按顺序执行。
+2. 只能在函数组件或者其他 Hooks 中使用：如果一定要在 Class 组件中使用，那应该如何做呢？其实有一个通用的机制，那就是利用高阶组件的模式，将 Hooks 封装成高阶组件，从而让类组件使用。
+```jsx
+// 第一步：转换为高阶组件
+import React from 'react';
+import { useWindowSize } from '../hooks/useWindowSize';
 
+export const withWindowSize = (Comp) => {
+  return props => {
+    const windowSize = useWindowSize();
+    return <Comp windowSize={windowSize} {...props} />;
+  };
+};
+// 第二步：使用高阶组价
 
+import React from 'react';
+import { withWindowSize } from './withWindowSize';
 
+class MyComp {
+  render() {
+    const { windowSize } = this.props;
+    // ...
+  }
+}
 
+// 通过 withWindowSize 高阶组件给 MyComp 添加 windowSize 属性
+export default withWindowSize(MyComp);
+```
+### useCallback：缓存回调函数
+在 React 函数组件中，每一次 UI 的变化，都是通过重新执行整个函数来完成的，这和传统的 Class 组件有很大区别：函数组件中并没有一个直接的方式在多次渲染之间维持一个状态。
 
+这也意味着，即使与当前函数有关状态没有发生变化，但是函数组件因为其它状态发生变化而重新渲染时，这种写法也会每次创建一个新的函数。创建一个新的处理函数，虽然不影响结果的正确性，但其实是没必要的。因为这样做不仅增加了系统的开销，更重要的是：每次创建新函数的方式会让接收事件处理函数的组件，需要重新渲染。
+```jsx
+// API：fn 是定义的回调函数，deps 是依赖的变量数组
+useCallback(fn, deps)
 
+// 示例
+import React, { useState, useCallback } from 'react';
 
+function Counter() {
+  const [count, setCount] = useState(0);
+  const handleIncrement = useCallback(
+    () => setCount(count + 1),
+    [count], // 只有当 count 发生变化时，才会重新创建回调函数
+  );
+  // ...
+  return <button onClick={handleIncrement}>+</button>
+}
+```
+### useMemo：缓存计算的结果
+useCallback 缓存的是一个函数，而 useMemo 缓存的是计算的结果。
 
+通过 useMemo 这个 Hook，可以避免在用到的数据没发生变化时进行的重复计算。
 
+除了避免重复计算之外，useMemo 还有一个很重要的好处：避免子组件的重复渲染。
 
+使用场景：如果某个数据是通过其它数据计算得到的，那么只有当用到的数据，也就是依赖的数据发生变化的时候，才应该需要重新计算。
+```jsx
+// API：fn 是产生所需数据的一个计算函数，deps 是依赖的变量数组
+useMemo(fn, deps);
+```
+结合 useMemo 和 useCallback 这两个 Hooks 一起看，会发现一个有趣的特性，那就是 useCallback 的功能其实是可以用 useMemo 来实现的。
+```jsx
+const myEventHandler = useMemo(() => {
+  // 返回一个函数作为缓存结果
+  return () => {
+    // 在这里进行事件处理
+  }
+}, [dep1, dep2]);
+```
+### useRef：在多次渲染之间共享数据
+函数组件虽然非常直观，简化了思考 UI 实现的逻辑，但是比起 Class 组件，还缺少了一个很重要的能力：在多次渲染之间共享数据。
 
+在类组件中，我们可以定义类的成员变量，以便能在对象上通过成员属性去保存一些数据。但是在函数组件中，是没有这样一个空间去保存数据的。因此，React 让 useRef 这样一个 Hook 来提供这样的功能。
 
+我们可以把 useRef 看作是在函数组件之外创建的一个容器空间。在这个容器上，我们可以通过唯一的 current 属设置一个值，从而在函数组件的多次渲染之间共享这个值。
 
+使用 useRef 保存的数据一般是和 UI 的渲染无关的，因此当 ref 的值发生变化时，是不会触发组件的重新渲染的，这也是 useRef 区别于 useState 的地方。
 
+除了存储跨渲染的数据之外，useRef 还有一个重要的功能，就是保存某个 DOM 节点的引用。我们知道，在 React 中，几乎不需要关心真实的 DOM 节点是如何渲染和修改的。但是在某些场景中，我们必须要获得真实 DOM 节点的引用，所以结合 React 的 ref 属性和 useRef 这个 Hook，我们就可以获得真实的 DOM 节点，并对这个节点进行操作。
+```jsx
+// API
+const myRefContainer = useRef(initialValue);
+```
+### useContext：定义全局状态
+React 提供了 Context 这样一个机制，能够让所有在某个组件开始的组件树上创建一个 Context。这样这个组件树上的所有组件，就都能访问和修改这个 Context 了。那么在函数组件里，我们就可以使用 useContext 这样一个 Hook 来管理 Context。
 
+Context 看上去就是一个全局的数据，为什么要设计这样一个复杂的机制，而不是直接用一个全局的变量去保存数据呢？答案其实很简单，就是为了能够进行数据的绑定。当这个 Context 的数据发生变化时，使用这个数据的组件就能够自动刷新。但如果没有 Context，而是使用一个简单的全局变量，就很难去实现了。
 
+Context 提供了一个方便在多个组件之间共享数据的机制。不过需要注意的是，它的灵活性也是一柄双刃剑。你或许已经发现，Context 相当于提供了一个定义 React 世界中全局变量的机制，而全局变量则意味着两点：
+1. 会让调试变得困难，因为你很难跟踪某个 Context 的变化究竟是如何产生的。
+2. 让组件的复用变得困难，因为一个组件如果使用了某个 Context，它就必须确保被用到的地方一定有这个 Context 的 Provider 在其父组件的路径上。
+所以在 React 的开发中，除了像 Theme、Language 等一目了然的需要全局设置的变量外，我们很少会使用 Context 来做太多数据的共享。需要再三强调的是，Context 更多的是提供了一个强大的机制，让 React 应用具备定义全局的响应式数据的能力。
+```jsx
+// 创建
+const MyContext = React.createContext(initialValue);
+// 使用
+const value = useContext(MyContext);
+```
+```jsx
+// 示例
+const themes = {
+  light: {
+    foreground: "#000000",
+    background: "#eeeeee"
+  },
+  dark: {
+    foreground: "#ffffff",
+    background: "#222222"
+  }
+};
 
+// 创建一个 Theme 的 Context
+const ThemeContext = React.createContext(themes.light);
 
+function App() {
+  // 使用 state 来保存 theme 从而可以动态修改
+  const [theme, setTheme] = useState("light");
 
+  // 切换 theme 的回调函数
+  const toggleTheme = useCallback(() => {
+    setTheme((theme) => (theme === "light" ? "dark" : "light"));
+  }, []);
 
+  return (
+    // 使用 theme state 作为当前 Context
+    <ThemeContext.Provider value={themes[theme]}>
+      <button onClick={toggleTheme}>Toggle Theme</button>
+      <Toolbar />
+    </ThemeContext.Provider>
+  );
+}
+
+// 在 Toolbar 组件中使用一个会使用 Theme 的 Button
+function Toolbar(props) {
+  return (
+    <div>
+      <ThemedButton />
+    </div>
+  );
+}
+
+// 在 Theme Button 中使用 useContext 来获取当前的主题
+function ThemedButton() {
+  const theme = useContext(ThemeContext);
+  return (
+    <button style={{
+      background: theme.background,
+      color: theme.foreground
+    }}>
+      I am styled by theme context!
+    </button>
+  );
+}
+```
+
+## Hooks ：如何正确理解函数组件的生命周期？
+React 的本质：从 Model 到 View 的映射。假设状态永远不变，那么实际上函数组件就相当于是一个模板引擎，只执行一次。但是 React 本身正是为动态的状态变化而设计的，而可能引起状态变化的原因基本只有两个：
+1. 用户操作产生的事件，比如点击了某个按钮。
+2. 副作用产生的事件，比如发起某个请求正确返回了。
+这两种事件本身并不会导致组件的重新渲染，但我们在这两种事件处理函数中，一定是因为改变了某个状态，这个状态可能是 State 或者 Context，从而导致了 UI 的重新渲染。
+
+对于第一种情况，其实函数组件和 Class 组件的思路几乎完全一样：通过事件处理函数来改变某个状态；对于第二种情况，在函数组件中是通过 useEffect 这个 Hook 更加直观和语义化的方式来描述。对应到 Class 组件，则是通过手动判断 Props 或者 State 的变化来执行的。
+
+在函数组件中你要思考的方式永远是：当某个状态发生变化时，我要做什么，而不再是在 Class 组件中的某个生命周期方法中我要做什么。
+### 构造函数
+在类组件中有一个专门的方法叫 constructor，也就是构造函数，在里面我们会做一些初始化的事情，比如设置 State 的初始状态，或者定义一些类的实例的成员。
+
+而现在，函数组件只是一个函数，没有所谓的对象，或者说类的实例这样的概念，那自然也就没有构造函数的说法了。
+
+那么在函数组件中，我们应该如何去做一些初始化的事情呢？答案是：函数组件基本上没有统一的初始化需要，因为 Hooks 自己会负责自己的初始化。比如 useState 这个 Hook，接收的参数就是定义的 State 初始值。而在过去的类组件中，你通常需要在构造函数中直接设置 this.state ，也就是设置某个值来完成初始化。
+
+但是要注意了，我提到的“基本上没有初始化需要”，也就是并不是完全没有。严格来说，虽然需求不多，但类组件中构造函数能做的不只是初始化 State，还可能有其它的逻辑。那么如果一定要在函数组件中实现构造函数应该怎么做呢？
+
+这时候我们不妨思考下构造函数的本质，其实就是：在所以其它代码执行之前的一次性初始化工作。在函数组件中，因为没有生命周期的机制，那么转换一下思路，其实我们要实现的是：一次性的代码执行。
+
+利用 useRef 这个 Hook，我们可以实现一个 useSingleton 这样的一次性执行某段代码的自定义 Hook，代码如下：
+```jsx
+import { useRef } from 'react';
+
+// 创建一个自定义 Hook 用于执行一次性代码
+function useSingleton(callback) {
+  // 用一个 called ref 标记 callback 是否执行过
+  const called = useRef(false);
+  // 如果已经执行过，则直接返回
+  if (called.current) return;
+  // 第一次调用时直接执行
+  callBack();
+  // 设置标记为已执行过
+  called.current = true;
+}
+```
+```jsx
+import useSingleton from './useSingleton';
+
+const MyComp = () => {
+  // 使用自定义 Hook
+  useSingleton(() => {
+    console.log('这段代码只执行一次');
+  });
+
+  return (
+    <div>My Component</div>
+  );
+};
+```
+### 三种常用的生命周期方法
+在类组件中，componentDidMount，componentWillUnmount，和 componentDidUpdate 这三个生命周期方法可以说是日常开发最常用的。业务逻辑通常要分散到不同的生命周期方法中，比如说在上面的 Blog 文章的例子中，你需要同时在 componentDidMount 和 componentDidUpdate 中去获取数据。
+
+而在函数组件中，这几个生命周期方法可以统一到 useEffect 这个 Hook，正如 useEffect 的字面含义，它的作用就是触发一个副作用，即在组件每次 render 之后去执行。
+```jsx
+useEffect(() => {
+  // componentDidMount + componentDidUpdate
+  console.log('这里基本等价于 componentDidMount + componentDidUpdate');
+  return () => {
+    // componentWillUnmount
+    console.log('这里基本等价于 componentWillUnmount');
+  }
+}, [deps])
+```
+
+## 创建自定义 Hooks
+声明一个名字以 use 开头的函数，比如 useCounter。这个函数在形式上和普通的 JavaScript 函数没有任何区别，你可以传递任意参数给这个 Hook，也可以返回任何值。但是要注意，Hooks 和普通函数在语义上是有区别的，就在于函数中有没有用到其它 Hooks。
+
+我们可以看到自定义 Hooks 的两个特点：
+1. 名字一定是以 use 开头的函数，这样 React 才能够知道这个函数是一个 Hook；
+2. 函数内部一定调用了其它的 Hooks，可以是内置的 Hooks，也可以是其它自定义 Hooks。这样才能够让组件刷新，或者去产生副作用。
+
+典型的四个使用场景：
+1. 抽取业务逻辑
+2. 封装通用逻辑
+3. 监听浏览器状态
+4. 拆分复杂组件
