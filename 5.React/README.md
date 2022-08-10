@@ -1335,6 +1335,268 @@ useEffect(() => {
 
 典型的四个使用场景：
 1. 抽取业务逻辑
+```jsx
+// 例如抽取计时器业务逻辑
+import { useState, useCallback }from 'react';
+ 
+function useCounter() {
+  // 定义 count 这个 state 用于保存当前数值
+  const [count, setCount] = useState(0);
+  // 实现加 1 的操作
+  const increment = useCallback(() => setCount(count + 1), [count]);
+  // 实现减 1 的操作
+  const decrement = useCallback(() => setCount(count - 1), [count]);
+  // 重置计数器
+  const reset = useCallback(() => setCount(0), []);
+  
+  // 将业务逻辑的操作 export 出去供调用者使用
+  return { count, increment, decrement, reset };
+}
+```
+```jsx
+import React from 'react';
+
+function Counter() {
+  // 调用自定义 Hook
+  const { count, increment, decrement, reset } = useCounter();
+
+  // 渲染 UI
+  return (
+    <div>
+      <button onClick={decrement}> - </button>
+      <p>{count}</p>
+      <button onClick={increment}> + </button>
+      <button onClick={reset}> reset </button>
+    </div>
+  );
+}
+```
 2. 封装通用逻辑
+```jsx
+// 封装接口请求逻辑
+import { useState } from 'react';
+
+const useAsync = (asyncFunction) => {
+  // 设置三个异步逻辑相关的 state
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  // 定义一个 callback 用于执行异步逻辑
+  const execute = useCallback(() => {
+    // 请求开始时，设置 loading 为 true，清除已有数据和 error 状态
+    setLoading(true);
+    setData(null);
+    setError(null);
+    return asyncFunction()
+      .then((response) => {
+        // 请求成功时，将数据写进 state，设置 loading 为 false
+        setData(response);
+        setLoading(false);
+      })
+      .catch((error) => {
+        // 请求失败时，设置 loading 为 false，并设置错误状态
+        setError(error);
+        setLoading(false);
+      });
+  }, [asyncFunction]);
+
+  return { execute, loading, data, error };
+};
+```
+```jsx
+import React from "react";
+import useAsync from './useAsync';
+
+export default function UserList() {
+  // 通过 useAsync 这个函数，只需要提供异步逻辑的实现
+  const {
+    execute: fetchUsers,
+    data: users,
+    loading,
+    error,
+  } = useAsync(async () => {
+    const res = await fetch("https://reqres.in/api/users/");
+    const json = await res.json();
+    return json.data;
+  });
+  
+  return (
+    // 根据状态渲染 UI...
+  );
+}
+```
 3. 监听浏览器状态
+```jsx
+// 窗口大小变化重新布局
+import { useState, useEffect } from 'react';
+
+// 获取横向，纵向滚动条位置
+const getPosition = () => {
+  return {
+    x: document.body.scrollLeft,
+    y: document.body.scrollTop,
+  };
+};
+const useScroll = () => {
+  // 定一个 position 这个 state 保存滚动条位置
+  const [position, setPosition] = useState(getPosition());
+  useEffect(() => {
+    const handler = () => {
+      setPosition(getPosition(document));
+    };
+    // 监听 scroll 事件，更新滚动条位置
+    document.addEventListener("scroll", handler);
+    return () => {
+      // 组件销毁时，取消事件监听
+      document.removeEventListener("scroll", handler);
+    };
+  }, []);
+  return position;
+};
+```
+```jsx
+// 返回顶部
+import React, { useCallback } from 'react';
+import useScroll from './useScroll';
+
+function ScrollTop() {
+  const { y } = useScroll();
+
+  const goTop = useCallback(() => {
+    document.body.scrollTop = 0;
+  }, []);
+
+  const style = {
+    position: "fixed",
+    right: "10px",
+    bottom: "10px",
+  };
+  // 当滚动条位置纵向超过 300 时，显示返回顶部按钮
+  if (y > 300) {
+    return (
+      <button onClick={goTop} style={style}>
+        Back to Top
+      </button>
+    );
+  }
+  // 否则不 render 任何 UI
+  return null;
+}
+
+```
 4. 拆分复杂组件
+```jsx
+import React, { useEffect, useCallback, useMemo, useState } from "react";
+import { Select, Table } from "antd";
+import _ from "lodash";
+import useAsync from "./useAsync";
+
+const endpoint = "https://myserver.com/api/";
+const useArticles = () => {
+  // 使用上面创建的 useAsync 获取文章列表
+  const { execute, data, loading, error } = useAsync(
+    useCallback(async () => {
+      const res = await fetch(`${endpoint}/posts`);
+      return await res.json();
+    }, []),
+  );
+  // 执行异步调用
+  useEffect(() => execute(), [execute]);
+  // 返回语义化的数据结构
+  return {
+    articles: data,
+    articlesLoading: loading,
+    articlesError: error,
+  };
+};
+const useCategories = () => {
+  // 使用上面创建的 useAsync 获取分类列表
+  const { execute, data, loading, error } = useAsync(
+    useCallback(async () => {
+      const res = await fetch(`${endpoint}/categories`);
+      return await res.json();
+    }, []),
+  );
+  // 执行异步调用
+  useEffect(() => execute(), [execute]);
+
+  // 返回语义化的数据结构
+  return {
+    categories: data,
+    categoriesLoading: loading,
+    categoriesError: error,
+  };
+};
+const useCombinedArticles = (articles, categories) => {
+  // 将文章数据和分类数据组合到一起
+  return useMemo(() => {
+    // 如果没有文章或者分类数据则返回 null
+    if (!articles || !categories) return null;
+    return articles.map((article) => {
+      return {
+        ...article,
+        category: categories.find(
+          (c) => String(c.id) === String(article.categoryId),
+        ),
+      };
+    });
+  }, [articles, categories]);
+};
+const useFilteredArticles = (articles, selectedCategory) => {
+  // 实现按照分类过滤
+  return useMemo(() => {
+    if (!articles) return null;
+    if (!selectedCategory) return articles;
+    return articles.filter((article) => {
+      console.log("filter: ", article.categoryId, selectedCategory);
+      return String(article?.category?.name) === String(selectedCategory);
+    });
+  }, [articles, selectedCategory]);
+};
+
+const columns = [
+  { dataIndex: "title", title: "Title" },
+  { dataIndex: ["category", "name"], title: "Category" },
+];
+
+export default function BlogList() {
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  // 获取文章列表
+  const { articles, articlesError } = useArticles();
+  // 获取分类列表
+  const { categories, categoriesError } = useCategories();
+  // 组合数据
+  const combined = useCombinedArticles(articles, categories);
+  // 实现过滤
+  const result = useFilteredArticles(combined, selectedCategory);
+
+  // 分类下拉框选项用于过滤
+  const options = useMemo(() => {
+    const arr = _.uniqBy(categories, (c) => c.name).map((c) => ({
+      value: c.name,
+      label: c.name,
+    }));
+    arr.unshift({ value: null, label: "All" });
+    return arr;
+  }, [categories]);
+
+  // 如果出错，简单返回 Failed
+  if (articlesError || categoriesError) return "Failed";
+
+  // 如果没有结果，说明正在加载
+  if (!result) return "Loading...";
+
+  return (
+    <div>
+      <Select
+        value={selectedCategory}
+        onChange={(value) => setSelectedCategory(value)}
+        options={options}
+        style={{ width: "200px" }}
+        placeholder="Select a category"
+      />
+      <Table dataSource={result} columns={columns} />
+    </div>
+  );
+}
+```
