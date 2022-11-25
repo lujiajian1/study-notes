@@ -20,7 +20,6 @@ function deepClone(obj = {}) {
 ```
 
 ### 手写 apply
-
 ```js
 Function.prototype.myapply = function (context, args) {
   //这里默认不传就是给window,也可以用es6给参数设置默认参数
