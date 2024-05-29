@@ -7,6 +7,7 @@
 * 安全需求
 
 ## 桌面端技术选型
+
 | 框架 | 开发技术 | 生态系统	| 适用场景 | 安全性	| 安装包体积 |
 |——|——|—–|—–|—–|—–|
 | Electron | HTML、CSS、JavaScript、Chromium、Node.js | 比较老牌，有强大的社区支持	    | 功能丰富、跨平台的桌面应用，特别是网络相关的应用	      | 因为使用Chromium，需要注意安全漏洞。需谨慎处理外部内容 | 安装包较大，因为集成了Chromium，可能较大         |
@@ -31,7 +32,7 @@ Electron 继承了来自 Chromium 的多进程架构，Chromium 始于其主进�
 
 ## 主进程
 主进程是 Electron 应用程序的核心，通常由一个主要的 JavaScript 文件（如 main.js ）定义，你可以在 package.json 中指定它：
-```json
+```js
 // package.json
 {  
     "name": "my-electron-app",  
