@@ -520,5 +520,7 @@ electron .
 ![build](https://github.com/lujiajian1/study-notes/blob/main/img/build.png)
 
 ## Electron 应用更新
+![upload](https://github.com/lujiajian1/study-notes/blob/main/img/upload.png)
 
 ## Electron 崩溃监控关键步骤
+![crash](https://github.com/lujiajian1/study-notes/blob/main/img/crash.png)
