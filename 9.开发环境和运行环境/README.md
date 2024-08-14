@@ -469,3 +469,118 @@ import('./data.js').then(() =>{})
 * Vue中路由使用hash模式，开发微信H5页面分享时在安卓上设置分享成功，但是ios的分享异常
 * 参考：
     * https://mp.weixin.qq.com/s/4b8VzBkvf-jpYOLoCkiJEg
+
+### 文件切片下载上传
+核心思路：利用 Blob.prototype.slice 方法，和数组的 slice 方法相似，文件的 slice 方法可以返回原文件的某个切片。预先定义好单个切片大小，将文件切分为一个个切片，然后借助 http 的可并发性，同时上传多个切片。这样从原本传一个大文件，变成了并发传多个小的文件切片，可以大大减少上传时间。另外由于是并发，传输到服务端的顺序可能会发生变化，因此我们还需要给每个切片记录顺序。服务端负责接受前端传输的切片，并在接收到所有切片后合并所有切片。
+* 伪代码：
+```js
+handleUpload(e) {
+    const [file] = e.target.files;
+    if (!file) return;
+    const size = 10 * 1024 * 1024; 
+    const fileChunkList = [];
+    let cur = 0;
+    while (cur < file.size) {
+        fileChunkList.push({ file: file.slice(cur, cur + size) });
+        cur += size;
+    }
+    let data = fileChunkList.map(({ _file }, index) => ({
+        chunk: _file,
+        // 文件名 + 数组下标
+        hash: file.name + "-" + index
+    }));
+
+
+    const requestList = data.map(({ chunk，hash }) => {
+       const formData = new FormData();
+       formData.append("chunk", chunk);
+       formData.append("hash", hash);
+       formData.append("filename", this.container.file.name);
+       return { formData };
+     }).map(({ formData }) =>
+       this.request({
+         url: "http://localhost:3000",
+         data: formData
+       })
+     );
+    await Promise.all(requestList);// 并发上传
+    await this.mergeRequest(); // 发送合并请求
+}
+```
+* 服务端何时合并切片：前端在每个切片中都携带切片最大数量的信息，当服务端接受到这个数量的切片时自动合并。或者也可以额外发一个请求，主动通知服务端进行切片的合并。
+* 显示上传进度：XMLHttpRequest 原生支持上传进度的监听，xhr.upload.onprogress = onProgress;
+* 断点续传：服务端保存已上传的切片 hash，前端每次上传前向服务端获取已上传的切片，所以必须有一个唯一的hash。spark-md5 库，它可以根据文件内容计算出文件的 hash 值。另外考虑到如果上传一个超大文件，读取文件内容计算 hash 是非常耗费时间的，并且会引起 UI 的阻塞，导致页面假死状态，所以我们使用 web-worker 在 worker 线程计算 hash，这样用户仍可以在主界面正常的交互。
+* 参考: https://juejin.cn/post/7255189826226602045
+
+### 文件切片下载
+传统的文件下载方式对于大文件来说存在性能问题。当用户请求下载一个大文件时，服务器需要将整个文件发送给客户端。这会导致以下几个问题：
+* 较长的等待时间：大文件需要较长的时间来传输到客户端，用户需要等待很长时间才能开始使用文件。
+* 网络阻塞：由于下载过程中占用了网络带宽，其他用户可能会遇到下载速度慢的问题。
+* 断点续传困难：如果下载过程中出现网络故障或者用户中断下载，需要重新下载整个文件，无法继续之前的下载进度。
+实现客户端切片下载的基本方案如下：
+* 服务器端将大文件切割成多个切片，并为每个切片生成唯一的标识符。
+* 客户端发送请求获取切片列表，同时开始下载第一个切片。
+* 客户端在下载过程中，根据切片列表发起并发请求下载其他切片，并逐渐拼接合并下载的数据。
+* 当所有切片都下载完成后，客户端将下载的数据合并为完整的文件。
+```js
+function downloadFile() {
+  // 发起文件下载请求
+  fetch('/download', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then(response => response.json())
+    .then(data => {
+      const totalSize = data.totalSize;
+      const totalChunks = data.totalChunks;
+
+      let downloadedChunks = 0;
+      let chunks = [];
+
+      // 下载每个切片
+      for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+        fetch(`/download/${chunkNumber}`, {
+          method: 'GET',
+        })
+          .then(response => response.blob())
+          .then(chunk => {
+            downloadedChunks++;
+            chunks.push(chunk);
+
+            // 当所有切片都下载完成时
+            if (downloadedChunks === totalChunks) {
+              // 合并切片
+              const mergedBlob = new Blob(chunks);
+
+              // 创建对象 URL，生成下载链接
+              const downloadUrl = window.URL.createObjectURL(mergedBlob);
+
+              // 创建 <a> 元素并设置属性
+              const link = document.createElement('a');
+              link.href = downloadUrl;
+              link.setAttribute('download', 'file.txt');
+
+              // 模拟点击下载
+              link.click();
+
+              // 释放资源
+              window.URL.revokeObjectURL(downloadUrl);
+            }
+          });
+      }
+    })
+    .catch(error => {
+      console.error('文件下载失败:', error);
+    });
+}
+```
+
+### 理解邮件传输协议（SMTP、POP3、IMAP、MIME）
+电子邮件协议有SMTP、POP3、IMAP4，它们都隶属于TCP/IP协议簇，默认状态下，分别通过TCP端口25、110和143建立连接。
+* SMTP: SMTP（Simple Mail Transfer Protocol，简单邮件传输协议）定义了邮件客户端与SMTP服务器之间，以及两台SMTP服务器之间发送邮件的通信规则 。SMTP协议属于TCP/IP协议族，通信双方采用一问一答的命令/响应形式进行对话，且定了对话的规则和所有命令/响应的语法格式。SMTP协议中一共定了18条命令，发送一封电子邮件的过程通常只需要其中的6条命令即可完成发送邮件的功能。
+* POP3: POP邮局协议负责从邮件服务器中检索电子邮件。邮件服务提供商专门为每个用户申请的电子邮箱提供了专门的邮件存储空间，SMTP服务器将接收到的电子邮件保存到相应用户的电子邮箱中。用户要从邮件服务提供商提供的电子邮箱中获取自己的电子邮件，就需要通过邮件服务提供商的POP3邮件服务器来帮助完成。POP3(Post Office Protocol 邮局协议的第三版本)协议定义了邮件客户端程序与POP3服务器进行通信的具体规则和细节。
+* IMAP:  IMAP（Internet Message Access Protocol）协议是对POP3协议的一种扩展，定了邮件客户端软件与邮件服务器的通信规则。IMAP协议在RFC2060文档中定义，目前使用的是第4个版本，所以也称为IMAP4。IMAP协议相对于POP3协议而言，它定了更为强大的邮件接收功能，主要体现在以下一些方面：1.IMAP具有摘要浏览功能，可以让用户在读完所有邮件的主题、发件人、大小等信息后，再由用户做出是否下载或直接在服务器上删除的决定。2.IMAP可以让用户有选择性地下载邮件附件。例如一封邮件包含3个附件，如果用户确定其中只有2个附件对自已有用，就可只下载这2个附件，而不必下载整封邮件，从而节省了下载时间。3.IMAP可以让用户在邮件服务器上创建自己的邮件夹，分类保存各个邮件。
+* MIME: 早期人们在使用电子邮件时，都是使用普通文本内容的电子邮件内容进行交流，由于互联网的迅猛发展，人们已不满足电子邮件仅仅是用来交换文本信息，而希望使用电子邮件来交换更为丰富多彩的多媒体信息，例如，在邮件中嵌入图片、声音、动画和附件等二进制数据。但在以往的邮件发送协议RFC822文档中定义，只能发送文本信息，无法发送非文本的邮件，针对这个问题，人们后来专门为此定义了MIME（Multipurpose Internet Mail Extension，多用途Internet邮件扩展）协议。
+* 参考: https://www.cnblogs.com/diegodu/p/4097202.html
