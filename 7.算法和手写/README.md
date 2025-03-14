@@ -2085,6 +2085,509 @@ var maxProfit = function (prices) {
 
 [参考原文](https://juejin.cn/post/6844903955030343694)
 
+### 按格式合并两个链表
+```js
+// 链表类
+class Node {
+  addr = null
+  val = null
+  next = null
+  constructor(map, addr, l) {
+    l.val += 1;
+    this.addr = addr;
+    let [v, n] = map.get(addr);
+    this.val = v;
+    if (n !== '-1') {
+      this.next = new Node(map, n, l);
+    }
+  }
+  toString() {
+    let [n, retV] = [this, []];
+    while (n !== null) {
+      retV.push(`${n.addr} ${n.val} ${n.next === null ? '-1' : n.next.addr}`);
+      n = n.next;
+    }
+    return retV.join('\n');
+  }
+  reverse() {
+    // 反转链表
+    let [h, c] = [null, this];
+    while (c !== null) {
+      [c.next, h, c] = [h, c, c.next];
+    }
+    return h;
+  }
+}
+
+const inputs = `
+00100 01000 7
+02233 2 34891
+00100 6 00001
+34891 3 10086
+01000 1 02233
+00033 5 -1
+10086 4 00033
+00001 7 -1
+`;
+
+const c = inputs.split('\n');
+const [startAddr1, startAddr2, totalNodeNum] = c[0].split(' ');
+// Map 只是为了方便构建链表数据结构
+const map = new Map();
+for (let i = 1; i <= parseInt(totalNodeNum); i++) {
+  let [a1, v, n] = c[i].split(' ');
+  map.set(a1, [v, n]);
+}
+//构建两个链表并且直接返回链表长度
+let length1 = { val: 0 };
+let length2 = { val: 0 };
+var L1 = new Node(map, startAddr1, length1);
+var L2 = new Node(map, startAddr2, length2);
+if (length1.val < length2.val) {
+  // 确保 L1 是长的链表
+  [L1, L2] = [L2, L1];
+}
+// 反转短链表
+L2 = L2.reverse();
+let [cl1, cl2] = [L1, L2];
+while (cl2 !== null) {
+  // 长链表每隔2个结点，插一个短链表的结点。直到短链表没有剩余结点
+  cl1 = cl1.next;
+  [cl1.next, cl2.next, cl2, cl1] = [cl2, cl1.next, cl2.next, cl1.next];
+}
+console.log("" + L1);
+```
+[参考原文](https://gzool.com/algorithm-hard-js-merge-two-linked-list)
+
+### [按公因数计算最大组件大小](https://leetcode.cn/problems/largest-component-size-by-common-factor/description/)
+```js
+var largestComponentSize = function(nums) {
+    const m = Math.max(...nums);
+    const uf = new UnionFind(m + 1);
+    for (const num of nums) {
+        for (let i = 2; i * i <= num; i++) {
+            if (num % i === 0) {
+                uf.union(num, i);
+                uf.union(num, Math.floor(num / i));
+            }
+        }
+    }
+    const counts = new Array(m + 1).fill(0);
+    let ans = 0;
+    for (let num of nums) {
+        const root = uf.find(num);
+        counts[root]++;
+        ans = Math.max(ans, counts[root]);
+    }
+    return ans;
+};
+
+class UnionFind {
+    constructor(n) {
+        this.parent = new Array(n).fill(0).map((_, i) => i);
+        this.rank = new Array(n).fill(0);
+    }
+
+    union(x, y) {
+        let rootx = this.find(x);
+        let rooty = this.find(y);
+        if (rootx !== rooty) {
+            if (this.rank[rootx] > this.rank[rooty]) {
+                this.parent[rooty] = rootx;
+            } else if (this.rank[rootx] < this.rank[rooty]) {
+                this.parent[rootx] = rooty;
+            } else {
+                this.parent[rooty] = rootx;
+                this.rank[rootx]++;
+            }
+        }
+    }
+
+    find(x) {
+        if (this.parent[x] !== x) {
+            this.parent[x] = this.find(this.parent[x]);
+        }
+        return this.parent[x];
+    }
+}
+```
+[参考原文](https://leetcode.cn/problems/largest-component-size-by-common-factor/solutions/1706239/an-gong-yin-shu-ji-suan-zui-da-zu-jian-d-amdx/)
+
+### [拼接最大数](https://leetcode.cn/problems/create-maximum-number/description/)
+```js
+var maxNumber = function (nums1, nums2, k) {
+  let max = null
+  for (let i = 0; i <= k; i++) {
+    if (k - i > nums2.length) continue
+    if (i > nums1.length) continue
+    const list1 = helper(nums1, i)
+    const list2 = helper(nums2, k - i)
+    const current = compose(list1, list2)
+    if (max) {
+      max = computMaxArray(max, current)
+    } else {
+      max = current
+    }
+  }
+  return max
+
+  function computMaxArray(ary1, ary2) {
+    if (ary1.length === 0) return ary2
+    if (ary2.length === 0) return ary1
+    if (ary1.length > ary2.length) return ary1
+    if (ary1.length < ary2.length) return ary2
+    let index = 0
+    while (index < ary1.length) {
+      if (ary1[index] > ary2[index]) {
+        return ary1
+      } else if (ary1[index] < ary2[index]) {
+        return ary2
+      }
+      index++
+    }
+    return ary2
+  }
+  // 找到数组1和2谁大
+  function check(a1, index1, a2, index2) {
+    while (index1 < a1.length && index2 < a2.length) {
+      const diff = a1[index1] - a2[index2]
+      if (diff !== 0) return diff
+      index1++
+      index2++
+    }
+    return a1.length - index1 - (a2.length - index2)
+  }
+
+  // 合并两个有序数组
+  function compose(ary1, ary2) {
+    const list = []
+    const len1 = ary1.length
+    const len2 = ary2.length
+    let index1 = 0
+    let index2 = 0
+    for (let i = 0; i < len1 + len2; i++) {
+      if (check(ary1, index1, ary2, index2) > 0) {
+        list[i] = ary1[index1++]
+      } else {
+        list[i] = ary2[index2++]
+      }
+    }
+    return list
+  }
+  function helper(array, limit) {
+    if (limit === 0) return []
+    if (limit >= array.length) return array
+    const stack = []
+    let index = 0
+    const len = array.length
+    while (index < len) {
+      while (
+        stack.length &&
+        stack[stack.length - 1] < array[index] &&
+        stack.length + len - index - 1 >= limit
+      ) {
+        stack.pop()
+      }
+      stack.push(array[index++])
+    }
+    return stack.slice(0, limit)
+  }
+}
+```
+[参考原文](https://juejin.cn/post/7071584649142599693)
+
+### [最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+```js
+// 暴力解
+var lengthOfLIS = function(nums) {
+    let n = nums.length;
+    if(n<=1){
+        return n;
+    }
+    let max = 1;
+    let dp = new Array(n).fill(1);
+    for(let i=1; i<n; i++){
+        for(let j=i-1; j>=0; j--){
+            if(nums[i]>nums[j]){
+                dp[i] = Math.max(dp[j]+1, dp[i]);
+            }
+        }
+        max = Math.max(dp[i], max);
+    }
+    return max;
+};
+// 二分优化
+var lengthOfLIS = function (nums) {
+    let n = nums.length;
+    if (n <= 1) {
+        return n;
+    }
+    let len = 1;
+    let dp = [null, nums[0]];
+    for (let i = 1; i < n; i++) {
+        if (dp[len] < nums[i]) {
+            dp[++len] = nums[i];
+            continue;
+        }
+        // 否则去dp中二分查找，判读插入位置
+        let left = 1, right = len, mid, pos = 0; 
+        while (left <= right) {
+            mid = (left + right) >> 1;
+            if (nums[i] > dp[mid]) {
+                // 元素在右边
+                left = mid + 1;
+                pos = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+        dp[pos + 1] = nums[i];
+    }
+    return len;
+};
+```
+
+### [二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/description/)
+```js
+var maxPathSum = function(root) {
+  let ans = 0;
+  var oneSideMax = function(root) {
+      if(root === null) return 0;
+      let left = Math.max(0, oneSideMax(root.left));
+      let right = Math.max(0, oneSideMax(root.right));
+      ans = Math.max(ans, left + right + root.val);
+      return Math.max(left, right) + root.val;
+  };
+
+  oneSideMax(root);
+  return ans;
+};
+```
+[参考原文](https://blog.csdn.net/M_Eve/article/details/112796420)
+
+### [岛屿最大面积](https://leetcode.cn/problems/max-area-of-island/description/)
+```js
+/**
+ * @param {number[][]} grid
+ * @return {number}
+ */
+var maxAreaOfIsland = function(grid) {
+  var max=0;
+  for (var i = 0; i < grid.length; i++) {
+    for (var j = 0; j < grid[0].length; j++) {
+      if (grid[i][j] === 1) {
+         max = Math.max(max, island(grid, i, j));
+      } 
+    }
+  }
+  return max;
+};
+ 
+var island = function(grid, i, j) {
+  if (i >= 0 && i < grid.length && j >= 0 && j < grid[0].length && grid[i][j] === 1) {
+    grid[i][j] = 0;
+    return 1 + island(grid, i+1, j) + island(grid, i-1, j) + island(grid, i, j+1) + island(grid, i, j-1);
+  } else return 0;
+}
+```
+[参考原文](https://blog.csdn.net/romeo12334/article/details/81410531)
+
+### [不相交的线](https://leetcode.cn/problems/uncrossed-lines/description/)
+```js
+var maxUncrossedLines = function(nums1, nums2) {
+    const m = nums1.length, n = nums2.length;
+    const dp = new Array(m + 1).fill(0).map(() => new Array(n + 1).fill(0));
+    for (let i = 1; i <= m; i++) {
+        const num1 = nums1[i - 1];
+        for (let j = 1; j <= n; j++) {
+            const num2 = nums2[j - 1];
+            if (num1 === num2) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[m][n];
+};
+```
+[参考原文](https://leetcode.cn/problems/uncrossed-lines/solutions/787955/bu-xiang-jiao-de-xian-by-leetcode-soluti-6tqz/)
+
+### [解码异或后的排列](https://leetcode.cn/problems/decode-xored-permutation/description/)
+```js
+var decode = function(encoded) {
+    const n = encoded.length + 1;
+    let total = 0;
+    for (let i = 1; i <= n; i++) {
+        total ^= i;
+    }
+    let odd = 0;
+    for (let i = 1; i < n - 1; i += 2) {
+        odd ^= encoded[i];
+    }
+    const perm = new Array(n).fill(0);
+    perm[0] = total ^ odd;
+    for (let i = 0; i < n - 1; i++) {
+        perm[i + 1] = perm[i] ^ encoded[i];
+    }
+    return perm;
+};
+```
+[参考原文](https://leetcode.cn/problems/decode-xored-permutation/solutions/769140/jie-ma-yi-huo-hou-de-pai-lie-by-leetcode-9gw4/)
+
+### [最长超赞子字符串](https://leetcode.cn/problems/find-longest-awesome-substring/description/)
+```js
+var longestAwesome = function(s) {
+    let prefix = new Map([[0, -1]]);
+    let ans = 0;
+    let sequence = 0;
+    for (let j = 0; j < s.length; ++j) {
+        let digit = parseInt(s[j]);
+        sequence ^= (1 << digit);
+        if (prefix.has(sequence)) {
+            ans = Math.max(ans, j - prefix.get(sequence));
+        } else {
+            prefix.set(sequence, j);
+        }
+        for (let k = 0; k < 10; ++k) {
+            if (prefix.has(sequence ^ (1 << k))) {
+                ans = Math.max(ans, j - prefix.get(sequence ^ (1 << k)));
+            }
+        }
+    }
+    return ans;
+};
+```
+[参考原文](https://leetcode.cn/problems/find-longest-awesome-substring/solutions/379067/zhao-chu-zui-chang-de-chao-zan-zi-zi-fu-chuan-by-l/)
+
+### [超级回文数](https://leetcode.cn/problems/super-palindromes/description/)
+```js
+var superpalindromesInRange = function(left, right) {
+  let ans = []; 
+  // 从 1 开始构造回文数
+  // 因为最大就是20位数，所以这里构造回文数肯定不会超 100000
+  for(let i = 1; i < 100000; i++) {
+    let [p1, p2] = makePalindromes(i);
+    let pp1 = BigInt(p1 * p1);
+    let pp2 = BigInt(p2 * p2);
+    if(pp1 >= left && pp1 <= right && checkPalindromes(pp1)) {
+      ans.push(pp1.toString());
+    }
+    if(pp2 >= left && pp2 <= right && checkPalindromes(pp2)) {
+      ans.push(pp2.toString());
+    }
+  }
+  ans.sort((a, b) => a - b);
+  return ans;
+};
+
+let checkPalindromes = function(num) {
+  return Array.from(num.toString()).reverse().join("") === num.toString()
+};
+
+//  构造奇数、偶数回文数
+let makePalindromes = function(num) {
+  let numStr = num.toString();
+  let revNumStr = Array.from(numStr).reverse().join("");
+  return [BigInt(numStr + revNumStr), BigInt(numStr + revNumStr.slice(1))]
+};
+```
+[参考原文](https://leetcode.cn/problems/super-palindromes/solutions/1711358/js-by-a-ba-li-9fcy/)
+
+### [最多能完成排序的块](https://leetcode.cn/problems/max-chunks-to-make-sorted-ii/description/)
+```js
+var maxChunksToSorted = function(arr) {
+    const stack = [];
+    for (const num of arr) {
+        if (stack.length === 0 || num >= stack[stack.length - 1]) {
+            stack.push(num);
+        } else {
+            const mx = stack.pop();
+            while (stack.length && stack[stack.length - 1] > num) {
+                stack.pop();
+            }
+            stack.push(mx);
+        }
+    }
+    return stack.length;
+};
+```
+[参考原文](https://leetcode.cn/problems/max-chunks-to-make-sorted-ii/solutions/1741851/zui-duo-neng-wan-cheng-pai-xu-de-kuai-ii-w5c6/)
+
+### [最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/description/)
+```js
+var longestValidParentheses = function(s) {
+    let len = s.length;
+    if(len<=1) {
+        return 0;
+    }
+    let maxlen = 0;
+    const stack = [-1];
+    for(let i=0;i<len;i++) {
+        if(s[i]==='(') {
+            stack.push(i);
+        } else {
+            stack.pop();
+            let stack_len = stack.length;
+            if(stack_len===0) {
+                stack.push(i);
+            } else {
+                maxlen = Math.max(maxlen, i - stack[stack_len-1]);
+            }
+        }
+    }
+    return maxlen;
+};
+```
+
+### [无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/)
+```js
+var lengthOfLongestSubstring = function(s) {
+    // 哈希集合，记录每个字符是否出现过
+    const occ = new Set();
+    const n = s.length;
+    // 右指针，初始值为 -1，相当于我们在字符串的左边界的左侧，还没有开始移动
+    let rk = -1, ans = 0;
+    for (let i = 0; i < n; ++i) {
+        if (i != 0) {
+            // 左指针向右移动一格，移除一个字符
+            occ.delete(s.charAt(i - 1));
+        }
+        while (rk + 1 < n && !occ.has(s.charAt(rk + 1))) {
+            // 不断地移动右指针
+            occ.add(s.charAt(rk + 1));
+            ++rk;
+        }
+        // 第 i 到 rk 个字符是一个极长的无重复字符子串
+        ans = Math.max(ans, rk - i + 1);
+    }
+    return ans;
+};
+```
+[参考原文](https://leetcode.cn/problems/longest-substring-without-repeating-characters/solutions/227999/)
+
+### [按位与为零的三元组](https://leetcode.cn/problems/triples-with-bitwise-and-equal-to-zero/description/)
+```js
+var countTriplets = function(nums) {
+    const cnt = new Array(1 << 16).fill(0);
+    for (const x of nums) {
+        for (const y of nums) {
+            ++cnt[x & y];
+        }
+    }
+    let ans = 0;
+    for (const x of nums) {
+        for (let mask = 0; mask < (1 << 16); ++mask) {
+            if ((x & mask) === 0) {
+                ans += cnt[mask];
+            }
+        }
+    }
+    return ans;
+};
+```
+[参考原文](https://leetcode.cn/problems/triples-with-bitwise-and-equal-to-zero/solutions/2144239/an-wei-yu-wei-ling-de-san-yuan-zu-by-lee-gjud/)
+
 ## 小知识
 
 * [时间复杂度](https://www.zhihu.com/question/20196775)：用来度量算法执行时间的多少，用大 O 阶表示，即 T(n)=O(f(n))，其中 n 为问题规模，也就是问题的大小。
