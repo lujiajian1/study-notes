@@ -309,11 +309,9 @@ var longestCommonSubsequence = function (text1, text2) {
     return dp[m][n];
 };
 ```
-![最长递增子序列](https://github.com/lujiajian1/study-notes/blob/main/img/lengthOfLIS1.jpg)
-![最长递增子序列](https://github.com/lujiajian1/study-notes/blob/main/img/lengthOfLIS2.jpg)
 ```js
 /**
- * 最长递增子序列  https://leetcode.cn/problems/longest-increasing-subsequence/
+ * 最长递增子序列 https://leetcode.cn/problems/longest-increasing-subsequence/
 */
 // 暴力解
 var lengthOfLIS = function(nums) {
@@ -363,6 +361,8 @@ var lengthOfLIS = function (nums) {
     return len;
 };
 ```
+![最长递增子序列](https://github.com/lujiajian1/study-notes/blob/main/img/lengthOfLIS1.jpg)
+![最长递增子序列](https://github.com/lujiajian1/study-notes/blob/main/img/lengthOfLIS2.jpg)
 ```js
 /**
  * 鸡蛋掉落-两枚鸡蛋 https://leetcode.cn/problems/egg-drop-with-2-eggs-and-n-floors/
