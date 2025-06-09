@@ -1,0 +1,1 @@
+# [Suspense {#suspense}](https://cn.vuejs.org/guide/built-ins/suspense.html)
