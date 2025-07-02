@@ -1461,7 +1461,7 @@ document.addEvenListener('DOMContentLoaded',function(){
     ```
 * for ... of循环
 * Promise
-* 模块化（Module）
+* [模块化（Module）](https://juejin.cn/post/7509373526823698444?searchId=202507011507281EC139EAB595055D96FD)
 ```js
 //导入部分
 //全部导入
@@ -1484,6 +1484,23 @@ export class User extend Component {};
 ```
 * 函数默认值
 * Proxy
+Proxy是ES6引入的一个强大特性，它允许你创建一个对象的代理，从而可以拦截和自定义该对象的基本操作。Proxy提供了一种机制，可以在对象的基本操作，如属性查找、赋值、枚举、函数调用等之前或之后执行自定义行为。
+```js
+const person = {
+    name: "Alice",
+    age: 30,
+};
+ 
+const proxy = new Proxy(person, {
+    get(target, prop) {
+        console.log(`Reading property: ${prop}`);
+        return prop in target ? target[prop] : "Default";
+    },
+});
+ 
+console.log(proxy.name); // "Reading property: name" → "Alice"
+console.log(proxy.gender); // "Reading property: gender" → "Default"
+```
 * 对象合并（Object.assign）
 * set：ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。Set函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。
     * Set 实例的属性
@@ -1610,23 +1627,23 @@ map.get('title') // "Author"
     * Es Module导出是引用值之前都存在映射关系，并且值都是可读的，不能修改
 
 ## [设计模式](https://blog.csdn.net/song_mou_xia/article/details/80763833)
-* 单例模式：提供了一种将代码组织为一个逻辑单元的手段，这个逻辑单元中的代码可以通过单一变量进行访问。
+* 单例模式：单例模式是一种常用的对象创建型模式，其核心在于确保一个类只有一个实例，并提供一个全局访问点。换句话说，无论何时何地，无论通过何种方式调用该类，都只能返回同一个实例。在实际开发中，我们经常需要使用一些全局唯一的对象，比如数据库连接、线程池、缓存等。如果这些对象被多次实例化，不仅会占用过多的内存资源，而且可能会导致数据不一致的问题。因此，我们需要使用单例模式来保证这些对象的唯一性。
 ```js
 
 // 单体模式
 var Singleton = function(name){
     this.name = name;
-    this.instance = null;
 };
 Singleton.prototype.getName = function(){
     return this.name;
 }
+let instance;
 // 获取实例对象
 function getInstance(name) {
-    if(!this.instance) {
-        this.instance = new Singleton(name);
+    if(!instance) {
+        instance = new Singleton(name);
     }
-    return this.instance;
+    return instance;
 }
 // 测试单体模式的实例
 var a = getInstance("aa");
@@ -1636,6 +1653,121 @@ console.log(a.getName());// aa
 console.log(b.getName());// aa
 ```
 * 发布—订阅模式：又叫观察者模式，它定义对象间的一种一对多的依赖关系，当一个对象的状态发生改变时，所有依赖于它的对象都将得到通知。
+```js
+let eventEmitter = {
+    // 思路：
+    // 创建一个对象
+    // 在该对象上创建一个缓存列表（调度中心）
+    // on 方法用来把函数 fn 都加到缓存列表中（订阅者注册事件到调度中心）
+    // emit 方法取到 arguments 里第一个当做 event，根据 event 值去执行对应缓存列表中的函数（发布者发布事件到调度中心，调度中心处理代码）
+    // off 方法可以根据 event 值取消订阅（取消订阅）
+    // once 方法只监听一次，调用完毕后删除缓存函数（订阅一次）
+
+
+    // 缓存列表
+    list: {},
+    // 订阅
+    on (event, fn) {
+        let _this = this;
+        // 如果对象中没有对应的 event 值，也就是说明没有订阅过，就给 event 创建个缓存列表
+        // 如有对象中有相应的 event 值，把 fn 添加到对应 event 的缓存列表里
+        (_this.list[event] || (_this.list[event] = [])).push(fn);
+        return _this;
+    },
+    // 监听一次
+    once (event, fn) {
+        // 先绑定，调用后删除
+        let _this = this;
+        function on () {
+            _this.off(event, on);
+            fn.apply(_this, arguments);
+        }
+        on.fn = fn;
+        _this.on(event, on);
+        return _this;
+    },
+    // 取消订阅
+    off (event, fn) {
+        let _this = this;
+        let fns = _this.list[event];
+        // 如果缓存列表中没有相应的 fn，返回false
+        if (!fns) return false;
+        if (!fn) {
+            // 如果没有传 fn 的话，就会将 event 值对应缓存列表中的 fn 都清空
+            fns && (fns.length = 0);
+        } else {
+            // 若有 fn，遍历缓存列表，看看传入的 fn 与哪个函数相同，如果相同就直接从缓存列表中删掉即可
+            let cb;
+            for (let i = 0, cbLen = fns.length; i < cbLen; i++) {
+                cb = fns[i];
+                if (cb === fn || cb.fn === fn) {
+                    fns.splice(i, 1);
+                    break
+                }
+            }
+        }
+        return _this;
+    },
+    // 发布
+    emit () {
+        let _this = this;
+        // 第一个参数是对应的 event 值，直接用数组的 shift 方法取出
+        let event = [].shift.call(arguments),
+            fns = [..._this.list[event]];
+        // 如果缓存列表里没有 fn 就返回 false
+        if (!fns || fns.length === 0) {
+            return false;
+        }
+        // 遍历 event 值对应的缓存列表，依次执行 fn
+        fns.forEach(fn => {
+            fn.apply(_this, arguments);
+        });
+        return _this;
+    }
+};
+
+function user1 (content) {
+    console.log('用户1订阅了:', content);
+}
+
+function user2 (content) {
+    console.log('用户2订阅了:', content);
+}
+
+function user3 (content) {
+    console.log('用户3订阅了:', content);
+}
+
+function user4 (content) {
+    console.log('用户4订阅了:', content);
+}
+
+// 订阅
+eventEmitter.on('article1', user1);
+eventEmitter.on('article1', user2);
+eventEmitter.on('article1', user3);
+
+// 取消user2方法的订阅
+eventEmitter.off('article1', user2);
+
+eventEmitter.once('article2', user4)
+
+// 发布
+eventEmitter.emit('article1', 'Javascript 发布-订阅模式');
+eventEmitter.emit('article1', 'Javascript 发布-订阅模式');
+eventEmitter.emit('article2', 'Javascript 观察者模式');
+eventEmitter.emit('article2', 'Javascript 观察者模式');
+
+// eventEmitter.on('article1', user3).emit('article1', 'test111');
+
+/*
+    用户1订阅了: Javascript 发布-订阅模式
+    用户3订阅了: Javascript 发布-订阅模式
+    用户1订阅了: Javascript 发布-订阅模式
+    用户3订阅了: Javascript 发布-订阅模式
+    用户4订阅了: Javascript 观察者模式
+*/
+```
 * 工厂模式：类似于现实生活中的工厂可以产生大量相似的商品，去做同样的事情，实现同样的效果。
 ```js
 function CreatePerson(name,age,sex) {
