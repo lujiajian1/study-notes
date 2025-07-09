@@ -51,6 +51,7 @@
 * 对可用性产生负面影响的元素：\<frameset\>,\<noframes\>和\<frame\>
 
 ### [webSocket](https://juejin.cn/post/6844903544978407431)
+* https://juejin.cn/post/7020964728386093093
 * https://juejin.cn/post/6844903698498322439
 * https://juejin.cn/post/6844903696560553991
 * https://juejin.cn/post/6844903606211215373
@@ -70,7 +71,7 @@ ws.onmessage = function (e) {
 * 真正意义的长连接：http长连接仅仅是为了复用tcp连接，只是一种口头约定，服务端可以不遵守；而websocket是完全意义上的长连接。
 * 是否平等：http长连接依旧无法摆脱一个request对应一个response的模式，且仅允许客户端往服务端发送request，所以对于实时通信的实现依旧只能是轮询；而websocket双方是对等的，可以相互发送消息，可以实现真正意义的实时通信。
 
-### [webworker](https://juejin.cn/post/6844903725249593352)
+### [webworker](https://juejin.cn/post/7139718200177983524)
 ```js
 //主线程
 const worker = new Worker('https://~.js');
