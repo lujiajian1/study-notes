@@ -40,15 +40,148 @@ Vue 3 提供了更现代化、更高性能的架构，通过 `Composition API` �
   💡 Vue 2：通过 `this.$parent` 获取父组件实例，或通过 `this.$children` 获取子组件实例。
   💡 Vue 3：通过 `ref` 引用子组件，直接访问其属性和方法。
 - Vue 3 组件支持多个 `v-model` 绑定和自定义属性名，父子之间的双向绑定更加灵活。
+```vue
+// Parent.vue 传送
+<template>
+    <child :msg="msg" @myClick="onMyClick"></child>
+</template>
+<script setup>
+import child from "./child.vue"
+
+import { ref } from "vue"
+
+const msg = ref('这是传级子组件的信息');
+
+const onMyClick = (msg) => {
+    console.log(msg) // 这是父组件收到的信息
+}
+</script>
+
+// Child.vue 接收
+<template>
+    // 写法一
+    <button @click="emit('myClick')">按钮</buttom>
+    // 写法二
+    <button @click="handleClick">按钮</buttom>
+</template>
+
+<script setup>
+const props = defineProps({
+    msg1: String
+})
+console.log(props)
+
+const emit = defineEmits(["myClick"])
+// 对应写法二
+const handleClick = ()=>{
+    emit("myClick", "这是发送给父组件的信息")
+}
+</script>
+```
 
 **跨组件通信**
 
 - Provide / Inject：父组件通过 `provide` 向后代组件传递数据，后代组件使用 `inject` 接收数据，适用于深层嵌套组件间的通信。
+```vue
+// Parent.vue
+<script setup>
+    import { provide } from "vue"
+    provide("name", "沐华")
+</script>
+
+// Child.vue
+<script setup>
+    import { inject } from "vue"
+    const name = inject("name")
+    console.log(name) // 沐华
+</script>
+```
 - vuex：通过全局状态管理库 Vuex 共享状态，实现跨组件通信（vue2）。
 - pinia：Pinia 是 Vue 3 推荐的全局状态管理库，替代了 Vuex。
 - 事件总线（Vue 2）：Vue 2 中可以通过`Event Bus`实现组件间的通信，但在 Vue 3 中不推荐使用。
+```vue
+// Bus.js
+import Vue from "vue"
+export default new Vue()
+
+// 在需要向外部发送自定义事件的组件内
+<template>
+    <button @click="handlerClick">按钮</button>
+</template>
+<script>
+    import Bus from "./Bus.js"
+    export default{
+        methods:{
+            handlerClick(){
+                // 自定义事件名 sendMsg
+                Bus.$emit("sendMsg", "这是要向外部发送的数据")
+            }
+        }
+    }
+</script>
+
+// 在需要接收外部事件的组件内
+<script>
+    import Bus from "./Bus.js"
+    export default{
+        mounted(){
+            // 监听事件的触发
+            Bus.$on("sendMsg", data => {
+                console.log("这是接收到的数据：", data)
+            })
+        },
+        beforeDestroy(){
+            // 取消监听
+            Bus.$off("sendMsg")
+        }
+    }
+</script>
+```
 - 全局事件处理器：通过在根组件$root或全局对象上监听事件，进行跨组件通信（Vue 3 推荐使用外部库，如 `mitt`）。
-  :::
+```js
+// main.js
+import Vue from 'vue'
+import App from './App.vue'
+
+new Vue({
+  el: '#app',
+  render: (h) => h(App),
+  data: {
+    theme: 'light',
+  },
+  methods: {
+    setTheme(newValue) {
+      console.log('setTheme triggered with', newValue)
+      this.theme = newValue
+    },
+  },
+})
+```
+```js
+// mitt.js
+import mitt from 'mitt'
+const mitt = mitt()
+export default mitt
+
+// 组件 A
+<script setup>
+import mitt from './mitt'
+const handleClick = () => {
+    mitt.emit('handleChange')
+}
+</script>
+
+// 组件 B 
+<script setup>
+import mitt from './mitt'
+import { onUnmounted } from 'vue'
+const someMethed = () => { ... }
+mitt.on('handleChange',someMethed)
+onUnmounted(()=>{
+    mitt.off('handleChange',someMethed)
+})
+</script>
+```
 
 ## Vue 组件的生命周期
 
@@ -101,11 +234,10 @@ setup 作为 Vue3 的 Composition API 的一部分, 其内部函数的执行时�
   import { ref, onMounted } from 'vue';
   console.log("setup");
   onMounted(() => {
-  console.log('onMounted');
+    console.log('onMounted');
   });
   // 执行结果:setup onMounted
 </script>
-
 ```
 
 ## Vue 组件在哪个生命周期发送 ajax 请求？
@@ -211,7 +343,7 @@ const count = ref(2)
 
 // 计算属性
 const doubledCount = computed(() => count.value * 2)
-</script>
+</>
 ```
 
 **watch**用于监听数据变化并执行副作用操作
@@ -658,6 +790,11 @@ this.$nextTick(() => {
 })
 ```
 
+## $nextTick 原理
+```js
+// TODO: 伪代码
+```
+
 ## 使用 Vue3 Composable 组合式函数，实现 useCount
 
 在 Vue 应用的概念中，“**组合式函数**”(Composables) 是一个利用 Vue 的组合式 API 来封装和复用有状态逻辑的函数。它和自定义 `React hooks` 非常相似。
@@ -899,6 +1036,12 @@ onErrorCaptured((err, instance, info) => {
 ```
 
 > Vue官方API： [onErrorCaptured](https://cn.vuejs.org/api/composition-api-lifecycle.html#onerrorcaptured)、[errorHandler](https://cn.vuejs.org/api/application.html#app-config-errorhandler)
+
+## [Vuex 原理](https://juejin.cn/post/6855474001838342151)：
+1. Vuex本质是一个对象
+2. Vuex对象有两个属性，一个是install方法，一个是Store这个类
+3. install方法的作用是将store这个实例挂载到所有的组件上，注意是同一个store实例。
+4. Store这个类拥有commit，dispatch这些方法，Store类里将用户传入的state包装成data，作为new Vue的参数，从而实现了state 值的响应式。
 
 ## Vuex 中 mutation 和 action 有什么区别？
 
@@ -1388,6 +1531,96 @@ Vue 的响应式原理在 2.x 和 3.x 中有所不同，分别基于 `Object.def
 
 **Vue 2.x 的实现 ( `Object.defineProperty` )**
 
+```js
+// 触发更新视图
+function updateView() {
+    console.log('视图更新')
+}
+
+// 重新定义数组原型
+const oldArrayProperty = Array.prototype
+// 创建新对象，原型指向 oldArrayProperty ，再扩展新的方法不会影响原型
+const arrProto = Object.create(oldArrayProperty);
+['push', 'pop', 'shift', 'unshift', 'splice'].forEach(methodName => {
+    arrProto[methodName] = function () {
+        updateView() // 触发视图更新
+        oldArrayProperty[methodName].call(this, ...arguments)
+        // Array.prototype.push.call(this, ...arguments)
+    }
+})
+
+// 重新定义属性，监听起来
+function defineReactive(target, key, value) {
+    // 深度监听
+    observer(value)
+
+    // 核心 API
+    Object.defineProperty(target, key, {
+        get() {
+            return value
+        },
+        set(newValue) {
+            if (newValue !== value) {
+                // 深度监听
+                observer(newValue)
+
+                // 设置新值
+                // 注意，value 一直在闭包中，此处设置完之后，再 get 时也是会获取最新的值
+                value = newValue
+
+                // 触发更新视图
+                updateView()
+            }
+        }
+    })
+}
+
+// 监听对象属性
+function observer(target) {
+    if (typeof target !== 'object' || target === null) {
+        // 不是对象或数组
+        return target
+    }
+
+    // 污染全局的 Array 原型
+    // Array.prototype.push = function () {
+    //     updateView()
+    //     ...
+    // }
+
+    if (Array.isArray(target)) {
+        target.__proto__ = arrProto
+    }
+
+    // 重新定义各个属性（for in 也可以遍历数组）
+    for (let key in target) {
+        defineReactive(target, key, target[key])
+    }
+}
+
+// 准备数据
+const data = {
+    name: 'zhangsan',
+    age: 20,
+    info: {
+        address: '北京' // 需要深度监听
+    },
+    nums: [10, 20, 30]
+}
+
+// 监听数据
+observer(data)
+
+// 测试
+// data.name = 'lisi'
+// data.age = 21
+// // console.log('age', data.age)
+// data.x = '100' // 新增属性，监听不到 —— 所以有 Vue.set
+// delete data.name // 删除属性，监听不到 —— 所有已 Vue.delete
+// data.info.address = '上海' // 深度监听
+data.nums.push(4) // 监听数组
+```
+
 `Object.defineProperty` 支持 IE9 及以上版本，兼容性非常好。它会递归遍历对象，对每个属性单独设置 `getter` 和 `setter` ，但也存在以下局限性：
 
 - **无法监听动态属性增删**
@@ -1400,6 +1633,49 @@ Vue 的响应式原理在 2.x 和 3.x 中有所不同，分别基于 `Object.def
   只能代理普通对象和数组，不能处理像 `Map` 、 `Set` 等复杂数据结构。
 
 **Vue 3.x 的实现 ( `Proxy` )**
+
+```js
+class Observer {
+    constructor(data) {
+        // 遍历参数data的属性,给添加到this上
+        for(let key of Object.keys(data)) {
+            if(typeof data[key] === 'object') {
+                data[key] = new Observer(data[key]);
+            }
+            Object.defineProperty(this, key, {
+                enumerable: true,
+                configurable: true,
+                get() {
+                    console.log('你访问了' + key);
+                    return data[key]; // 中括号法可以用变量作为属性名,而点方法不可以;
+                },
+                set(newVal) {
+                    console.log('你设置了' + key);
+                    console.log('新的' + key + '=' + newVal);
+                    if(newVal === data[key]) {
+                        return;
+                    }
+                    data[key] = newVal;
+                }
+            })
+        }
+    }
+}
+
+const obj = {
+    name: 'app',
+    age: '18',
+    a: {
+        b: 1,
+        c: 2,
+    },
+}
+const app = new Observer(obj);
+app.age = 20;
+console.log(app.age);
+app.newPropKey = '新属性';
+console.log(app.newPropKey);
+```
 
 为了解决 Vue 2.x 中的这些问题，Vue 3.x 采用了 `Proxy` ，带来了更优的性能和更全面的响应式支持：
 
@@ -1576,8 +1852,10 @@ Vue 组件的异步更新过程是其响应式系统的核心机制，主要通�
 2. **Watcher 入队**
    所有关联的 Watcher 会被推入 **异步更新队列**（ `queueWatcher` ），Vue 通过 `id` 去重，确保每个 Watcher 仅入队一次，避免重复更新。
 
-**二、调度阶段：异步队列处理** 3. **异步执行**
-Vue 将队列刷新任务放入微任务队列（优先 `Promise.then` ，降级 `setImmediate` 或 `setTimeout` ），等待当前同步代码执行完毕后处理。
+**二、调度阶段：异步队列处理** 
+
+3. **异步执行**
+    Vue 将队列刷新任务放入微任务队列（优先 `Promise.then` ，降级 `setImmediate` 或 `setTimeout` ），等待当前同步代码执行完毕后处理。
 
 ```javascript
 // 伪代码：nextTick 实现
@@ -1595,8 +1873,10 @@ const timerFunc = () => {
 4. **合并更新**
    同一事件循环中的多次数据变更会被合并为一次组件更新（如循环中修改数据 100 次，仅触发 1 次渲染）。
 
-**三、执行阶段：虚拟 DOM 与 DOM 更新** 5. **组件重新渲染**
-执行队列中的 Watcher 更新函数，触发组件的 `render` 生成新虚拟 DOM（VNode）。
+**三、执行阶段：虚拟 DOM 与 DOM 更新** 
+
+5. **组件重新渲染**
+    执行队列中的 Watcher 更新函数，触发组件的 `render` 生成新虚拟 DOM（VNode）。
 
 6. **Diff 与 Patch**
    通过 **Diff 算法** 对比新旧 VNode，计算出最小化 DOM 操作，批量更新真实 DOM。
@@ -1714,3 +1994,9 @@ const KeepAliveImpl = {
 ## 为何 ref 需要 value 属性
 
 Vue 3 中， `ref` 之所以需要 `.value` 属性，主要是因为 Vue 3 使用 `Proxy` 实现响应式。 `Proxy` 对对象或数组的每个属性进行深度代理，因此可以追踪嵌套属性的变化。而 `Proxy` 无法直接处理基本数据类型（如 `number` 、 `string` 、 `boolean` ），这使得 `reactive` 无法用于基本数据类型。为了实现基本数据类型的响应式，Vue 设计了 `ref` ，它将基本数据类型封装为一个包含 `value` 属性的对象，并通过 `getter` 和 `setter` 进行依赖追踪和更新。当访问或修改 `ref.value` 时，Vue 会触发依赖更新。
+
+## [Vue和React 的区别](https://juejin.cn/post/7238199999733088313)
+参考文章: https://juejin.cn/post/7352556065819918388
+
+## SSR（服务端渲染）
+参考文章: https://juejin.cn/post/7306018529844592692
