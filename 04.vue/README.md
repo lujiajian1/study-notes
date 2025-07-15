@@ -791,9 +791,22 @@ this.$nextTick(() => {
 ```
 
 ## $nextTick 原理
+* 使用：Vue是异步渲染，data改变之后，DOM不会立刻渲染，会整合一次渲染，this.$nextTick(()=>{})会在DOM渲染之后被触发，以获取最新DOM节点。
+* 原理：MutationObserver是HTML5新增的属性，用于监听DOM修改事件，能够监听到节点的属性、文本内容、子节点等的改动。
 ```js
-// TODO: 伪代码
+// MutationObserver的使用方法
+var observer = new MutationObserver(function(){
+    //这里是回调函数
+    console.log('DOM被修改了！');
+});
+var article = document.querySelector('article');
+observer.observer(article);
 ```
+![nextTick](https://github.com/lujiajian1/study-notes/blob/main/img/nextTick.png)
+参考文章：
+* https://segmentfault.com/a/1190000008589736
+* https://juejin.cn/post/7478623802931609600
+* https://juejin.cn/post/7021688091513454622
 
 ## 使用 Vue3 Composable 组合式函数，实现 useCount
 
