@@ -1,7 +1,7 @@
 ## 类型
 #### 八种类型
 * 七种基本数据类型
-    * 数字（Number），整数或浮点数，例如：42 或者 3.14159
+    * 数字（Number），整数或浮点数，例如：42 或者 3.14159。最大值：2^53 最小值：-2^53 最大安全值： 2^53-1 最小安全值：-2^53+1 [双精度浮点数](https://juejin.cn/post/7170533987562029087)
     * 字符串（String），字符串是一串表示文本值的字符序列，例如："Howdy" 
     * 布尔值（Boolean），有2个值分别是：true 和 false
     * null ， 一个表明 null 值的特殊关键字。 JavaScript 是大小写敏感的，因此 null 与 Null、NULL或变体完全不同
@@ -71,6 +71,7 @@
 
 #### [精度丢失问题(0.2+0.1 !== 0.3)](https://github.com/haizlin/fe-interview/issues/80)
 简单概括就是：计算内部存储数据使用的是二进制，二进制能精确地表示位数有限且分母是2的倍数的小数，比如，1/2，1/4，1/6，1/8，1/10 等。但是我们日常生活中使用的是十进制，所以十进制中的0.2也就是1/5是无法在计算机二进制中精确表示的，所以 0.2+0.1 有精度丢失问题。
+参考文章：https://juejin.cn/post/7325627704782307337
 
 ## 闭包和作用域链
 #### 执行上下文与作用域
@@ -1361,16 +1362,72 @@ document.addEvenListener('DOMContentLoaded',function(){
 })
 ```
 ## for...of 和 for...in
-* for...in
+* for...in：遍历一个对象的可枚举属性，如对象、数组、字符串。针对属性，所以获得 key
     * 遍历对象及其原型链上可枚举的属性
     * 如果用于遍历数组，处理遍历其元素外，还会遍历开发者对数组对象自定义的可枚举属性及其原型链上的可枚举属性
     * 遍历对象返回的属性名和遍历数组返回的索引都是 string 类型
-* for...of
+```js
+const arr = ['a', 'b', 'c', 'd', 'e']
+for(let i in arr){
+  console.log(i); // 打印输出：0, 1, 2，3，4
+  console.log(arr[i])//打印输出：a，b，c，d，e
+}
+
+const obj = {
+  name: "张三",
+  age: 10,
+  hello() {
+    console.log("hello");
+  },
+};
+for (const key in obj) {
+  console.log(key); // name age hello
+}
+```
+* for...of：遍历一个可迭代对象，如数组、字符串、Map/Set 。针对一个迭代对象，所以获得 value
     * es6 中添加的循环遍历语法；
     * 支持遍历数组，类数组对象（DOM NodeList），字符串，Map 对象，Set 对象；
     * 不支持遍历普通对象；
     * 遍历后输出的结果为数组元素的值
 * for...in（以及forEach、for）是常规的同步遍历，for...of 常用于异步的遍历
+```js
+const arr = [10, 20, 30]
+for (let n of arr) {
+    console.log(n) // 10 20 30
+}
+
+
+const pList = document.querySelectorAll('p')
+for (let p of pList) {
+    console.log(p)
+}
+
+const str = 'abc'
+for (let s of str) {
+    console.log(s) // a b c
+}
+
+const set1 = new Set([10, 20, 30])
+for (let n of set1) {
+    console.log(n) // 10 20 30
+}
+
+let map1 = new Map([
+    ['x', 10], ['y', 20], ['z', 3]
+])
+for (let n of map1) {
+    console.log(n) // ['x', 10]  ['y', 20]   ['z', 3]
+}
+
+function* foo(){
+  yield 10
+  yield 20
+  yield 30
+}
+for (let o of foo()) {
+  console.log(o) // 10 20 30
+}
+```
 
 ## [正则表达式](https://juejin.cn/post/6844903845227659271)
 
@@ -1461,7 +1518,7 @@ document.addEvenListener('DOMContentLoaded',function(){
     ```
 * for ... of循环
 * Promise
-* [模块化（Module）](https://juejin.cn/post/7509373526823698444?searchId=202507011507281EC139EAB595055D96FD)
+* [模块化（Module）](https://juejin.cn/post/7509373526823698444)
 ```js
 //导入部分
 //全部导入
@@ -1629,7 +1686,6 @@ map.get('title') // "Author"
 ## [设计模式](https://blog.csdn.net/song_mou_xia/article/details/80763833)
 * 单例模式：单例模式是一种常用的对象创建型模式，其核心在于确保一个类只有一个实例，并提供一个全局访问点。换句话说，无论何时何地，无论通过何种方式调用该类，都只能返回同一个实例。在实际开发中，我们经常需要使用一些全局唯一的对象，比如数据库连接、线程池、缓存等。如果这些对象被多次实例化，不仅会占用过多的内存资源，而且可能会导致数据不一致的问题。因此，我们需要使用单例模式来保证这些对象的唯一性。
 ```js
-
 // 单体模式
 var Singleton = function(name){
     this.name = name;

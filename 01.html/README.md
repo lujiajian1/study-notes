@@ -50,7 +50,7 @@
 * \<tt\>文本等宽；
 * 对可用性产生负面影响的元素：\<frameset\>,\<noframes\>和\<frame\>
 
-### [webSocket](https://juejin.cn/post/6844903544978407431)
+### [webSocket](https://juejin.cn/post/6844903544978407431)：HTML5开始提供的一种浏览器与服务器进行全双工通讯的网络技术，属于应用层协议。它基于TCP传输协议，并复用HTTP的握手通道
 * https://juejin.cn/post/7020964728386093093
 * https://juejin.cn/post/6844903698498322439
 * https://juejin.cn/post/6844903696560553991
@@ -71,7 +71,7 @@ ws.onmessage = function (e) {
 * 真正意义的长连接：http长连接仅仅是为了复用tcp连接，只是一种口头约定，服务端可以不遵守；而websocket是完全意义上的长连接。
 * 是否平等：http长连接依旧无法摆脱一个request对应一个response的模式，且仅允许客户端往服务端发送request，所以对于实时通信的实现依旧只能是轮询；而websocket双方是对等的，可以相互发送消息，可以实现真正意义的实时通信。
 
-### [webworker](https://juejin.cn/post/7139718200177983524)
+### [webworker](https://juejin.cn/post/7139718200177983524)：Web Worker 是 HTML5 标准的一部分，这一规范定义了一套 API，允许我们在 js 主线程之外开辟新的 Worker 线程，并将一段 js 脚本运行其中，它赋予了开发者利用 js 操作多线程的能力
 ```js
 //主线程
 const worker = new Worker('https://~.js');
@@ -91,11 +91,12 @@ worker.terminate(); // 主线程关闭worker线程
 self.onmessage = e => {
     console.log('主线程传来的信息：', e.data);
     // do something
+    
+    //发送信息给主线程
+    self.postMessage({
+        hello: [ '这条信息', '来自worker线程' ]
+    });
 };
-//发送信息给主线程
-self.postMessage({
-    hello: [ '这条信息', '来自worker线程' ]
-});
 ```
 
 ### [SEO优化技巧](https://juejin.cn/post/6844904097263386638)
