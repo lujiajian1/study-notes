@@ -28,6 +28,349 @@ Vue 3 提供了更现代化、更高性能的架构，通过 `Composition API` �
 
 - Vue3支持为一个组件绑定多个 `v-model`，并且可以自定义 `prop` 和 `event` 名称。
 
+## Vue2 和 Vu3 diff算法的区别？
+- Vue2
+```js
+// 当数据发生改变时，set方法会让调用Dep.notify通知所有订阅者Watcher，订阅者就会调用patch给真实的DOM打补丁.
+function patch (oldVnode, vnode) {
+    // some code
+    if (sameVnode(oldVnode, vnode)) {
+        // 值得比较
+    	patchVnode(oldVnode, vnode)
+    } else {
+        // 直接删除旧的元素，插入新元素
+    	const oEl = oldVnode.el // 当前oldVnode对应的真实元素节点
+    	let parentEle = api.parentNode(oEl)  // 父元素
+    	createEle(vnode)  // 根据Vnode生成新元素
+    	if (parentEle !== null) {
+            api.insertBefore(parentEle, vnode.el, api.nextSibling(oEl)) // 将新元素添加进父元素
+            api.removeChild(parentEle, oldVnode.el)  // 移除以前的旧元素节点
+            oldVnode = null
+    	}
+    }
+    // some code 
+    return vnode
+}
+
+// 判断两节点是否值得比较，值得比较则执行 patchVnode
+function sameVnode (a, b) {
+  return (
+    a.key === b.key &&  // key值
+    a.tag === b.tag &&  // 标签名
+    a.isComment === b.isComment &&  // 是否为注释节点
+    // 是否都定义了data，data包含一些具体信息，例如onclick , style
+    isDef(a.data) === isDef(b.data) &&  
+    sameInputType(a, b) // 当标签是<input>的时候，type必须相同
+  )
+}
+
+// 比较当前元素
+patchVnode (oldVnode, vnode) {
+    const el = vnode.el = oldVnode.el
+    let i, oldCh = oldVnode.children, ch = vnode.children
+    if (oldVnode === vnode) return
+    if (oldVnode.text !== null && vnode.text !== null && oldVnode.text !== vnode.text) {
+        // 如果只是文本节点不同
+        api.setTextContent(el, vnode.text)
+    }else {
+        updateEle(el, vnode, oldVnode)
+    	if (oldCh && ch && oldCh !== ch) {
+            // 子元素不同
+            updateChildren(el, oldCh, ch)
+    	}else if (ch){
+            // 新元素存在子元素，但是旧元素没有，直接创建新元素
+            createEle(vnode);
+    	}else if (oldCh){
+             // 旧元素存在子元素，但是新元素没有，直接移除旧元素的子元素
+            api.removeChildren(el)
+    	}
+    }
+}
+
+// 子元素采用双端对比策略
+updateChildren (parentElm, oldCh, newCh) {
+    let oldStartIdx = 0, newStartIdx = 0
+    let oldEndIdx = oldCh.length - 1
+    let oldStartVnode = oldCh[0]
+    let oldEndVnode = oldCh[oldEndIdx]
+    let newEndIdx = newCh.length - 1
+    let newStartVnode = newCh[0]
+    let newEndVnode = newCh[newEndIdx]
+    let oldKeyToIdx
+    let idxInOld
+    let elmToMove
+    let before
+    while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+        if (oldStartVnode == null) {   // 对于vnode.key的比较，会把oldVnode = null
+            oldStartVnode = oldCh[++oldStartIdx] 
+        }else if (oldEndVnode == null) {
+            oldEndVnode = oldCh[--oldEndIdx]
+        }else if (newStartVnode == null) {
+            newStartVnode = newCh[++newStartIdx]
+        }else if (newEndVnode == null) {
+            newEndVnode = newCh[--newEndIdx]
+        }else if (sameVnode(oldStartVnode, newStartVnode)) {
+            patchVnode(oldStartVnode, newStartVnode)
+            oldStartVnode = oldCh[++oldStartIdx]
+            newStartVnode = newCh[++newStartIdx]
+        }else if (sameVnode(oldEndVnode, newEndVnode)) {
+            patchVnode(oldEndVnode, newEndVnode)
+            oldEndVnode = oldCh[--oldEndIdx]
+            newEndVnode = newCh[--newEndIdx]
+        }else if (sameVnode(oldStartVnode, newEndVnode)) {
+            patchVnode(oldStartVnode, newEndVnode)
+            api.insertBefore(parentElm, oldStartVnode.el, api.nextSibling(oldEndVnode.el))
+            oldStartVnode = oldCh[++oldStartIdx]
+            newEndVnode = newCh[--newEndIdx]
+        }else if (sameVnode(oldEndVnode, newStartVnode)) {
+            patchVnode(oldEndVnode, newStartVnode)
+            api.insertBefore(parentElm, oldEndVnode.el, oldStartVnode.el)
+            oldEndVnode = oldCh[--oldEndIdx]
+            newStartVnode = newCh[++newStartIdx]
+        }else {
+           // 使用key时的比较
+            if (oldKeyToIdx === undefined) {
+                oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx) // 有key生成index表
+            }
+            idxInOld = oldKeyToIdx[newStartVnode.key]
+            if (!idxInOld) {
+                api.insertBefore(parentElm, createEle(newStartVnode).el, oldStartVnode.el)
+                newStartVnode = newCh[++newStartIdx]
+            }
+            else {
+                elmToMove = oldCh[idxInOld]
+                if (elmToMove.sel !== newStartVnode.sel) {
+                    api.insertBefore(parentElm, createEle(newStartVnode).el, oldStartVnode.el)
+                }else {
+                    patchVnode(elmToMove, newStartVnode)
+                    oldCh[idxInOld] = null
+                    api.insertBefore(parentElm, elmToMove.el, oldStartVnode.el)
+                }
+                newStartVnode = newCh[++newStartIdx]
+            }
+        }
+    }
+    if (oldStartIdx > oldEndIdx) {
+        before = newCh[newEndIdx + 1] == null ? null : newCh[newEndIdx + 1].el
+        addVnodes(parentElm, before, newCh, newStartIdx, newEndIdx)
+    }else if (newStartIdx > newEndIdx) {
+        removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx)
+    }
+}
+```
+- Vue3
+```js
+// 子元素对比策略上不同：Vue 2 采用双端对比，Vue 3 采用 最长递增子序列（LIS） 优化，提高了列表更新的效率。
+
+// 第一步：从头对比
+const patchKeyedChildren = (c1, c2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized) => {
+  let i = 0
+  const l2 = c2.length
+  // 旧节点的尾部标记位
+  let e1 = c1.length - 1
+  // 新节点的尾部标记位
+  let e2 = l2 - 1
+  // 从头部开始比对
+  // (a b) c
+  // (a b) d e
+  while (i <= e1 && i <= e2) {
+    const n1 = c1[i]
+    const n2 = (c2[i] = optimized
+      ? cloneIfMounted(c2[i] as VNode)
+      : normalizeVNode(c2[i]))
+    // 如果是 sameVnode 则递归执行 patch  
+    if (isSameVNodeType(n1, n2)) {
+      patch(n1, n2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized)
+    } else {
+      break
+    }
+    i++
+  }
+}
+// 第二步：从尾对比
+const patchKeyedChildren = (c1, c2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized) => {
+  let i = 0
+  const l2 = c2.length
+  // 旧节点的尾部标记位
+  let e1 = c1.length - 1
+  // 新节点的尾部标记位
+  let e2 = l2 - 1
+  // 从头部开始比对
+  // ...
+  // 从尾部开始比对
+  // a (b c)
+  // d e (b c)
+  while (i <= e1 && i <= e2) {
+    const n1 = c1[e1]
+    const n2 = (c2[e2] = optimized
+        ? cloneIfMounted(c2[e2] as VNode)
+        : normalizeVNode(c2[e2]))
+    // 如果是 sameVnode 则递归执行 patch  
+    if (isSameVNodeType(n1, n2)) {
+      patch(n1, n2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized)
+    } else {
+      break
+    }
+    e1--
+    e2--
+  }
+}
+// 第三步：新增节点
+const patchKeyedChildren = (c1, c2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized) => {
+  let i = 0
+  const l2 = c2.length
+  // 旧节点的尾部标记位
+  let e1 = c1.length - 1
+  // 新节点的尾部标记位
+  let e2 = l2 - 1
+  // 从头部开始必须
+  // ...
+  // 从尾部开始比对
+  // ...
+  // 如果有多余的新节点，则执行新增逻辑
+  if (i > e1) {
+    if (i <= e2) {
+      const nextPos = e2 + 1
+      const anchor = nextPos < l2 ? c2[nextPos].el : parentAnchor
+      while (i <= e2) {
+        // 新增新节点
+        patch(null, c2[i], container, anchor, parentComponent, parentSuspense, isSVG)
+        i++
+      }
+    }
+  }
+}
+// 第四步：删除节点
+const patchKeyedChildren = (c1, c2, container, parentAnchor, parentComponent, parentSuspense, isSVG, optimized) => {
+  let i = 0
+  const l2 = c2.length
+  // 旧节点的尾部标记位
+  let e1 = c1.length - 1
+  // 新节点的尾部标记位
+  let e2 = l2 - 1
+  // 从头部开始比对
+  // ...
+  // 从尾部开始比对
+  // ...
+  // 如果有多余的新节点，则执行新增逻辑
+  // ...
+  // 如果有多余的旧节点，则执行卸载逻辑
+  else if (i > e2) {
+    while (i <= e1) {
+      // 卸载节点
+      unmount(c1[i], parentComponent, parentSuspense, true)
+      i++
+    }
+  }
+}
+
+
+// 第五步：未知子序列 - 构造新节点位置映射 keyToNewIndexMap
+
+// 旧子序列开始位置
+const s1 = i
+// 新子序列开始位置
+const s2 = i
+
+// 5.1 构建 key:index 关系索引 map
+const keyToNewIndexMap = new Map()
+for (i = s2; i <= e2; i++) {
+  const nextChild = (c2[i] = optimized
+    ? cloneIfMounted(c2[i] as VNode)
+    : normalizeVNode(c2[i]))
+  if (nextChild.key != null) {
+    keyToNewIndexMap.set(nextChild.key, i)
+  }
+}
+
+// 第五步：未知子序列 - 继续处理旧节点
+
+// 记录新节点已更新的数目
+let patched = 0
+// 记录新节点还有多少个没有更新
+const toBePatched = e2 - s2 + 1
+// 标记是否有必要进行节点的位置移动
+let moved = false
+// 标记是否有节点进行了位置移动
+let maxNewIndexSoFar = 0
+// 记录新节点在旧节点中的位置数组
+const newIndexToOldIndexMap = new Array(toBePatched)
+// newIndexToOldIndexMap 全部置为 0
+for (i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0
+// 开始遍历旧子节点
+for (i = s1; i <= e1; i++) {
+  // prevChild 代表旧节点
+  const prevChild = c1[i]
+  // 还有多余的旧节点，则删除
+  if (patched >= toBePatched) {
+    unmount(prevChild, parentComponent, parentSuspense, true)
+    continue
+  }
+  // 记录旧节点在新节点中的位置数组
+  let newIndex = keyToNewIndexMap.get(prevChild.key)
+  
+  // 如果旧节点不存在于新节点中，则删除该节点
+  if (newIndex === undefined) {
+    unmount(prevChild, parentComponent, parentSuspense, true)
+  } else {
+    // newIndexToOldIndexMap 中元素为 0 表示着新节点不存在于旧节点中
+    newIndexToOldIndexMap[newIndex - s2] = i + 1
+    // 默认不移动的话，所有相同节点都是增序排列的
+    // 如果有移动，必然出现节点降序的情况
+    if (newIndex >= maxNewIndexSoFar) {
+      maxNewIndexSoFar = newIndex
+    } else {
+      moved = true
+    }
+    // 更新节点
+    patch(
+      prevChild,
+      c2[newIndex] as VNode,
+      container,
+      null,
+      parentComponent,
+      parentSuspense,
+      isSVG,
+      slotScopeIds,
+      optimized
+    )
+    // 记录更新的数量
+    patched++
+  }
+}
+
+// 第五步：未知子序列 - 移动和增加新节点
+
+// 根据 newIndexToOldIndexMap 求取最长公共子序列
+const increasingNewIndexSequence = moved
+  ? getSequence(newIndexToOldIndexMap)
+  : EMPTY_ARR
+// 最长公共子序列尾部索引  
+j = increasingNewIndexSequence.length - 1
+// 从尾部开始遍历
+for (i = toBePatched - 1; i >= 0; i--) {
+  const nextIndex = s2 + i
+  const nextChild = c2[nextIndex]
+  const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : parentAnchor
+  // 如果新子序列中的节点在旧子序列中不存在，则新增节点
+  if (newIndexToOldIndexMap[i] === 0) {
+    patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG)
+  } else if (moved) {
+    // 如果需要移动且
+    // 没有最长递增子序列
+    // 当前的节点不在最长递增子序列中
+    if (j < 0 || i !== increasingNewIndexSequence[j]) {
+      move(nextChild, container, anchor, MoveType.REORDER)
+    } else {
+      j--
+    }
+  }
+}
+```
+参考文章：
+https://juejin.cn/post/6844903607913938951
+https://juejin.cn/book/7146465352120008743/section/7148745093858459685
+
 ## Vue 组件的通讯方式有哪些？
 
 组件之间的通讯通常分为父子组件通讯和跨组件通讯。要注意，vue3 组件的通讯方式和 vue2 有一定的区别。
@@ -808,6 +1151,95 @@ observer.observer(article);
 * https://juejin.cn/post/7478623802931609600
 * https://juejin.cn/post/7021688091513454622
 
+## Vue2 和 Vue3 $nextTick 的区别
+Vue2 和 Vue3 的 `nextTick` 在核心功能上相似（都是用于在 DOM 更新后执行回调），但在实现机制和细节上有以下关键区别：
+
+1. **实现原理**
+   - **Vue2**：  
+     使用 **宏任务（MacroTask）和微任务（MicroTask）结合的降级策略**，按优先级尝试以下方式：  
+     - 首选 `Promise`（微任务）
+     - 降级到 `MutationObserver`（微任务）
+     - 再降级到 `setImmediate`（宏任务）
+     - 最后用 `setTimeout(fn, 0)`（宏任务）兜底  
+     ❗ 由于降级策略，不同环境下可能使用宏任务或微任务。
+
+   - **Vue3**：  
+     **统一使用 `Promise.resolve().then()` 微任务实现**，不再支持降级策略。  
+     ✅ 现代浏览器均支持 `Promise`，代码更简洁且行为一致。
+
+
+2. **执行时机**
+   - **Vue2**：  
+     回调可能进入 **微任务队列**（如 `Promise`）或 **宏任务队列**（如 `setTimeout`），导致执行时机不一致。  
+     ```javascript
+     // 示例：Vue2 中可能因降级导致时序问题
+     setTimeout(() => console.log('宏任务 1'));
+     this.$nextTick(() => console.log('nextTick')); // 可能输出顺序不稳定
+     ```
+
+   - **Vue3**：  
+     所有回调通过 `Promise.then()` 推入 **微任务队列**，时序严格可预测：  
+     ```javascript
+     setTimeout(() => console.log('宏任务')); // 后执行
+     nextTick(() => console.log('nextTick')); // 先执行（微任务）
+     ```
+
+3. **API 使用**
+   - **Vue2**：  
+     通过组件实例调用：`this.$nextTick(callback)`  
+     ```javascript
+     methods: {
+       updateData() {
+         this.message = "更新";
+         this.$nextTick(() => {
+           console.log("DOM 已更新");
+         });
+       }
+     }
+     ```
+
+   - **Vue3**：  
+     支持两种方式：  
+     - **Composition API**：从 `vue` 导入 `nextTick`  
+       ```javascript
+       import { nextTick } from 'vue';
+       setup() {
+         const update = async () => {
+           message.value = "更新";
+           await nextTick(); // 支持 await
+           console.log("DOM 已更新");
+         };
+       }
+       ```
+     - **Options API**：保留 `this.$nextTick()`（兼容 Vue2 写法）
+
+4. **与事件循环的交互**
+   - **Vue2**：  
+     若降级到宏任务（如 `setTimeout`），回调可能被延迟到下一个事件循环，导致：  
+     - 在同一个事件循环中修改数据 + `nextTick` 后访问 DOM，可能拿到旧值。  
+     - 与宏任务（如 `setTimeout`）混用时顺序不确定。
+
+   - **Vue3**：  
+     严格使用微任务，确保：  
+     - 在同步代码修改数据后，`nextTick` 回调在 **同一事件循环的微任务阶段** 执行。  
+     - 永远在宏任务（如 `setTimeout`、事件回调）之前执行，时序可预测。
+
+
+5. **性能影响**
+   - **Vue3 优化**：  
+     移除降级检测逻辑，代码更轻量（源码约 20 行 vs Vue2 的 100+ 行）。  
+     统一微任务机制，减少不必要的任务队列切换。
+
+6. **总结对比表**
+| **特性**         | **Vue2**                     | **Vue3**                     |
+|------------------|------------------------------|------------------------------|
+| **实现机制**     | 宏任务/微任务降级策略        | 统一 `Promise` 微任务        |
+| **执行时机**     | 可能宏任务或微任务（不稳定） | 始终微任务（稳定可预测）     |
+| **API 形式**     | 仅 `this.$nextTick()`        | 支持导入 `nextTick` + `$nextTick` |
+| **异步支持**     | 不支持 `await`               | 支持 `await nextTick()`      |
+| **时序问题**     | 可能因降级导致延迟           | 严格按微任务时序执行         |
+
+
 ## 使用 Vue3 Composable 组合式函数，实现 useCount
 
 在 Vue 应用的概念中，“**组合式函数**”(Composables) 是一个利用 Vue 的组合式 API 来封装和复用有状态逻辑的函数。它和自定义 `React hooks` 非常相似。
@@ -1326,6 +1758,24 @@ router.beforeEach((to, from, next) => {
 
 关联文章：[5min带你快速回顾、学习VueRouter的使用！](https://juejin.cn/post/7359084604663840820)
 
+## Vue-router 原理
+
+1. **hash 实现**
+hash 是 URL 中 hash (#) 及后面的那部分，常用作锚点在页面内进行导航，改变 URL 中的 hash 部分不会引起页面刷新。
+通过 hashchange 事件监听 URL 的变化，改变 URL 的方式只有这几种：
+* 通过浏览器前进后退改变 URL
+* 通过<a>标签改变 URL
+* 通过window.location改变URL
+
+2. **history 实现**
+history 提供了 pushState 和 replaceState 两个方法，这两个方法改变 URL 的 path 部分不会引起页面刷新
+history 提供类似 hashchange 事件的 popstate 事件，但 popstate 事件有些不同：
+* 通过浏览器前进后退改变 URL 时会触发 popstate 事件
+* 通过pushState/replaceState或<a>标签改变 URL 不会触发 popstate 事件。
+* 好在我们可以拦截 pushState/replaceState的调用和<a>标签的点击事件来检测 URL 变化
+* 通过js 调用history的back，go，forward方法课触发该事件
+所以监听 URL 变化可以实现，只是没有 hashchange 那么方便。
+
 ## 什么是 MVVM
 
 **MVVM（Model-View-ViewModel）** 是一种用于构建用户界面的架构模式，用于现代的前端开发框架（Vue、Angular）。它通过 **数据绑定** 和 **视图模型** 提供了高效的 UI 更新和数据同步机制。
@@ -1540,175 +1990,23 @@ function render() {
 
 ## Vue 响应式原理
 
-Vue 的响应式原理在 2.x 和 3.x 中有所不同，分别基于 `Object.defineProperty` 和 `Proxy` 实现。
+1. **Vue2 部分**
+Vue2 是通过 Object.defineProperty 将对象的属性转换成 getter/setter 的形式来进行监听它们的变化，当读取属性值的时候会触发 getter 进行依赖收集，当设置对象属性值的时候会触发 setter 进行向相关依赖发送通知，从而进行相关操作。
 
-**Vue 2.x 的实现 ( `Object.defineProperty` )**
+由于 Object.defineProperty 只对属性 key 进行监听，无法对引用对象进行监听，所以在 Vue2 中创建一个了 Observer 类对整个对象的依赖进行管理，当对响应式对象进行新增或者删除则由响应式对象中的 dep 通知相关依赖进行更新操作。
 
-```js
-// 触发更新视图
-function updateView() {
-    console.log('视图更新')
-}
+Object.defineProperty 也可以实现对数组的监听的，但因为性能的原因 Vue2 放弃了这种方案，改由重写数组原型对象上的 7 个能操作数组内容的变更的方法，从而实现对数组的响应式监听。
 
-// 重新定义数组原型
-const oldArrayProperty = Array.prototype
-// 创建新对象，原型指向 oldArrayProperty ，再扩展新的方法不会影响原型
-const arrProto = Object.create(oldArrayProperty);
-['push', 'pop', 'shift', 'unshift', 'splice'].forEach(methodName => {
-    arrProto[methodName] = function () {
-        updateView() // 触发视图更新
-        oldArrayProperty[methodName].call(this, ...arguments)
-        // Array.prototype.push.call(this, ...arguments)
-    }
-})
+2. **Vue3 部分**
+Vue3 则是通过 Proxy 对数据实现 getter/setter 代理，从而实现响应式数据，然后在副作用函数中读取响应式数据的时候，就会触发 Proxy 的 getter，在 getter 里面把对当前的副作用函数保存起来，将来对应响应式数据发生更改的话，则把之前保存起来的副作用函数取出来执行。
 
-// 重新定义属性，监听起来
-function defineReactive(target, key, value) {
-    // 深度监听
-    observer(value)
+Vue3 对数组实现代理时，用于代理普通对象的大部分代码可以继续使用，但由于对数组的操作与对普通对象的操作存在很多的不同，那么也需要对这些不同的操作实现正确的响应式联系或触发响应。这就需要对数组原型上的一些方法进行重写。
 
-    // 核心 API
-    Object.defineProperty(target, key, {
-        get() {
-            return value
-        },
-        set(newValue) {
-            if (newValue !== value) {
-                // 深度监听
-                observer(newValue)
+比如通过索引为数组设置新的元素，可能会隐式地修改数组的 length 属性的值。同时如果修改数组的 length 属性的值，也可能会间接影响数组中的已有元素。另外用户通过 includes、indexOf 以及 lastIndexOf 等对数组元素进行查找时，可能是使用代理对象进行查找，也有可能使用原始值进行查找，所以我们就需要重写这些数组的查找方法，从而实现用户的需求。原理很简单，当用户使用这些方法查找元素时，先去响应式对象中查找，如果没找到，则再去原始值中查找。
 
-                // 设置新值
-                // 注意，value 一直在闭包中，此处设置完之后，再 get 时也是会获取最新的值
-                value = newValue
+另外如果使用 push、pop、shift、unshift、splice 这些方法操作响应式数组对象时会间接读取和设置数组的 length 属性，所以我们也需要对这些数组的原型方法进行重新，让当使用这些方法间接读取 length 属性时禁止进行依赖追踪，这样就可以断开 length 属性与副作用函数之间的响应式联系了。
 
-                // 触发更新视图
-                updateView()
-            }
-        }
-    })
-}
-
-// 监听对象属性
-function observer(target) {
-    if (typeof target !== 'object' || target === null) {
-        // 不是对象或数组
-        return target
-    }
-
-    // 污染全局的 Array 原型
-    // Array.prototype.push = function () {
-    //     updateView()
-    //     ...
-    // }
-
-    if (Array.isArray(target)) {
-        target.__proto__ = arrProto
-    }
-
-    // 重新定义各个属性（for in 也可以遍历数组）
-    for (let key in target) {
-        defineReactive(target, key, target[key])
-    }
-}
-
-// 准备数据
-const data = {
-    name: 'zhangsan',
-    age: 20,
-    info: {
-        address: '北京' // 需要深度监听
-    },
-    nums: [10, 20, 30]
-}
-
-// 监听数据
-observer(data)
-
-// 测试
-// data.name = 'lisi'
-// data.age = 21
-// // console.log('age', data.age)
-// data.x = '100' // 新增属性，监听不到 —— 所以有 Vue.set
-// delete data.name // 删除属性，监听不到 —— 所有已 Vue.delete
-// data.info.address = '上海' // 深度监听
-data.nums.push(4) // 监听数组
-```
-
-`Object.defineProperty` 支持 IE9 及以上版本，兼容性非常好。它会递归遍历对象，对每个属性单独设置 `getter` 和 `setter` ，但也存在以下局限性：
-
-- **无法监听动态属性增删**
-  Vue 2.x 在新增或删除对象属性时不会触发视图更新，需通过 `Vue.set` 或 `Vue.delete` 手动处理。
-- **数组监听受限**
-  无法直接监听数组索引的修改（如 `arr[0] = 1` ）和 `length` 变化，因此 Vue 2.x 重写了数组的一些方法来解决这一问题。
-- **性能开销较大**
-  需要递归地为每个属性设置 `getter` 和 `setter` ，对深层嵌套的对象和大型数组性能较差。
-- **不支持 Map/Set 等数据结构**
-  只能代理普通对象和数组，不能处理像 `Map` 、 `Set` 等复杂数据结构。
-
-**Vue 3.x 的实现 ( `Proxy` )**
-
-```js
-class Observer {
-    constructor(data) {
-        // 遍历参数data的属性,给添加到this上
-        for(let key of Object.keys(data)) {
-            if(typeof data[key] === 'object') {
-                data[key] = new Observer(data[key]);
-            }
-            Object.defineProperty(this, key, {
-                enumerable: true,
-                configurable: true,
-                get() {
-                    console.log('你访问了' + key);
-                    return data[key]; // 中括号法可以用变量作为属性名,而点方法不可以;
-                },
-                set(newVal) {
-                    console.log('你设置了' + key);
-                    console.log('新的' + key + '=' + newVal);
-                    if(newVal === data[key]) {
-                        return;
-                    }
-                    data[key] = newVal;
-                }
-            })
-        }
-    }
-}
-
-const obj = {
-    name: 'app',
-    age: '18',
-    a: {
-        b: 1,
-        c: 2,
-    },
-}
-const app = new Observer(obj);
-app.age = 20;
-console.log(app.age);
-app.newPropKey = '新属性';
-console.log(app.newPropKey);
-```
-
-为了解决 Vue 2.x 中的这些问题，Vue 3.x 采用了 `Proxy` ，带来了更优的性能和更全面的响应式支持：
-
-- **动态属性增删支持**
-  `Proxy` 可以直接代理整个对象，因此可以监听属性的动态增删，不再需要手动操作。
-- **完美支持数组和索引修改**
-  `Proxy` 能够监听数组索引的修改（如 `arr[0] = 1` ）以及 `length` 变化，避免了 Vue 2.x 中的重写数组方法。
-- **性能更优**
-  `Proxy` 采用懒代理模式，只有在访问属性时才会递归代理子对象，避免了递归遍历的性能开销。
-- **支持更多数据结构**
-  除了普通对象和数组， `Proxy` 还可以代理 `Map` 、 `Set` 等数据结构，提供了更强大的响应式能力。
-
-| 特性         | `Object.defineProperty` <br/>（Vue 2）    | `Proxy` <br/>（Vue 3）          |
-| ------------ | ----------------------------------------- | ------------------------------- |
-| 动态属性增删 | ❌ 不支持（需 `Vue.set` / `Vue.delete` ） | ✅ 支持                         |
-| 数组索引修改 | ❌ 需重写方法（如 `push` ）               | ✅ 直接监听                     |
-| 性能         | ⚠️ 递归初始化所有属性，性能较差           | ✅ 惰性代理，按需触发，性能更优 |
-| 数据结构支持 | ❌ 仅普通对象/数组                        | ✅ 支持 `Map` 、 `Set` 等       |
-| 兼容性       | ✅ 支持 IE9+                              | ❌ 不支持 IE                    |
-| 实现复杂度   | ⚠️ 需递归遍历对象，代码冗余               | ✅ 统一拦截，代码简洁           |
+参考文章：https://juejin.cn/post/7124351370521477128
 
 ## 为何 v-for 需要使用 key
 
@@ -2010,6 +2308,9 @@ Vue 3 中， `ref` 之所以需要 `.value` 属性，主要是因为 Vue 3 使�
 
 ## [Vue和React 的区别](https://juejin.cn/post/7238199999733088313)
 参考文章: https://juejin.cn/post/7352556065819918388
+
+## React vs Vue：MVC 与 MVVM 模式对比分析
+参考文章：https://blog.csdn.net/weixin_43991457/article/details/148130296
 
 ## SSR（服务端渲染）
 参考文章: https://juejin.cn/post/7306018529844592692
