@@ -303,6 +303,115 @@ function compare (a, b) {
 其实⽤到最⼩堆，也就是把taskQueue做成最⼩堆的数据结构，然后执⾏任务的时候，取最⼩堆的最⼩任务，如果任务执⾏完毕，那么需要把这个任务从taskQueue中删除，并重新调整剩下的任务池，依然保证它是最⼩堆的数据结构。当然，往taskQueue中插⼊新任务的时候，也要调整taskQueue，保证新的任务池仍然是最⼩堆。
 
 #### 最小堆
+是一种经过排序的完全二叉树，其中任一非终端节点的数据值均不大于其左子节点和右子节点的值。
+![](../img/zuixiaodui.png)
+
+| **数组**             | 3   | 7   | 4   | 10  | 12  | 9   | 6   | 15  | 14  |
+|---------------------|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| **深度（depth）**    | 1   | 2   | 2   | 3   | 3   | 3   | 3   | 4   | 4   |
+| **数组下标（index）** | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   |
+
+经过观察，发现父子节点下标关系如下：
+根据子节点下标推算父节点下标： parentIndex = (childIndex - 1) >>> 1
+根据父节点下标推算子节点下标： leftIndex = (index + 1)2 - 1, rightIndex = leftIndex + 1、
+
+至此，我们就可以尝试去实现最小堆的增(push)删(pop)查(peek)函数了：
+
+peek：获取最小堆的堆顶值
+```js
+export function peek(heap) {
+    return heap.length === 0 ? null : heap[0];
+}
+```
+
+push：往最小堆中添加一个元素，因为taskQueue本身已经是最小堆，并且是数组存储，这时候为了尽可能多的复用原先的结构，我们可以先把新元素插入数组尾部，然后从下往上调整最小堆：
+```js
+export function push(heap, node) {
+    const index = heap.length;
+    heap.push(node);
+    siftUp(heap, node, index);
+}
+```
+怎么从下往上调整呢？因为最小堆的典型特点就是父节点比左右子节点都小，那这时候除了尾部元素，其他都是满足这个特点的。这个时候我们只需要调整尾部元素以及和尾部元素的祖先就可以了，一直往上调整，直到不再需要调整为止。代码如下：
+```js
+function siftUp(heap, node, i) {
+    let index = i;
+    while (index > 0) {
+        // 父节点下标
+        const parentIndex = (index - 1) >>> 1;
+        // 父节点
+        const parent = heap[parentIndex];
+        if (compare(parent, node) > 0) {
+            // parent>node, 不符合最小堆
+            heap[parentIndex] = node;
+            heap[index] = parent;
+            index = parentIndex;
+        } else {
+            // 已经符合最小堆，上面的祖先本身就是最小堆结构，因此停止调整
+            return;
+        }
+    }
+}
+```
+
+pop: 删除堆顶元素。即React一个任务执行完了，那么肯定要把这个任务从任务池taskQueue中删除。问题来了，怎么删除呢，堆顶元素其实就是taskQueue[0]，这个位置我们肯定还是要用的，并且和push一样，为了尽可能复用原先的最小堆结构，我们可以采取一个办法：把最后一个元素覆盖堆顶元素，然后从堆顶往下调整最小堆。
+```js
+export function pop(heap) {
+    if (heap.length === 0) {
+        return null;
+    }
+    const first = heap[0];
+    const last = heap.pop();
+    // 如果堆顶和堆尾元素不相等，证明现在的元素总数>1，需要往下调整
+    if (first !== last) {
+        heap[0] = last;
+        siftDown(heap, last, 0);
+    }
+    return first;
+}
+```
+关于往下调整，其实就是检查每个子堆的结构，确保最小值在父节点，不满足就交换父与左或者父与右，代码如下，我加了尽可能多的详细注释：
+```js
+function siftDown(heap, node, i) {
+	let index = i;
+	const len = heap.length;
+	const halfLen = len >>> 1;
+
+	while (index < halfLen) {
+		let leftIndex = (index + 1) * 2 - 1;
+		let left = heap[leftIndex];
+		let rightIndex = leftIndex + 1;
+		let right = heap[rightIndex];
+		// todo 比较parent与left与right的大小
+		// 如果parent不是最小的，那就比较left和right谁最小，然后把最小的和parent交换位置
+		// 如果parent是最小的，那就停止
+		if (compare(left, node) < 0) {
+			// left < parent
+			// 为了保证根节点最小，比较left和right
+			if (rightIndex < len && compare(right, left) < 0) {
+				// right<left, right是最小的，交换parent和right
+				heap[index] = right;
+				heap[rightIndex] = node;
+				index = rightIndex;
+			} else {
+				// right>left, left是最小的，交换parent和left
+				heap[index] = left;
+				heap[leftIndex] = node;
+				index = leftIndex;
+			}
+		} else if (rightIndex < len && compare(right, node) < 0) {
+			// left > parent
+			// 检查right, right<parent
+			heap[index] = right;
+			heap[rightIndex] = node;
+			index = rightIndex;
+		} else {
+			// parnent最小
+			return;
+		}
+	}
+}
+```
 
 ## 类组件
 ![](../img/classComp.png)
