@@ -1315,7 +1315,6 @@ Redux 中间件（Middleware）允许你在 `action` 被分发（`dispatch`）�
     payload: fetch('/api/data').then((response) => response.json()),
   })
   ```
-  :::
 
 ## 你用过哪些 React 状态管理库？
 
