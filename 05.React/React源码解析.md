@@ -1,11 +1,5 @@
-## 为什么学习源码
-* 跳出圈子，停止自满：你和身边的同事的级别相差不会超过2，你平常看的最多的代码就是你自己的，其次是他们的。 这个时候如果你想再进一步，必须跳出自己的小圈子，找些优质代码学习。
-* 掌握原理，避免bug，优化项目：知其然知其所以然。
-* 为了面试
-
 ## 如何调试React源码
 * [debugReact](https://github.com/bubucuo/DebugReact)
-* [源码文件指引](https://www.processon.com/view/link/60b206c2e0b34d3841931a88#map)
 
 ## React中常见的数据结构-Fiber
 简而言之，fiber就是v16之后的虚拟DOM（React在遍历的节点的时候，并不是真正的DOM，而是采用虚拟的DOM）
@@ -183,6 +177,11 @@ export type RootType = {
 ```
 * ReactDOMRoot
 ```js
+function createRoot(container: Element | null): RootType {
+    const root = new ReactDOMRoot(container);
+    return root;
+}
+
 function ReactDOMRoot(internalRoot: FiberRoot) {
     this._internalRoot = internalRoot;
 }
@@ -204,8 +203,11 @@ ReactDOMHydrationRoot.prototype.unmount = ReactDOMRoot.prototype.unmount = funct
     }
 }
 ```
-#### 2.root.render(jsx)，执行更新，updateContainer
+#### 2.root.render(jsx)，执行更新，updateContainer(element: ReactNodeList, container: OpaqueRoot, parentComponent: ?React$Component, callback: ?Function)
 1. 获取current fiber
+```js
+const current = container.current;
+```
 2. 创建一个update：const update = createUpdate(eventTime, lane);
     1. 初始化一个update对象
     ```js
@@ -219,6 +221,12 @@ ReactDOMHydrationRoot.prototype.unmount = ReactDOMRoot.prototype.unmount = funct
     };
     ```
     2. 赋值update的payload
+```js
+const eventTime = requestEventTime;
+const lane = requestUpdateLane(current);
+const update = createUpdate(eventTime, lane);
+update.payload = { element };
+```
 3. update进入队列：enqueueUpdate(current, update, lane); 生成一个环形链表
 4. 处理update更新：scheduleUpdateOnFiber(current, lane, enentTime);发起任务调度：ensureRootlsScheduled(root, eventTime);
     1. 任务调度：unstable_scheduleCallback;后续查看任务调度
