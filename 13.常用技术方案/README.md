@@ -1,9 +1,47 @@
-## [微服务](https://juejin.cn/post/6844904162509979662)
+## [微前端](https://juejin.cn/post/6844904162509979662)
 一种类似于微服务的架构，它将微服务的理念应用于浏览器端，即将 Web 应用由单一的单体应用转变为多个小型前端应用聚合为一的应用。各个前端应用还可以独立运行、独立开发、独立部署。微前端不是单纯的前端框架或者工具，而是一套架构体系，
 * 运维层面的改造：Nginx 路由代理，简单，但是切换会触发刷线
 * iframe嵌套：实现简单，天然隔离，但是SEO不友好，兼容性有问题
-* Web Components：每个子应用有独立的js和css，需要改造历史代码，成本高
-* 组合式应用路由分发： 每个子应用独立构建和部署，运行时由父应用来进行路由管理，应用加载，启动，卸载，以及通信机制，该方案的核心是“主从”思想，即包括一个基座（MainApp）应用和若干个微（MicroApp）应用，基座应用大多数是一个前端SPA项目，主要负责应用注册，路由映射，消息下发等，而微应用是独立前端项目，这些项目不限于采用React，Vue，Angular或者JQuery开发，每个微应用注册到基座应用中，由基座进行管理，但是如果脱离基座也是可以单独访问。	
+* NPM方案：在设计时需要将微应用打包成独立的 NPM 包，然后在主应用中引入和使用
+* 动态 Script：根据导航进行微应用的切换，切换的过程会动态加载和执行 JS 和 CSS 资源
+* Web Components：属于 W3C 的标准，符合微前端技术无关的特性，每个子应用有独立的js和css，需要改造历史代码，成本高
+* [single-spa](https://zh-hans.single-spa.js.org/docs/getting-started-overview)
+```js
+// single-spa-config.js  
+// 引入 single-spa 的 NPM 库包
+import { registerApplication, start } from 'single-spa';  
+  
+// Simple usage  
+// 简单使用方式，按顺序传递四个参数
+registerApplication(  
+  // 参数1：微应用名称标识
+  'app2',  
+  // 参数2：微应用加载逻辑 / 微应用对象，必须返回 Promise
+  () => import('src/app2/main.js'),  
+  // 参数3：微应用的激活条件
+  (location) => location.pathname.startsWith('/app2'),  
+  // 参数4：传递给微应用的 props 数据
+  { some: 'value' }  
+);  
+  
+// Config with more expressive API  
+// 使用对象传递参数，更加清晰，易于阅读和维护，无须记住参数的顺序
+registerApplication({  
+  // name 参数
+  name: 'app1',  
+  // app 参数，必须返回 Promise
+  app: () => import('src/app1/main.js'),  
+  // activeWhen 参数
+  activeWhen: '/app1',  
+  // customProps 参数
+  customProps: {  
+    some: 'value',  
+  }  
+});  
+  
+start();
+```
+* [qiankun](https://qiankun.umijs.org/zh)： 对 single-spa 的二次封装，在 single-spa 的基础上提供了更加简单的 API 和配置项，使得开发者能更容易的实现微前端。
 
 ## [文件上传](https://juejin.cn/post/6980142557066067982)
 * 大文件上传：async-pool 这个库提供的 asyncPool 函数来实现大文件的并发上传。相信有些小伙伴已经了解大文件上传的解决方案，在上传大文件时，为了提高上传的效率，我们一般会使用 Blob.slice 方法对大文件按照指定的大小进行切割，然后通过多线程进行分块上传，等所有分块都成功上传后，再通知服务端进行分块合并。
@@ -300,11 +338,32 @@ css 现状存在的问题
 ## 暗黑主题
 https://juejin.cn/post/7379960023407738892
 
-## 中英文
-https://juejin.cn/post/7390339205984141366
+## [中英文](https://juejin.cn/post/7390339205984141366)
+1. 读取 git commit 中的增量代码文件路径
+```js
+const getGitResult = command =>  new Promise((res, rej) => {    
+    // eslint-disable-next-line consistent-return    
+    exec(command, (err, stdout) => {      
+        if (err) {        
+            return rej(err);      
+        }      
+        res(stdout.trim());    
+    });  
+});
 
-## fastdev
-https://juejin.cn/post/7390188382212587556
+preHead = await getGitResult(`git rev-parse HEAD~${argv.order}`); 
+const curHead = await getGitResult('git rev-parse HEAD');  
+// 获取所有发生变化的文件
+const diffFiles = await getGitResult(`git diff --name-only ${curHead} ${preHead}`);  
+const files = diffFiles.split(/\n/);  
+```
+2. 文案替换
+```js
+const res = await jscodeshift(transformPath, filepath, options);    
+```
+
+## [fastdev](https://juejin.cn/post/7390188382212587556)
+jscodeshift：jscodeshift 是一个基于 codemod 理念的 JavaScript/TypeScript 重构工具，其原理是将 JS/TS 代码解析为抽象语法树（Abstract Syntax Tree，AST），并提供一系列用于访问和修改 AST 的 API 以实现自动化的代码重构。使用 jscodeshift 可以进行一系列代码转换操作，比如替换变量名、修改函数调用、重构类定义等。它可以帮助开发人员快速而准确地进行大规模的代码修改，尤其适用于需要对遗留代码进行更新或者升级的情况。
 
 ## 快照 PageSpy
 https://pagespy.huolala.cn/
