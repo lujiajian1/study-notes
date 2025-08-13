@@ -934,7 +934,7 @@ console.log(result2);
 // (24) ["am0#", "am0$", "am1#", "am1$", "an0#", "an0$", "an1#", "an1$", "a00#", "a00$", "a01#", "a01$", "bm0#", "bm0$", "bm1#", "bm1$", "bn0#", "bn0$", "bn1#", "bn1$", "b00#", "b00$", "b01#", "b01$"]
 ```
 
-### 合并区间
+### 合并区间：[[1,3],[2,6],[8,10],[15,18]] => [[1,6],[8,10],[15,18]]
 
 ```js
 //输入: intervals = [[1,3],[2,6],[8,10],[15,18]]
@@ -1025,7 +1025,7 @@ var threeSum = function (nums) {
 };
 ```
 
-### [搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+### [搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)：输入：nums = [4,5,6,7,0,1,2], target = 0 输出：4
 
 ```js
  /**
@@ -1064,7 +1064,7 @@ public int search(int[] nums, int target) {
 }
 ```
 
-### [寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+### [寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)：输入：nums1 = [1,3], nums2 = [2] 输出：合并数组 = [1,2,3] ，中位数 2
 
 ```js
 var findMedianSortedArrays = function (nums1, nums2) {
@@ -1087,7 +1087,7 @@ var findMedianSortedArrays = function (nums1, nums2) {
 };
 ```
 
-### [全排列](https://leetcode-cn.com/problems/permutations/)
+### [全排列](https://leetcode-cn.com/problems/permutations/)：[1,2,3] => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
 
 ```js
 var permute = function (nums) {
@@ -1115,7 +1115,7 @@ var permute = function (nums) {
 };
 ```
 
-### [字符串中的第一个唯一字符](https://leetcode-cn.com/problems/first-unique-character-in-a-string/)
+### [字符串中的第一个唯一字符](https://leetcode-cn.com/problems/first-unique-character-in-a-string/)："leetcode" => 0
 
 ```js
 var firstUniqChar = function (s) {
@@ -1128,7 +1128,7 @@ var firstUniqChar = function (s) {
 };
 ```
 
-### [无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+### [无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)："abcabcbb" => 3
 
 ```js
 function lengthOfLongestSubstring(str) {
@@ -1149,7 +1149,7 @@ function lengthOfLongestSubstring(str) {
 }
 ```
 
-### [最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+### [最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)："babad" => "bab"
 
 ```js
 var longestPalindrome = function (s) {
@@ -1173,7 +1173,7 @@ var longestPalindrome = function (s) {
 };
 ```
 
-### [整数反转](https://leetcode-cn.com/problems/reverse-integer/)
+### [整数反转](https://leetcode-cn.com/problems/reverse-integer/)：123 => 321
 
 ```js
 var reverse = function (x) {
@@ -1191,7 +1191,7 @@ var reverse = function (x) {
 };
 ```
 
-### 退格
+### 退格：输入："a<-b<-", "c<-d<-"，结果：true，解释：都为""
 
 ```js
 // 比较含有退格的字符串，"<-"代表退格键，"<"和"-"均为正常字符
@@ -1252,7 +1252,7 @@ function generateParenthesis(n: number): string[] {
 }
 ```
 
-### [有效括号](https://leetcode-cn.com/problems/valid-parentheses/)
+### [有效括号](https://leetcode-cn.com/problems/valid-parentheses/)："()[]{}" => true
 
 ```js
 /**
@@ -1283,7 +1283,7 @@ var isValid = function (s) {
 };
 ```
 
-### [数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
+### [数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)：[6, 1, 3, 1, 1, 1] => 1
 
 ```js
 /**
@@ -1533,7 +1533,7 @@ var mergeTwoLists = function (l1, l2) {
 };
 ```
 
-### [两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
+### [两数相加](https://leetcode-cn.com/problems/add-two-numbers/)：输入：l1 = [2,4,3], l2 = [5,6,4] 输出：[7,0,8]
 
 ```js
 var addTwoNumbers = function (l1, l2) {
