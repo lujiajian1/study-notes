@@ -1,5 +1,9 @@
 ## 手写
 ### 深拷贝
+1. 判断是否是 object，不是直接返回原值
+2. 判断是否是数组，如果是直接返回数组类型
+3. for...in...遍历，判断是否符合 hasOwnProperty，符合则 result[key] = deepClone(obj[key]);
+注释：hasOwnProperty 不会检查原型链上的属性，只会检查对象自身的属性
 
 ```js
 function deepClone(obj = {}) {
@@ -20,6 +24,8 @@ function deepClone(obj = {}) {
 ```
 
 ### 手写 apply
+1. this的原始值为 fn1，将this变更为 context[key]。const key = Symbol(); context[key] = this;
+2. context[key](...args)
 ```js
 Function.prototype.myapply = function (context, args) {
   //这里默认不传就是给window,也可以用es6给参数设置默认参数
@@ -211,7 +217,7 @@ const event = new Event();
 event.on("test", (a) => {
   console.log(a);
 });
-event.trigger("thet", "hello world"); // 绑定后就输出
+event.trigger("test", "hello world"); // 绑定后就输出
 event.off("test");
 event.trigger("test", "hello world"); // 解绑后就不显示了
 ```
@@ -394,7 +400,7 @@ function multiRequest(urls = [], maxNum) {
 ### 实现一个发布订阅模式
 
 ```js
-class Subjects {
+class EventBus {
   constructor() {
     this.subs = [];
     this.state = 0;
@@ -433,7 +439,7 @@ class Observer {
 }
 var observerA = new Observer("A");
 var observerB = new Observer("B");
-var subject = new Subjects();
+var subject = new EventBus();
 subject.addSubs(observerA);
 subject.addSubs(observerB);
 subject.doSomeLogic();
@@ -850,11 +856,39 @@ const merge = (left, right) => {
 };
 ```
 
-### [下一个排列](https://leetcode-cn.com/problems/next-permutation/)
+### [全排列](https://leetcode-cn.com/problems/permutations/)：[1,2,3] => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+
+```js
+var permute = function (nums) {
+  const res = [];
+
+  // 回溯
+  const backtrack = (path) => {
+    // 终点，当 path 的 length 和 nums 的 length 相等的时候，记录这一次的 path 并结束递归
+    if (path.length === nums.length) {
+      return res.push(path);
+    }
+
+    // 通过循环加递归的形式，模拟出所有的排列情况
+    nums.forEach((v) => {
+      // 当 path 中，包含这一次的循环的值的时候，进行回溯(中断递归)
+      if (path.includes(v)) return;
+
+      // 递归
+      backtrack(path.concat(v));
+    });
+  };
+  backtrack([]);
+
+  return res;
+};
+```
+
+### [下一个排列](https://leetcode-cn.com/problems/next-permutation/)：例如，arr = [1,2,3] ，以下这些都可以视作 arr 的排列：[1,2,3]、[1,3,2]、[3,1,2]、[2,3,1] 。整数数组的 下一个排列 是指其整数的下一个字典序更大的排列。
 
 ```js
 var nextPermutation = function (nums) {
-  // 从又往左找到第一个降序的位置
+  // 从右往左找到第一个降序的位置
   let right = nums.length - 1;
   let flag = false;
   while (right) {
@@ -880,7 +914,7 @@ var nextPermutation = function (nums) {
     let temp = sorted[move];
     sorted[move] = nums[right];
     nums[right] = temp;
-    sorted.sort((next, pre) => next - pre);
+    // sorted.sort((next, pre) => next - pre);
     nums.push(...sorted);
   }
   nums;
@@ -990,7 +1024,7 @@ var twoSum = function (nums, target) {
 
 ```js
 var threeSum = function (nums) {
-  // 如果元素的个数小于4，直接返回空数组
+  // 如果元素的个数小于3，直接返回空数组
   if (nums.length < 3) {
     return [];
   }
@@ -1077,41 +1111,13 @@ var findMedianSortedArrays = function (nums1, nums2) {
   }
   res = nums2.concat(nums1);
   res = res.sort((a, b) => a - b);
-  let i1 = Math.ceil(res.length / 2);
-  let i2 = Math.floor(res.length / 2);
+  let i1 = Math.ceil(res.length / 2); // 向上取整
+  let i2 = Math.floor(res.length / 2); // 向下取整
   if (i1 === i2) {
     return (res[i1 - 1] + res[i1]) / 2;
   } else {
     return res[i2];
   }
-};
-```
-
-### [全排列](https://leetcode-cn.com/problems/permutations/)：[1,2,3] => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-
-```js
-var permute = function (nums) {
-  const res = [];
-
-  // 回溯
-  const backtrack = (path) => {
-    // 终点，当 path 的 length 和 nums 的 length 相等的时候，记录这一次的 path 并结束递归
-    if (path.length === nums.length) {
-      return res.push(path);
-    }
-
-    // 通过循环加递归的形式，模拟出所有的排列情况
-    nums.forEach((v) => {
-      // 当 path 中，包含这一次的循环的值的时候，进行回溯(中断递归)
-      if (path.includes(v)) return;
-
-      // 递归
-      backtrack(path.concat(v));
-    });
-  };
-  backtrack([]);
-
-  return res;
 };
 ```
 
@@ -1582,7 +1588,10 @@ var addTwoNumbers = function (l1, l2) {
 
 ## 二叉树
 
-### 二叉树前中后遍历
+### 二叉树前中后遍历：前中后指的是根节点是第一个访问的节点，还是中间访问，还是最后访问
+* 前序遍历：先访问根节点，然后遍历左子树，再遍历右子树
+* 中序遍历：先遍历左子树，然后访问根节点，最后遍历右子树
+* 后序遍历：先遍历左子树，然后遍历右子树，最后访问根节点
 
 ![二叉树前中后遍历](https://github.com/lujiajian1/study-notes/blob/main/img/nodetree.png)
 
@@ -1731,7 +1740,7 @@ function isSymmetric(root: TreeNode | null): boolean {
 }
 ```
 
-### [平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
+### [平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)：具有一个左子树和一个右子树，且对于任意一个子树而言，左子树和右子树高度差不超过1。
 
 ```js
 function isBalanced(root) {
@@ -1755,7 +1764,7 @@ function tree_height(root) {
 }
 ```
 
-### [路径总和](https://leetcode-cn.com/problems/path-sum/)
+### [路径总和](https://leetcode-cn.com/problems/path-sum/)：给你二叉树的根节点 root 和一个表示目标和的整数 targetSum 。判断该树中是否存在 根节点到叶子节点 的路径，这条路径上所有节点值相加等于目标和 targetSum 。如果存在，返回 true ；否则，返回 false。
 
 ```js
 //通过递归方法来解决
@@ -1772,7 +1781,7 @@ var hasPathSum = function (root, targetSum) {
 };
 ```
 
-### [路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
+### [路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)：给你二叉树的根节点 root 和一个整数目标和 targetSum ，找出所有 从根节点到叶子节点 路径总和等于给定目标和的路径。
 
 ```js
 /**
@@ -1799,7 +1808,8 @@ var pathSum = function (root, targetSum) {
 };
 ```
 
-### [二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/description/)
+### [二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/description/)：输入：root = [-10,9,20,null,null,15,7] 输出：42 解释：最优路径是 15 -> 20 -> 7 
+
 ```js
 var maxPathSum = function(root) {
   let ans = 0;
@@ -1984,6 +1994,25 @@ var rightSideView = function(root) {
 ### 爬楼梯：假设你现在正在爬楼梯，楼梯有 n 级。每次你只能爬 1 级或者 2 级，那么你有多少种方法爬到楼梯的顶部
 
 ```js
+// 方法1：动态规划
+function climbStairs(n) {
+    if {
+    if (n === 1) return 1;
+    if (n === 2) return 2;
+
+    // 初始化一个数组来存储每一级的方法数
+    let dp = new Array(n + 1).fill(0);
+    dp[1] = 1; // 1 级楼梯有 1 种方法
+    dp[2] = 2; // 2 级楼梯有 2 种方法
+
+    // 从第 3 级开始计算
+    for (let i = 3; i <= n; i++) {
+        dp[i] = dp[i - 1] + dp[i - 2]; // 递推公式
+    }
+
+    return dp[n];
+}
+// 方法2：优化空间复杂度，只需要前两个状态来计算当前状态，因此可以使用两个变量来存储前两个状态，从而将空间复杂度优化为 O(1)。
 var climbStairs = function (n) {
   if (n === 1 || n === 2) {
     return n;
