@@ -1283,6 +1283,32 @@ var isValid = function (s) {
 };
 ```
 
+### [最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/description/)：输入：s = ")()())" 输出：4
+```js
+var longestValidParentheses = function(s) {
+    let len = s.length;
+    if(len<=1) {
+        return 0;
+    }
+    let maxlen = 0;
+    const stack = [-1];
+    for(let i=0;i<len;i++) {
+        if(s[i]==='(') {
+            stack.push(i);
+        } else {
+            stack.pop();
+            let stack_len = stack.length;
+            if(stack_len===0) {
+                stack.push(i);
+            } else {
+                maxlen = Math.max(maxlen, i - stack[stack_len-1]);
+            }
+        }
+    }
+    return maxlen;
+};
+```
+
 ### [数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)：[6, 1, 3, 1, 1, 1] => 1
 
 ```js
@@ -1729,7 +1755,7 @@ function tree_height(root) {
 }
 ```
 
-### [路径总和](https://leetcode-cn.com/problems/path-sum/submissions/)
+### [路径总和](https://leetcode-cn.com/problems/path-sum/)
 
 ```js
 //通过递归方法来解决
@@ -1773,6 +1799,24 @@ var pathSum = function (root, targetSum) {
 };
 ```
 
+### [二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/description/)
+```js
+var maxPathSum = function(root) {
+  let ans = 0;
+  var oneSideMax = function(root) {
+      if(root === null) return 0;
+      let left = Math.max(0, oneSideMax(root.left));
+      let right = Math.max(0, oneSideMax(root.right));
+      ans = Math.max(ans, left + right + root.val);
+      return Math.max(left, right) + root.val;
+  };
+
+  oneSideMax(root);
+  return ans;
+};
+```
+[参考原文](https://blog.csdn.net/M_Eve/article/details/112796420)
+
 ### [翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
 
 ```js
@@ -1796,7 +1840,7 @@ var invertTree = function (root) {
 };
 ```
 
-### [合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
+### [合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)：合并的规则是：如果两个节点重叠，那么将这两个节点的值相加作为合并后节点的新值；否则，不为 null 的节点将直接作为新二叉树的节点。
 
 ```js
 var mergeTrees = function (t1, t2) {
@@ -1959,7 +2003,7 @@ var climbStairs = function (n) {
 };
 ```
 
-### [编辑距离](https://leetcode-cn.com/problems/edit-distance/)
+### [编辑距离](https://leetcode-cn.com/problems/edit-distance/)：给你两个单词 word1 和 word2， 请返回将 word1 转换成 word2 所使用的最少操作数。输入：word1 = "horse", word2 = "ros" 输出：3
 
 ```js
 var minDistance = function (word1, word2) {
@@ -1995,7 +2039,7 @@ var minDistance = function (word1, word2) {
 
 [参考原文](https://juejin.cn/post/6844903823270477837)
 
-### [买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/submissions/)
+### [买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
 
 ```js
 var maxProfit = function (prices) {
@@ -2085,7 +2129,7 @@ var maxProfit = function (prices) {
 
 [参考原文](https://juejin.cn/post/6844903955030343694)
 
-### 按格式合并两个链表
+### [按格式合并两个链表](https://gzool.com/algorithm-hard-js-merge-two-linked-list)：输入：L1 = a1 -> a2 -> a3 -> ... -> aN，L2 = b1 -> b2 -> b3 -> ...bN 输出：a1 -> a2 -> bN -> a3 -> a4 -> bN-1 -> ...
 ```js
 // 链表类
 class Node {
@@ -2157,9 +2201,8 @@ while (cl2 !== null) {
 }
 console.log("" + L1);
 ```
-[参考原文](https://gzool.com/algorithm-hard-js-merge-two-linked-list)
 
-### [按公因数计算最大组件大小](https://leetcode.cn/problems/largest-component-size-by-common-factor/description/)
+### [按公因数计算最大组件大小](https://leetcode.cn/problems/largest-component-size-by-common-factor/description/)：输入：nums = [4,6,15,35] 输出：4
 ```js
 var largestComponentSize = function(nums) {
     const m = Math.max(...nums);
@@ -2211,9 +2254,8 @@ class UnionFind {
     }
 }
 ```
-[参考原文](https://leetcode.cn/problems/largest-component-size-by-common-factor/solutions/1706239/an-gong-yin-shu-ji-suan-zui-da-zu-jian-d-amdx/)
 
-### [拼接最大数](https://leetcode.cn/problems/create-maximum-number/description/)
+### [拼接最大数](https://leetcode.cn/problems/create-maximum-number/description/)：输入：nums1 = [3,4,6,5], nums2 = [9,1,2,5,8,3], k = 5 输出：[9,8,6,5,3]
 ```js
 var maxNumber = function (nums1, nums2, k) {
   let max = null
@@ -2296,7 +2338,7 @@ var maxNumber = function (nums1, nums2, k) {
 ```
 [参考原文](https://juejin.cn/post/7071584649142599693)
 
-### [最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+### [最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)：输入：nums = [10,9,2,5,3,7,101,18] 输出：[2,3,7,101] 长度：4
 ```js
 // 暴力解
 var lengthOfLIS = function(nums) {
@@ -2346,24 +2388,6 @@ var lengthOfLIS = function (nums) {
     return len;
 };
 ```
-
-### [二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/description/)
-```js
-var maxPathSum = function(root) {
-  let ans = 0;
-  var oneSideMax = function(root) {
-      if(root === null) return 0;
-      let left = Math.max(0, oneSideMax(root.left));
-      let right = Math.max(0, oneSideMax(root.right));
-      ans = Math.max(ans, left + right + root.val);
-      return Math.max(left, right) + root.val;
-  };
-
-  oneSideMax(root);
-  return ans;
-};
-```
-[参考原文](https://blog.csdn.net/M_Eve/article/details/112796420)
 
 ### [岛屿最大面积](https://leetcode.cn/problems/max-area-of-island/description/)
 ```js
@@ -2435,7 +2459,7 @@ var decode = function(encoded) {
 ```
 [参考原文](https://leetcode.cn/problems/decode-xored-permutation/solutions/769140/jie-ma-yi-huo-hou-de-pai-lie-by-leetcode-9gw4/)
 
-### [最长超赞子字符串](https://leetcode.cn/problems/find-longest-awesome-substring/description/)
+### [最长超赞子字符串](https://leetcode.cn/problems/find-longest-awesome-substring/description/)：输入：s = "3242415" 输出："24241"
 ```js
 var longestAwesome = function(s) {
     let prefix = new Map([[0, -1]]);
@@ -2460,7 +2484,7 @@ var longestAwesome = function(s) {
 ```
 [参考原文](https://leetcode.cn/problems/find-longest-awesome-substring/solutions/379067/zhao-chu-zui-chang-de-chao-zan-zi-zi-fu-chuan-by-l/)
 
-### [超级回文数](https://leetcode.cn/problems/super-palindromes/description/)
+### [超级回文数](https://leetcode.cn/problems/super-palindromes/description/)：输入：left = "4", right = "1000" 输出：4 解释：4、9、121 和 484 都是超级回文数
 ```js
 var superpalindromesInRange = function(left, right) {
   let ans = []; 
@@ -2494,7 +2518,7 @@ let makePalindromes = function(num) {
 ```
 [参考原文](https://leetcode.cn/problems/super-palindromes/solutions/1711358/js-by-a-ba-li-9fcy/)
 
-### [最多能完成排序的块](https://leetcode.cn/problems/max-chunks-to-make-sorted-ii/description/)
+### [最多能完成排序的块](https://leetcode.cn/problems/max-chunks-to-make-sorted-ii/description/)： 输入：[2,1,3,4,4] 输出：4 解释：分成 [2, 1], [3], [4], [4]
 ```js
 var maxChunksToSorted = function(arr) {
     const stack = [];
@@ -2514,33 +2538,7 @@ var maxChunksToSorted = function(arr) {
 ```
 [参考原文](https://leetcode.cn/problems/max-chunks-to-make-sorted-ii/solutions/1741851/zui-duo-neng-wan-cheng-pai-xu-de-kuai-ii-w5c6/)
 
-### [最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/description/)
-```js
-var longestValidParentheses = function(s) {
-    let len = s.length;
-    if(len<=1) {
-        return 0;
-    }
-    let maxlen = 0;
-    const stack = [-1];
-    for(let i=0;i<len;i++) {
-        if(s[i]==='(') {
-            stack.push(i);
-        } else {
-            stack.pop();
-            let stack_len = stack.length;
-            if(stack_len===0) {
-                stack.push(i);
-            } else {
-                maxlen = Math.max(maxlen, i - stack[stack_len-1]);
-            }
-        }
-    }
-    return maxlen;
-};
-```
-
-### [无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/)
+### [无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/)：输入: s = "abcabcbb" 输出: 3 
 ```js
 var lengthOfLongestSubstring = function(s) {
     // 哈希集合，记录每个字符是否出现过
@@ -2566,7 +2564,7 @@ var lengthOfLongestSubstring = function(s) {
 ```
 [参考原文](https://leetcode.cn/problems/longest-substring-without-repeating-characters/solutions/227999/)
 
-### [按位与为零的三元组](https://leetcode.cn/problems/triples-with-bitwise-and-equal-to-zero/description/)
+### [按位与为零的三元组](https://leetcode.cn/problems/triples-with-bitwise-and-equal-to-zero/description/)：输入：nums = [0,0,0] 输出：27
 ```js
 var countTriplets = function(nums) {
     const cnt = new Array(1 << 16).fill(0);
