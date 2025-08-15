@@ -733,6 +733,8 @@ export function updateFragmentComponent(wip) {
 ```
 
 # React任务调度与最小堆
+根据子节点下标推算父节点下标： parentIndex = (childIndex - 1) >>> 1
+根据父节点下标推算子节点下标： leftIndex = (index + 1)2 - 1, rightIndex = leftIndex + 1
 [三分钟带你彻底读懂React任务调度以及背后的算法](https://juejin.cn/post/7051878454433677319)
 
 # 任务调度
