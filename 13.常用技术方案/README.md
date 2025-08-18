@@ -335,8 +335,31 @@ css 现状存在的问题
 1. **附件重传逻辑**
 ![](../img/reupdata3.jpeg)
 
-## 暗黑主题
-https://juejin.cn/post/7379960023407738892
+## [暗黑主题](https://juejin.cn/post/7379960023407738892)
+#### 难点
+1. 迭代了三年的大型跨端项目
+2. UI没有标准化规范，甚至没有标准的色值体系
+3. css代码规范混乱，某个元素的样式被全局默认样式，行内样式，外部样式共同作用下，利用优先级关系来实现最后的展示效果。并且部分样式结合了很多业务逻辑，不同的场景下设置了不同的样式，需要梳理业务逻辑
+4. antd 版本过低 & antd 高度定制
+
+#### 方案调研
+* mix-blend-mode 的 difference：DarkMode.js
+* CSS-in-JS：React-styled-components
+* sass 变量 + mixin
+* Less + 类名
+* zougt/some-loader-utils + sass
+* css3 Variables
+
+#### 亮点
+* postcss-custom-properties 来解决 css Variables 的兼容性问题
+* 检测系统主题
+```js
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    className = 'lx-theme-dark';
+}
+```
+* 渐进式可控优化：ant-allow-dark、extheme
+
 
 ## [中英文](https://juejin.cn/post/7390339205984141366)
 1. 读取 git commit 中的增量代码文件路径
