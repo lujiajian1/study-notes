@@ -277,6 +277,26 @@ createHexRules();
 为了方便维护，更是为了其他团队使用通用UI组件库，将通用UI组件从项目中独立，通过 rollup 实现独立的打包发布。主要实现的能力有：抽离对全局样式和api层方法的依赖，自动化打包发布脚本，antd类型导出，按需加载，css隔离。
 
 ## React 性能优化
+* 加载时性能优化
+  * 资源小一点
+    * 条件编译，不同版本的包只引入当前包需要的模块
+    * 模块的按需加载懒加载 @loadable/component
+    * 模块的动态卸载
+    * js拆分
+    * css体积优化
+    * 删除冗余代码、Tree Shaking
+  * 请求少一点
+    * 重复请求缓存结果
+    * 非必要请求延迟加载
+    * 可聚合请求接口改造
+* 渲染时性能优化
+  * 组件拆分
+  * React.memo 避免不必要的函数组件渲染
+  * 优化顶层组件组件的 prop/state，合理使用useMemo/useCallback
+  * 邮箱列表、报表数据使用虚拟列表
+* 开发阶段优化
+  * fastdev 模式
+  * DLL 处理第三方库，提升构建速度
 
 #### 背景
 * 100+子模块，上万组件，参与编译的源文件4w，项目运行期间加载资源总量超过50M。
@@ -390,3 +410,432 @@ jscodeshift：jscodeshift 是一个基于 codemod 理念的 JavaScript/TypeScrip
 
 ## 快照 PageSpy
 https://pagespy.huolala.cn/
+
+## [动态表单form-generator](https://juejin.cn/post/6971351044412407822)
+#### <vue-form-generator :schema="schema" />
+1. 将 schema 转换为表单组件，支持动态渲染。schema 会被复制一份给 formConfCopy。先 renderFrom 生成 <el-form></el-form>
+```js
+render(h) {
+  return renderFrom.call(this, h)
+}
+
+function renderFrom(h) {
+  const { formConfCopy } = this
+
+  return (
+    <el-row gutter={formConfCopy.gutter}>
+      <el-form
+        size={formConfCopy.size}
+        label-position={formConfCopy.labelPosition}
+        disabled={formConfCopy.disabled}
+        label-width={`${formConfCopy.labelWidth}px`}
+        ref={formConfCopy.formRef}
+        // model不能直接赋值 https://github.com/vuejs/jsx/issues/49#issuecomment-472013664
+        props={{ model: this[formConfCopy.formModel] }}
+        rules={this[formConfCopy.formRules]}
+      >
+        {renderFormItem.call(this, h, formConfCopy.fields)}
+        {formConfCopy.formBtns && formBtns.call(this, h)}
+      </el-form>
+    </el-row>
+  )
+}
+```
+2. renderFormItem
+```js
+// 布局 & renderFormItem
+const layouts = {
+  colFormItem(h, scheme) {
+    const config = scheme.__config__
+    const listeners = buildListeners.call(this, scheme)
+
+    let labelWidth = config.labelWidth ? `${config.labelWidth}px` : null
+    if (config.showLabel === false) labelWidth = '0'
+    return (
+      <el-col span={config.span}>
+        <el-form-item label-width={labelWidth} prop={scheme.__vModel__}
+          label={config.showLabel ? config.label : ''}>
+          <render conf={scheme} {...{ on: listeners }} />
+        </el-form-item>
+      </el-col>
+    )
+  },
+  rowFormItem(h, scheme) {
+    let child = renderChildren.apply(this, arguments)
+    if (scheme.type === 'flex') {
+      child = <el-row type={scheme.type} justify={scheme.justify} align={scheme.align}>
+              {child}
+            </el-row>
+    }
+    return (
+      <el-col span={scheme.span}>
+        <el-row gutter={scheme.gutter}>
+          {child}
+        </el-row>
+      </el-col>
+    )
+  }
+}
+// renderFormItem
+function renderFormItem(h, elementList) {
+  return elementList.map(scheme => {
+    const config = scheme.__config__
+    const layout = layouts[config.layout]
+
+    if (layout) {
+      return layout.call(this, h, scheme)
+    }
+    throw new Error(`没有与${config.layout}匹配的layout`)
+  })
+}
+```
+3. 表单元素 <render conf={scheme} {...{ on: listeners }} />
+```js
+import { deepClone } from '@/utils/index'
+
+const componentChild = {}
+/**
+ * 将./slots中的文件挂载到对象componentChild上
+ * 文件名为key，对应JSON配置中的__config__.tag
+ * 文件内容为value，解析JSON配置中的__slot__
+ */
+const slotsFiles = require.context('./slots', false, /\.js$/)
+const keys = slotsFiles.keys() || []
+keys.forEach(key => {
+  const tag = key.replace(/^\.\/(.*)\.\w+$/, '$1')
+  const value = slotsFiles(key).default
+  componentChild[tag] = value
+})
+
+function vModel(dataObject, defaultValue) {
+  dataObject.props.value = defaultValue
+
+  dataObject.on.input = val => {
+    this.$emit('input', val)
+  }
+}
+
+function mountSlotFlies(h, confClone, children) {
+  const childObjs = componentChild[confClone.__config__.tag]
+  if (childObjs) {
+    Object.keys(childObjs).forEach(key => {
+      const childFunc = childObjs[key]
+      if (confClone.__slot__ && confClone.__slot__[key]) {
+        children.push(childFunc(h, confClone, key))
+      }
+    })
+  }
+}
+
+function emitEvents(confClone) {
+  ['on', 'nativeOn'].forEach(attr => {
+    const eventKeyList = Object.keys(confClone[attr] || {})
+    eventKeyList.forEach(key => {
+      const val = confClone[attr][key]
+      if (typeof val === 'string') {
+        confClone[attr][key] = event => this.$emit(val, event)
+      }
+    })
+  })
+}
+
+function buildDataObject(confClone, dataObject) {
+  Object.keys(confClone).forEach(key => {
+    const val = confClone[key]
+    if (key === '__vModel__') {
+      vModel.call(this, dataObject, confClone.__config__.defaultValue)
+    } else if (dataObject[key]) {
+      dataObject[key] = { ...dataObject[key], ...val }
+    } else {
+      dataObject.attrs[key] = val
+    }
+  })
+
+  // 清理属性
+  clearAttrs(dataObject)
+}
+
+function clearAttrs(dataObject) {
+  delete dataObject.attrs.__config__
+  delete dataObject.attrs.__slot__
+  delete dataObject.attrs.__methods__
+}
+
+function makeDataObject() {
+  return {
+    attrs: {},
+    props: {},
+    nativeOn: {},
+    on: {},
+    style: {}
+  }
+}
+
+export default {
+  props: {
+    conf: {
+      type: Object,
+      required: true
+    }
+  },
+  render(h) {
+    const dataObject = makeDataObject()
+    const confClone = deepClone(this.conf)
+    const children = []
+
+    // 如果slots文件夹存在与当前tag同名的文件，则执行文件中的代码
+    mountSlotFlies.call(this, h, confClone, children)
+
+    // 将字符串类型的事件，发送为消息
+    emitEvents.call(this, confClone)
+
+    // 将json表单配置转化为vue render可以识别的 “数据对象（dataObject）”
+    buildDataObject.call(this, confClone, dataObject)
+
+    return h(this.conf.__config__.tag, dataObject, children)
+  }
+}
+```
+#### 表单生成器拖拽生成json
+[Vue.Draggable](https://github.com/SortableJS/Vue.Draggable)
+
+#### 表单生成vue代码
+1. vueTemplate：遍历 scheme 拼接 html template 代码
+```js
+const html = vueTemplate(makeUpHtml(this.formData, type))
+
+function vueTemplate(str) {
+  return `<template>
+    <div>
+      ${str}
+    </div>
+  </template>`
+}
+
+function buildFormTemplate(scheme, child, type) {
+  let labelPosition = ''
+  if (scheme.labelPosition !== 'right') {
+    labelPosition = `label-position="${scheme.labelPosition}"`
+  }
+  const disabled = scheme.disabled ? `:disabled="${scheme.disabled}"` : ''
+  let str = `<el-form ref="${scheme.formRef}" :model="${scheme.formModel}" :rules="${scheme.formRules}" size="${scheme.size}" ${disabled} label-width="${scheme.labelWidth}px" ${labelPosition}>
+      ${child}
+      ${buildFromBtns(scheme, type)}
+    </el-form>`
+  if (someSpanIsNot24) {
+    str = `<el-row :gutter="${scheme.gutter}">
+        ${str}
+      </el-row>`
+  }
+  return str
+}
+
+/**
+ * 组装html代码。【入口函数】
+ * @param {Object} formConfig 整个表单配置
+ * @param {String} type 生成类型，文件或弹窗等
+ */
+function makeUpHtml(formConfig, type) {
+  const htmlList = []
+  confGlobal = formConfig
+  // 判断布局是否都沾满了24个栅格，以备后续简化代码结构
+  someSpanIsNot24 = formConfig.fields.some(item => item.__config__.span !== 24)
+  // 遍历渲染每个组件成html
+  formConfig.fields.forEach(el => {
+    htmlList.push(layouts[el.__config__.layout](el))
+  })
+  const htmlStr = htmlList.join('\n')
+  // 将组件代码放进form标签
+  let temp = buildFormTemplate(formConfig, htmlStr, type)
+  // dialog标签包裹代码
+  if (type === 'dialog') {
+    temp = dialogWrapper(temp)
+  }
+  confGlobal = null
+  return temp
+}
+
+const layouts = {
+  colFormItem(scheme) {
+    const config = scheme.__config__
+    let labelWidth = ''
+    let label = `label="${config.label}"`
+    if (config.labelWidth && config.labelWidth !== confGlobal.labelWidth) {
+      labelWidth = `label-width="${config.labelWidth}px"`
+    }
+    if (config.showLabel === false) {
+      labelWidth = 'label-width="0"'
+      label = ''
+    }
+    const required = !ruleTrigger[config.tag] && config.required ? 'required' : ''
+    const tagDom = tags[config.tag] ? tags[config.tag](scheme) : null
+    let str = `<el-form-item ${labelWidth} ${label} prop="${scheme.__vModel__}" ${required}>
+        ${tagDom}
+      </el-form-item>`
+    str = colWrapper(scheme, str)
+    return str
+  },
+  rowFormItem(scheme) {
+    const config = scheme.__config__
+    const type = scheme.type === 'default' ? '' : `type="${scheme.type}"`
+    const justify = scheme.type === 'default' ? '' : `justify="${scheme.justify}"`
+    const align = scheme.type === 'default' ? '' : `align="${scheme.align}"`
+    const gutter = scheme.gutter ? `:gutter="${scheme.gutter}"` : ''
+    const children = config.children.map(el => layouts[el.__config__.layout](el))
+    let str = `<el-row ${type} ${justify} ${align} ${gutter}>
+      ${children.join('\n')}
+    </el-row>`
+    str = colWrapper(scheme, str)
+    return str
+  }
+}
+
+const tags = {
+  'el-input': el => {
+    const {
+      tag, disabled, vModel, clearable, placeholder, width
+    } = attrBuilder(el)
+    const maxlength = el.maxlength ? `:maxlength="${el.maxlength}"` : ''
+    const showWordLimit = el['show-word-limit'] ? 'show-word-limit' : ''
+    const readonly = el.readonly ? 'readonly' : ''
+    const prefixIcon = el['prefix-icon'] ? `prefix-icon='${el['prefix-icon']}'` : ''
+    const suffixIcon = el['suffix-icon'] ? `suffix-icon='${el['suffix-icon']}'` : ''
+    const showPassword = el['show-password'] ? 'show-password' : ''
+    const type = el.type ? `type="${el.type}"` : ''
+    const autosize = el.autosize && el.autosize.minRows
+      ? `:autosize="{minRows: ${el.autosize.minRows}, maxRows: ${el.autosize.maxRows}}"`
+      : ''
+    let child = buildElInputChild(el)
+
+    if (child) child = `\n${child}\n` // 换行
+    return `<${tag} ${vModel} ${type} ${placeholder} ${maxlength} ${showWordLimit} ${readonly} ${disabled} ${clearable} ${prefixIcon} ${suffixIcon} ${showPassword} ${autosize} ${width}>${child}</${tag}>`
+  },
+}
+```
+
+2. vueScript：遍历 scheme 拼接 data rule method 等
+```js
+const script = vueScript(makeUpJs(this.formData, type))
+
+function vueScript(str) {
+  return `<script>
+    ${str}
+  </script>`
+}
+
+/**
+ * 组装js 【入口函数】
+ * @param {Object} formConfig 整个表单配置
+ * @param {String} type 生成类型，文件或弹窗等
+ */
+function makeUpJs(formConfig, type) {
+  confGlobal = formConfig = deepClone(formConfig)
+  const dataList = []
+  const ruleList = []
+  const optionsList = []
+  const propsList = []
+  const methodList = mixinMethod(type)
+  const uploadVarList = []
+  const created = []
+
+  formConfig.fields.forEach(el => {
+    buildAttributes(el, dataList, ruleList, optionsList, methodList, propsList, uploadVarList, created)
+  })
+
+  const script = buildexport(
+    formConfig,
+    type,
+    dataList.join('\n'),
+    ruleList.join('\n'),
+    optionsList.join('\n'),
+    uploadVarList.join('\n'),
+    propsList.join('\n'),
+    methodList.join('\n'),
+    created.join('\n')
+  )
+  confGlobal = null
+  return script
+}
+
+// js整体拼接
+function buildexport(conf, type, data, rules, selectOptions, uploadVar, props, methods, created) {
+  const str = `${exportDefault}{
+  ${inheritAttrs[type]}
+  components: {},
+  props: [],
+  data () {
+    return {
+      ${conf.formModel}: {
+        ${data}
+      },
+      ${conf.formRules}: {
+        ${rules}
+      },
+      ${uploadVar}
+      ${selectOptions}
+      ${props}
+    }
+  },
+  computed: {},
+  watch: {},
+  created () {
+    ${created}
+  },
+  mounted () {},
+  methods: {
+    ${methods}
+  }
+}`
+  return str
+}
+```
+3. cssStyle: 将 scheme 中的css 拼接
+```js
+const css = cssStyle(makeUpCss(this.formData))
+
+export function cssStyle(cssStr) {
+  return `<style>
+    ${cssStr}
+  </style>`
+}
+
+function makeUpCss(conf) {
+  const cssList = []
+  conf.fields.forEach(el => addCss(cssList, el))
+  return cssList.join('\n')
+}
+
+function addCss(cssList, el) {
+  const css = styles[el.__config__.tag]
+  css && cssList.indexOf(css) === -1 && cssList.push(css)
+  if (el.__config__.children) {
+    el.__config__.children.forEach(el2 => addCss(cssList, el2))
+  }
+}
+
+const styles = {
+  'el-rate': '.el-rate{display: inline-block; vertical-align: text-top;}',
+  'el-upload': '.el-upload__tip{line-height: 1.2;}'
+}
+```
+4. 组合代码
+```js
+generateCode() {
+  const { type } = this.generateConf
+  this.AssembleFormData()
+  const html = vueTemplate(makeUpHtml(this.formData, type))
+  const script = vueScript(makeUpJs(this.formData, type))
+  const css = cssStyle(makeUpCss(this.formData))
+  return beautifier.html(html + script + css, beautifierConf.html)
+}
+```
+5. 下载vue代码
+```js
+import { saveAs } from 'file-saver' //https://www.npmjs.com/package/file-saver
+
+execDownload(data) {
+  const codeStr = this.generateCode()
+  const blob = new Blob([codeStr], { type: 'text/plain;charset=utf-8' }) //vue文本转化为二进制流
+  saveAs(blob, data.fileName)
+},
+```
