@@ -1211,7 +1211,7 @@ a.toString() // 不报错
 
 const b: unknown = 'y'
 // b.toString() // 报错
-;(b as string).toString() // 不报错
+(b as string).toString() // 不报错
 ```
 
 ## TS 访问修饰符 public protected private 有什么作用

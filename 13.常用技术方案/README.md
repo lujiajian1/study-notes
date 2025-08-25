@@ -344,6 +344,490 @@ css 现状存在的问题
 * 体积小的背景图片打包编译为base64，导致相同的图片被重复编译为base64打包。
 * 有一些通用的样式集，重复使用，但没有提取为公共样式。
 * 有部分sass @import  使用不规范，导致无用代码重复打包。
+```js
+// 优化css的脚本
+const cssnanoPresetAdvanced = require('cssnano-preset-advanced');
+const cssnano = require('cssnano');
+const postcss = require('postcss');
+const sorting = require('postcss-sorting');
+const fs = require('fs');
+const path = require('path');
+
+const propertiesMerge = postcss.plugin('postcss-properties-merge', (replaceSelectorPropsMap, preRules) => root => {
+    const replaceMapKeys = Object.keys(replaceSelectorPropsMap);
+    return new Promise((resolve, reject) => {
+        try {
+            root.walkRules(rule => {
+                if (replaceMapKeys.includes(rule.selector)) {
+                    const cssString = rule.toString();
+                    if (cssString.indexOf(replaceSelectorPropsMap[rule.selector]) !== -1) {
+                        const modifiedCssString = cssString.replace(replaceSelectorPropsMap[rule.selector], '');
+                        rule.replaceWith(modifiedCssString);
+                        if (preRules[replaceSelectorPropsMap[rule.selector]]) {
+                            preRules[replaceSelectorPropsMap[rule.selector]].push(rule.selector);
+                        } else {
+                            preRules[replaceSelectorPropsMap[rule.selector]] = [rule.selector];
+                        }
+                    }
+                }
+            });
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+});
+
+const base64Merge = postcss.plugin('postcss-base64-merge', (selectorsBase64Map, preBase64Rules) => root => {
+    const base64ReplaceMapKeys = Object.keys(selectorsBase64Map);
+    return new Promise((resolve, reject) => {
+        try {
+            root.walkDecls(decl => {
+                const currentSelector = decl.parent.selector;
+                if (decl.prop === 'background-image' && base64ReplaceMapKeys.includes(currentSelector) && decl.value === selectorsBase64Map[currentSelector]) {
+                    decl.remove();
+                    if (preBase64Rules[selectorsBase64Map[currentSelector]]) {
+                        preBase64Rules[selectorsBase64Map[currentSelector]].push(currentSelector);
+                    } else {
+                        preBase64Rules[selectorsBase64Map[currentSelector]] = [currentSelector];
+                    }
+                }
+            });
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+});
+
+const special = ['composes', '@import', '@extend', '@mixin', '@at-root'];
+const positioning = ['position', 'top', 'right', 'bottom', 'left', 'z-index'];
+const boxModel = [
+    'display',
+    'flex',
+    'flex-basis',
+    'flex-direction',
+    'flex-flow',
+    'flex-grow',
+    'flex-shrink',
+    'flex-wrap',
+    'grid',
+    'grid-area',
+    'grid-auto-rows',
+    'grid-auto-columns',
+    'grid-auto-flow',
+    'grid-gap',
+    'grid-row',
+    'grid-row-start',
+    'grid-row-end',
+    'grid-row-gap',
+    'grid-column',
+    'grid-column-start',
+    'grid-column-end',
+    'grid-column-gap',
+    'grid-template',
+    'grid-template-areas',
+    'grid-template-rows',
+    'grid-template-columns',
+    'gap',
+    'align-content',
+    'align-items',
+    'align-self',
+    'justify-content',
+    'justify-items',
+    'justify-self',
+    'order',
+    'float',
+    'clear',
+    'box-sizing',
+    'width',
+    'min-width',
+    'max-width',
+    'height',
+    'min-height',
+    'max-height',
+    'margin',
+    'margin-top',
+    'margin-right',
+    'margin-bottom',
+    'margin-left',
+    'padding',
+    'padding-top',
+    'padding-right',
+    'padding-bottom',
+    'padding-left',
+    'border',
+    'border-color',
+    'border-style',
+    'border-width',
+    'border-top',
+    'border-top-color',
+    'border-top-width',
+    'border-top-style',
+    'border-right',
+    'border-right-color',
+    'border-right-width',
+    'border-right-style',
+    'border-bottom',
+    'border-bottom-color',
+    'border-bottom-width',
+    'border-bottom-style',
+    'border-left',
+    'border-left-color',
+    'border-left-width',
+    'border-left-style',
+    'border-radius',
+    'border-top-left-radius',
+    'border-top-right-radius',
+    'border-bottom-right-radius',
+    'border-bottom-left-radius',
+    'border-image',
+    'border-image-source',
+    'border-image-slice',
+    'border-image-width',
+    'border-image-outset',
+    'border-image-repeat',
+    'border-collapse',
+    'border-spacing',
+    'object-fit',
+    'object-position',
+    'overflow',
+    'overflow-x',
+    'overflow-y',
+];
+const typography = [
+    'color',
+    'font',
+    'font-weight',
+    'font-size',
+    'font-family',
+    'font-style',
+    'font-variant',
+    'font-size-adjust',
+    'font-stretch',
+    'font-effect',
+    'font-emphasize',
+    'font-emphasize-position',
+    'font-emphasize-style',
+    'font-smooth',
+    'line-height',
+    'direction',
+    'letter-spacing',
+    'white-space',
+    'text-align',
+    'text-align-last',
+    'text-transform',
+    'text-decoration',
+    'text-emphasis',
+    'text-emphasis-color',
+    'text-emphasis-style',
+    'text-emphasis-position',
+    'text-indent',
+    'text-justify',
+    'text-outline',
+    'text-wrap',
+    'text-overflow',
+    'text-overflow-ellipsis',
+    'text-overflow-mode',
+    'text-orientation',
+    'text-shadow',
+    'vertical-align',
+    'word-wrap',
+    'word-break',
+    'word-spacing',
+    'overflow-wrap',
+    'tab-size',
+    'hyphens',
+    'unicode-bidi',
+    'columns',
+    'column-count',
+    'column-fill',
+    'column-gap',
+    'column-rule',
+    'column-rule-color',
+    'column-rule-style',
+    'column-rule-width',
+    'column-span',
+    'column-width',
+    'page-break-after',
+    'page-break-before',
+    'page-break-inside',
+    'src',
+];
+const visual = [
+    'list-style',
+    'list-style-position',
+    'list-style-type',
+    'list-style-image',
+    'table-layout',
+    'empty-cells',
+    'caption-side',
+    'background',
+    'background-color',
+    'background-image',
+    'background-repeat',
+    'background-position',
+    'background-position-x',
+    'background-position-y',
+    'background-size',
+    'background-clip',
+    'background-origin',
+    'background-attachment',
+    'background-blend-mode',
+    'outline',
+    'outline-width',
+    'outline-style',
+    'outline-color',
+    'outline-offset',
+    'box-shadow',
+    'box-decoration-break',
+    'transform',
+    'transform-origin',
+    'transform-style',
+    'backface-visibility',
+    'perspective',
+    'perspective-origin',
+    'visibility',
+    'cursor',
+    'opacity',
+    'filter',
+    'isolation',
+    'backdrop-filter',
+    'mix-blend-mode',
+];
+const animation = [
+    'transition',
+    'transition-delay',
+    'transition-timing-function',
+    'transition-duration',
+    'transition-property',
+    'animation',
+    'animation-name',
+    'animation-duration',
+    'animation-play-state',
+    'animation-timing-function',
+    'animation-delay',
+    'animation-iteration-count',
+    'animation-direction',
+    'animation-fill-mode',
+];
+const misc = [
+    'appearance',
+    'content',
+    'clip',
+    'clip-path',
+    'counter-reset',
+    'counter-increment',
+    'resize',
+    'user-select',
+    'nav-index',
+    'nav-up',
+    'nav-right',
+    'nav-down',
+    'nav-left',
+    'pointer-events',
+    'quotes',
+    'touch-action',
+    'will-change',
+    'zoom',
+    'fill',
+    'fill-rule',
+    'clip-rule',
+    'stroke',
+];
+const order = [].concat(special, positioning, boxModel, typography, visual, animation, misc);
+
+const cssFilePath = 'styles.e529496289897d581529.css';
+const cssNewFilePath = 'styles-new.css';
+const reportPath = 'style-report.json';
+
+const selectorsBase64Map = {};
+const replaceSelectorPropsMap = {};
+
+const niceStyle = (propCount, propModlLeng, allLeng) => {
+    return new Promise((resolve, reject) => {
+        fs.readFile(cssFilePath, 'utf8', async(err, css) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            // 属性排序
+            const sortResult = await postcss([
+                sorting({
+                    'properties-order': order,
+                }),
+            ]).process(css, {
+                from: undefined,
+            });
+
+            // 去除空白，注释
+            const miniResult = await postcss([cssnano]).process(sortResult, {
+                from: undefined,
+            });
+
+            // 分析css代码
+            const root = postcss.parse(miniResult);
+            let currentSelector = ''; // 当前选择器
+            let propertyList = [];
+            const propertyCount = {}; // 整个css代码的样式集的出现次数
+            const propertyModule = {}; // 整个css代码的样式集的选择器映射
+            const base64Map = {};
+            root.walkDecls(decl => {
+                // 收集background-image 的 base64 图片
+                if (decl.prop === 'background-image' && decl.value.indexOf('base64') !== -1 && decl.parent.type !== 'atrule' && decl.parent.parent.type !== 'atrule') {
+                    if (base64Map[decl.value]) {
+                        base64Map[decl.value].push(decl.parent.selector);
+                    } else {
+                        base64Map[decl.value] = [decl.parent.selector];
+                    }
+                }
+
+                // 收集重复样式集
+                const declValue = decl.value.indexOf('base64') !== -1 ? 'base64:aaaa' : decl.value;
+                if (!currentSelector || currentSelector === decl.parent.selector) {
+                    propertyList.push(`${decl.prop}:${declValue};`);
+                } else {
+                    propertyList = [`${decl.prop}:${declValue};`];
+                }
+                const reversedPropertyList = Array.from(propertyList).reverse();
+                const propertyJoinStr = [];
+                for (let i = 0; i < reversedPropertyList.length; i++) {
+                    propertyJoinStr.push(reversedPropertyList[i] + (propertyJoinStr[i - 1] || ''));
+                }
+                propertyJoinStr.forEach(_ => {
+                    if (propertyModule[_]) {
+                        propertyModule[_].push({ selector: decl.parent.selector });
+                    } else {
+                        propertyModule[_] = [{ selector: decl.parent.selector }];
+                    }
+
+                    if (!propertyCount[_]) {
+                        propertyCount[_] = 0;
+                    }
+                    // eslint-disable-next-line no-plusplus
+                    propertyCount[_]++;
+                });
+                currentSelector = decl.parent.selector;
+            });
+
+            // 筛选符合替换条件的样式集
+            const filterPropertyModule = {};
+            const filterPropertyCount = {};
+            Object.keys(propertyCount).forEach(_ => {
+                if (propertyCount[_] > propCount && _.split(';').length > propModlLeng && _.length * propertyCount[_] > allLeng) {
+                    filterPropertyModule[_] = propertyModule[_];
+                    filterPropertyCount[_] = propertyCount[_];
+                }
+            });
+            // 将筛选后的样式集，格式化为 {selector: property]}，并且每个 selector 只存最长的 property
+            const replaceSelectorMap = {};
+            Object.keys(filterPropertyModule).forEach(props => {
+                const selectors = filterPropertyModule[props];
+                selectors.forEach(({ selector }) => {
+                    if (replaceSelectorMap[selector]) {
+                        if (replaceSelectorMap[selector].length < props.length) {
+                            replaceSelectorMap[selector] = props;
+                        }
+                    } else {
+                        replaceSelectorMap[selector] = props;
+                    }
+                });
+            });
+            // 去除 Selector 长度大于 property
+            Object.keys(replaceSelectorMap).forEach(selec => {
+                if (selec.length < replaceSelectorMap[selec].length) {
+                    replaceSelectorPropsMap[selec] = replaceSelectorMap[selec];
+                }
+            });
+
+            // 筛选重复使用的base64图片
+            const repeatedBase64Map = {}; // 过滤出
+            const repeatedBase64Count = {};
+            Object.keys(base64Map).forEach(_ => {
+                if (base64Map[_].length > 1) {
+                    repeatedBase64Map[_] = base64Map[_];
+                    repeatedBase64Count[_] = base64Map[_].length;
+                }
+            });
+            // 将筛选后的样式集，格式化为 {selector: base64}，并且每个 selector 只存最长的 base64
+            Object.keys(repeatedBase64Map).forEach(props => {
+                const selectors = repeatedBase64Map[props];
+                selectors.forEach(selector => {
+                    if (selectorsBase64Map[selector]) {
+                        if (selectorsBase64Map[selector].length < props.length) {
+                            selectorsBase64Map[selector] = props;
+                        }
+                    } else {
+                        selectorsBase64Map[selector] = props;
+                    }
+                });
+            });
+
+            // 写入报告文件
+            fs.writeFile(reportPath, `${JSON.stringify(replaceSelectorPropsMap)} ${JSON.stringify(repeatedBase64Map)}`, 'utf8', _err => {
+                if (_err) {
+                    console.error(_err);
+                    return;
+                }
+                console.log('报告已写入');
+            });
+
+            console.log('miniResult', miniResult.css.length);
+            // 优化css代码
+            // 删除提取重复的样式集
+            const preRules = {};
+            const replaceResult = await postcss([propertiesMerge(replaceSelectorPropsMap, preRules)]).process(miniResult, {
+                from: undefined,
+            });
+            let preRulesStr = '';
+            Object.keys(preRules).forEach(_ => {
+                const selectorStr = preRules[_].join(',');
+                preRulesStr += `${selectorStr}{${_}}`;
+            });
+
+            console.log('replaceResult', (preRulesStr + replaceResult.css).length);
+
+            // 合并相同的base64图片
+            const preBase64Rules = {};
+            const base64MergeResult = await postcss([base64Merge(selectorsBase64Map, preBase64Rules)]).process(replaceResult.css, {
+                from: undefined,
+            });
+            let preBase64RulesStr = '';
+            Object.keys(preBase64Rules).forEach(_ => {
+                const selectorStr = preBase64Rules[_].join(',');
+                preBase64RulesStr += `${selectorStr}{background-image:${_};}`;
+            });
+            console.log('base64MergeResult', (preBase64RulesStr + preRulesStr + base64MergeResult.css).length);
+
+
+
+            // css代码压缩优化
+            const nanoResult = await postcss(cssnano({
+                preset: cssnanoPresetAdvanced
+            })).process(preBase64RulesStr + preRulesStr + base64MergeResult.css, {
+                from: undefined,
+            });
+            resolve(nanoResult.css.length);
+            // console.log(nanoResult.css.length);
+            console.log('nanoResult', nanoResult.css.length);
+
+            // 写入文件新的css文件
+            fs.writeFile(cssNewFilePath, nanoResult.css, 'utf8', _err => {
+                if (_err) {
+                    console.error(_err);
+                    return;
+                }
+                console.log('CSS文件已更新并压缩');
+            });
+        });
+    })
+}
+
+// niceStyle(9, 3, 600);
+
+module.exports = niceStyle;
+```
 
 ## 多账号绑定附件重传
 首先，多账号是邮箱客户端的基本能力，并且线上用户频繁反馈不能绑定个人邮箱账号的工单。另外，支持外贸通的售卖，具备支持外部邮箱能力后，外贸通可以售卖第三方邮箱客户。多账号的场景下，因为写信中上传的附件与发件人是绑定的，当切换发件人时，需要重新生成一封新写信，并对原始信件中的附件重新上传到当前发件人下。
