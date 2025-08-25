@@ -344,6 +344,19 @@ css 现状存在的问题
 * 体积小的背景图片打包编译为base64，导致相同的图片被重复编译为base64打包。
 * 有一些通用的样式集，重复使用，但没有提取为公共样式。
 * 有部分sass @import  使用不规范，导致无用代码重复打包。
+* 优化脚本逻辑
+  * 第一步：fs.readFile 读取需要优化的css文件
+  * 第二步：使用 postcss-sorting 对css属性进行排序
+  * 第三步：使用 cssnano 去除空白和注释，方便匹配
+  * 第四步：使用 postcss.parse 将 CSS 字符串解析为 PostCSS 的抽象语法树
+  * 第五步：使用 root.walkDecls 变量 遍历 AST（抽象语法树）中的所有 CSS 声明（Declaration 节点）
+    * 收集记录 background-image 的 base64 图片
+    * 收集重复样式集
+  * 第六步：过滤不符合条件的样式集：样式集出现次数大于propCount，属性数目大于propModlLeng，属性总长度大于allLeng
+  * 第七步：格式化样式集，找个每个选择器最长的样式集。然后，遍历样式集，去除 Selector 长度大于 property
+  * 第八步：使用自定义postcss插件 propertiesMerge 提取合并重复的样式集
+  * 第九步：使用自定义postcss插件 base64Merge 提取合并重复的 base64 图片
+  * 第十步：cssnano 压缩，将优化后css写入文件
 ```js
 // 优化css的脚本
 const cssnanoPresetAdvanced = require('cssnano-preset-advanced');
@@ -720,7 +733,7 @@ const niceStyle = (propCount, propModlLeng, allLeng) => {
                     filterPropertyCount[_] = propertyCount[_];
                 }
             });
-            // 将筛选后的样式集，格式化为 {selector: property]}，并且每个 selector 只存最长的 property
+            // 将筛选后的样式集，格式化为 {selector: property}，并且每个 selector 只存最长的 property
             const replaceSelectorMap = {};
             Object.keys(filterPropertyModule).forEach(props => {
                 const selectors = filterPropertyModule[props];
