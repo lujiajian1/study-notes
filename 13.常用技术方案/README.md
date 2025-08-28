@@ -334,10 +334,10 @@ createHexRules();
 #### js拆分
 一共减少了15MB的js体积
 * webpack optimization splitChunks 对各个模块进行分割，并提取出相同部分代码。
-* 三方库的按需加载，比如一些组件库，图标库、可视化引擎库。
-* DLL 处理第三方库，提升构建速度。
+* 使用 babel-plugin-import 配置第三方库的按需加载，比如一些组件库，图标库、可视化引擎库。
+* DLL 处理第三方库，提升构建速度：将一些字体、埋点 SDK、编辑器 tinymce 等单独打包，之后的构建过程，可以 Webpack externals 跳过这些依赖，直接 html.js 引入使用。
 * 统一第三方库的版本，其他团队有的是通过npm包整合开发的，比如antd的版本可以共用一个，不需要不同团队多次引入打包。
-* 条件编译，不同版本的包只引入当前包需要的模块。
+* 条件编译，使用环境变量 process.env.BUILD_ISEDM 不同版本的包只引入当前包需要的模块。
 
 #### css 体积优化
 css 现状存在的问题
@@ -355,7 +355,11 @@ css 现状存在的问题
   * 第六步：过滤不符合条件的样式集：样式集出现次数大于propCount，属性数目大于propModlLeng，属性总长度大于allLeng
   * 第七步：格式化样式集，找个每个选择器最长的样式集。然后，遍历样式集，去除 Selector 长度大于 property
   * 第八步：使用自定义postcss插件 propertiesMerge 提取合并重复的样式集
+    * 使用 root.walkRules 遍历所有的 css 声明，找到需要抽取的选择器的样式集，将样式集合并
+    * 返回最新的 resultCss
   * 第九步：使用自定义postcss插件 base64Merge 提取合并重复的 base64 图片
+    * 使用 root.walkRules 遍历所有的 css 声明，找到所有符合要求的base64图片删除
+    * 返回最新的 resultCss
   * 第十步：cssnano 压缩，将优化后css写入文件
 ```js
 // 优化css的脚本
