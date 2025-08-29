@@ -942,7 +942,8 @@ const res = await jscodeshift(transformPath, filepath, options);
 ```
 
 #### 之后优化方案
-* 利用 require('@iamtraction/google-translate') 对提取的中文进行初步翻译，减轻产品的压力
+* 利用 require('@iamtraction/google-translate') 对提取的中文进行初步翻译，减轻产品工作
+* 利用大模型的能力做翻译，不需要产品参与，减轻产品工作
 * 做个vscode拓展插件，可以在需求开发中直接进行翻译，不需要提交git后再跑脚本
 
 ## [fastdev](https://juejin.cn/post/7390188382212587556)
@@ -1252,7 +1253,6 @@ const tags = {
   },
 }
 ```
-
 2. vueScript：遍历 scheme 拼接 data rule method 等
 ```js
 const script = vueScript(makeUpJs(this.formData, type))
