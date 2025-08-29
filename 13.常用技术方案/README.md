@@ -898,6 +898,26 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 
 
 ## [中英文](https://juejin.cn/post/7390339205984141366)
+1. 获取上一个提交的哈希值：git rev-parse HEAD~1
+2. 获取当前提交的哈希值：git rev-parse HEAD
+3. 获取两次提交中修改的文件列表：git diff --name-only ${curHead} ${preHead}
+4. 利用 jscodeshift 插件，将文件源代码字符串解析转化为AST：jscodeshift(fileInfo.source)
+5. 查找类型为JSXText的节点：ast.find(jscodeshift.JSXText)
+6. 将JSXText的节点替换为{getIn18Text(`${key}`)}，key 是通过pinyin.convertToPinyin生成的
+7. 查找字符串字面量节点jscodeshift.StringLiteral：ast.find(jscodeshift.StringLiteral)
+8. 找到 jscodeshift.StringLiteral 的父节点类型，并对不同的父节点类型差异化处理
+   1. VariableDeclarator 变量初始值：getIn18Text(`${key}`)
+   2. CallExpression 函数调用：getIn18Text(`${key}`)
+   3. ObjectProperty 对象属性值：getIn18Text(`${key}`)
+   4. ArrayExpression 数组元素：getIn18Text(`${key}`)
+   5. TemplateLiteral 模板字符串：getIn18Text(`${key}`)
+   6. ReturnStatement 返回语句返回值：getIn18Text(`${key}`)
+   7. JSXAttribute 属性：{getIn18Text(`${key}`)}
+   8.  ConditionalExpression 表达式：getIn18Text(`${key}`)
+9.  将所有替换的文案导出
+10. 在文件最前面插入 "import { getIn18Text } from 'api';"
+
+#### 伪代码
 1. 读取 git commit 中的增量代码文件路径
 ```js
 const getGitResult = command =>  new Promise((res, rej) => {    
@@ -920,6 +940,9 @@ const files = diffFiles.split(/\n/);
 ```js
 const res = await jscodeshift(transformPath, filepath, options);    
 ```
+
+#### 之后优化方案
+* 利用 require('@iamtraction/google-translate') 对提取的中文进行初步翻译，减轻产品的压力
 
 ## [fastdev](https://juejin.cn/post/7390188382212587556)
 jscodeshift：jscodeshift 是一个基于 codemod 理念的 JavaScript/TypeScript 重构工具，其原理是将 JS/TS 代码解析为抽象语法树（Abstract Syntax Tree，AST），并提供一系列用于访问和修改 AST 的 API 以实现自动化的代码重构。使用 jscodeshift 可以进行一系列代码转换操作，比如替换变量名、修改函数调用、重构类定义等。它可以帮助开发人员快速而准确地进行大规模的代码修改，尤其适用于需要对遗留代码进行更新或者升级的情况。
