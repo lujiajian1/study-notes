@@ -943,6 +943,7 @@ const res = await jscodeshift(transformPath, filepath, options);
 
 #### 之后优化方案
 * 利用 require('@iamtraction/google-translate') 对提取的中文进行初步翻译，减轻产品的压力
+* 做个vscode拓展插件，可以在需求开发中直接进行翻译，不需要提交git后再跑脚本
 
 ## [fastdev](https://juejin.cn/post/7390188382212587556)
 jscodeshift：jscodeshift 是一个基于 codemod 理念的 JavaScript/TypeScript 重构工具，其原理是将 JS/TS 代码解析为抽象语法树（Abstract Syntax Tree，AST），并提供一系列用于访问和修改 AST 的 API 以实现自动化的代码重构。使用 jscodeshift 可以进行一系列代码转换操作，比如替换变量名、修改函数调用、重构类定义等。它可以帮助开发人员快速而准确地进行大规模的代码修改，尤其适用于需要对遗留代码进行更新或者升级的情况。
