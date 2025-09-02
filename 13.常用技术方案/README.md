@@ -516,6 +516,72 @@ const indexConfig = {
 export default [indexConfig, ...jsConfigs];
 ```
 
+```sh
+# publish_ui.sh
+#!/bin/bash
+
+set -e
+
+cd ./publish/ui
+
+npm version patch
+
+npm version patch
+
+cd ../../
+
+rm -rf ui-dist
+
+yarn build-ui
+
+cp ./publish/ui/package.json ./ui-dist
+
+cp ./publish/ui/README.md ./ui-dist
+
+cd ./ui-dist
+
+mv SiriusDrawer-ui SiriusDrawer
+
+mv SiriusModal-ui SiriusModal
+
+mv index-ui.d.ts index.d.ts
+
+# alias nenpm='cnpm --registry=http://rnpm.hz.netease.com/ --registryweb=http://npm.hz.netease.com/ --cache=$HOME/.nenpm/.cache --userconfig=$HOME/.nenpmrc'
+
+# nenpm publish
+```
+
+```sh
+# publish_comp.sh
+#!/bin/bash
+
+set -e
+
+cd ./publish/comp
+
+npm version patch
+
+npm version patch
+
+cd ../../
+
+rm -rf comp-dist
+
+yarn build-comp
+
+cp ./publish/comp/package.json ./comp-dist
+
+cp ./publish/comp/README.md ./comp-dist
+
+cd ./comp-dist
+
+mv index-comp.d.ts index.d.ts
+
+# alias nenpm='cnpm --registry=http://rnpm.hz.netease.com/ --registryweb=http://npm.hz.netease.com/ --cache=$HOME/.nenpm/.cache --userconfig=$HOME/.nenpmrc'
+
+# nenpm publish
+```
+
 ## React 性能优化
 * 加载时性能优化
   * 资源小一点
