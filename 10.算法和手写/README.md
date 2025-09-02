@@ -721,31 +721,35 @@ fn();
 
 ```js
 //使用apply
-function flat(arr) {
-  // 验证 arr 中，还有没有深层数组 [1, 2, [3, 4]]
-  const isDeep = arr.some((item) => item instanceof Array);
-  if (!isDeep) {
-    return arr; // 已经是 flatern [1, 2, 3, 4]
-  }
+function flat(arr, depth = Infinity) {
+    if (depth <= 0) {
+        return arr;
+    }
 
-  const res = Array.prototype.concat.apply([], arr);
-  return flat(res); // 递归
+    // 验证 arr 中，还有没有深层数组 [1, 2, [3, 4]]
+    const isDeep = arr.some((item) => item instanceof Array);
+    if (!isDeep) {
+        return arr; // 已经是 flatern [1, 2, 3, 4]
+    }
+
+    const res = Array.prototype.concat.apply([], arr);
+    return flat(res, depth -1); // 递归
 }
 
 const res = flat([1, 2, [3, 4, [10, 20, [100, 200]]], 5]);
 console.log(res);
 
 //使用展开运算符
-function arrf(arr) {
-  let res = [];
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i] instanceof Array) {
-      res = res.concat(arrf(arr[i]));
-    } else {
-      res.push(arr[i]);
+function arrf(arr, depth = Infinity) {
+    let res = [];
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] instanceof Array && depth > 0) {
+            res = res.concat(arrf(arr[i], depth -1));
+        } else {
+            res.push(arr[i]);
+        }
     }
-  }
-  return res;
+    return res;
 }
 ```
 
