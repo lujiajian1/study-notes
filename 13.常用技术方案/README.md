@@ -1,6 +1,6 @@
 ## [微前端](https://juejin.cn/post/6844904162509979662)
 一种类似于微服务的架构，它将微服务的理念应用于浏览器端，即将 Web 应用由单一的单体应用转变为多个小型前端应用聚合为一的应用。各个前端应用还可以独立运行、独立开发、独立部署。微前端不是单纯的前端框架或者工具，而是一套架构体系，
-* 运维层面的改造：Nginx 路由代理，简单，但是切换会触发刷线
+* 运维层面的改造：Nginx 路由代理，简单，但是切换会触发刷新
 * iframe嵌套：实现简单，天然隔离，但是SEO不友好，兼容性有问题
 * NPM方案：在设计时需要将微应用打包成独立的 NPM 包，然后在主应用中引入和使用
 * 动态 Script：根据导航进行微应用的切换，切换的过程会动态加载和执行 JS 和 CSS 资源
@@ -270,11 +270,251 @@ createHexRules();
 提供组件的介绍说明。提供组件调用的案例 usage，以及展示演示案例的源码。提供组件的属性列表 propTypes。但是，如果要把这些内容都通过 markdown 去写，不仅耗时，并且不利于维护。为了把更多的精力投入到开发更优质的组件当中，我们需要文档生成自动化。
 
 在解析器中 react-docgen-typescript 是一个简单、功能强大并且社区活跃的工具。所以最后选择利用  react-docgen-typescript 的能力开发自动获取组件注释和类型的脚本，生成组件属性列表的表格。
-另外，对于组件使用的案例，可以自动解析展示出案例的源码。采用遍历解析 React.children 生成源码。
+
+使用[jsx-to-string](https://github.com/grommet/jsx-to-string)的第三方库将案例遍历解析 React.children 生成源码。
+
 组件描述部分支持 Markdown 语法，使用 react-markdown 插件解析展示 Markdown 的内容。
 
 #### 组件库独立打包
 为了方便维护，更是为了其他团队使用通用UI组件库，将通用UI组件从项目中独立，通过 rollup 实现独立的打包发布。主要实现的能力有：抽离对全局样式和api层方法的依赖，自动化打包发布脚本，antd类型导出，按需加载，css隔离。
+```js
+// rollup.ui.config.js
+import typescript from 'rollup-plugin-typescript2';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
+import svgr from '@svgr/rollup';
+import alias from '@rollup/plugin-alias';
+import postcss from 'rollup-plugin-postcss';
+import svg from 'rollup-plugin-svg';
+import copy from 'rollup-plugin-copy';
+import terser from '@rollup/plugin-terser';
+import replace from '@rollup/plugin-replace';
+
+function createCssAndIndexFile() {
+  return {
+    name: 'createCssAndIndexFile',
+    generateBundle() {
+      this.emitFile({
+        name: 'index.css',
+        fileName: 'index.css',
+        type: 'asset',
+        source: `@import "./global.css";`,
+      });
+    },
+  };
+}
+
+const plugins = [
+  replace({
+    'antd/lib/locale/zh_CN': 'antd/lib/locale/zh_CN',
+    'antd/lib/input/TextArea': '../types/input',
+    'antd/lib/radio/radioButton': '../types/radio',
+    'antd/lib/checkbox/Group': '../types/checkbox',
+    'antd/lib/date-picker': '../types/datepicker',
+    'antd/es/table': '../types/table',
+    'antd/lib/': '../types/',
+    'process.env.BUILD_ENV': JSON.stringify(process.env.BUILD_ENV),
+  }),
+  svg(),
+  svgr(),
+  resolve(),
+  json(),
+  typescript({ tsconfig: './tsconfig.ui.json' }),
+  alias({
+    resolve: ['.tsx', '.ts', '.scss'],
+    entries: {
+      '../styles/export.module.scss': '../variables',
+      '@web-common': '../web-common/src',
+      '@': '../web/src',
+    },
+  }),
+  commonjs(),
+  postcss({
+    inject: { insertAt: 'top' },
+  }),
+];
+
+const comp = [
+  'Button',
+  'Divider',
+  'SiriusBadge',
+  'Tag',
+  'Pagination',
+  'Breadcrumb',
+  'PageHeader',
+  'SiriusSteps',
+  'Table',
+  'Tabs',
+  'SiriusDrawer-ui',
+  'Cascader',
+  'Radio',
+  'Checkbox',
+  'Switch',
+  'TimePicker',
+  'DatePicker',
+  'Input',
+  'Select',
+  'SiriusModal-ui',
+  'Tooltip',
+  'Message',
+  'Popover',
+  'Alert',
+];
+
+const jsConfigs = comp.map(name => {
+  const input = `./src/${name}/index.tsx`;
+  let fileName = name;
+  if (name === 'SiriusDrawer-ui') {
+    fileName = 'SiriusDrawer';
+  }
+  if (name === 'SiriusModal-ui') {
+    fileName = 'SiriusModal';
+  }
+  return {
+    input,
+    output: {
+      name: `lxui-${fileName}`,
+      file: `ui-dist/${fileName}.js`,
+      format: 'umd',
+      exports: 'named',
+      globals: {
+        react: 'React',
+        'react-dom': 'ReactDOM',
+      },
+      plugins: [terser()],
+    },
+    plugins,
+    external: ['react', 'react-dom', 'rc-motion', 'rc-resize-observer', 'rc-trigger', 'moment', 'rc-cascader'],
+  };
+});
+
+const indexConfig = {
+  input: './src/index-ui.ts',
+  output: {
+    name: 'lxui',
+    file: 'ui-dist/index.js',
+    format: 'umd',
+    exports: 'named',
+    globals: {
+      react: 'React',
+      'react-dom': 'ReactDOM',
+    },
+    plugins: [terser()],
+  },
+  plugins: plugins.concat([
+    createCssAndIndexFile(),
+    copy({
+      copyOnce: true,
+      targets: [{ src: './src/styles/comp-global.css', dest: 'ui-dist', rename: 'global.css' }],
+    }),
+  ]),
+  external: ['react', 'react-dom', 'rc-motion', 'rc-resize-observer', 'rc-trigger', 'moment', 'rc-cascader'],
+};
+
+export default [indexConfig, ...jsConfigs];
+```
+
+```js
+// rollup.comp.config.js
+import typescript from 'rollup-plugin-typescript2';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
+import svgr from '@svgr/rollup';
+import alias from '@rollup/plugin-alias';
+import postcss from 'rollup-plugin-postcss';
+import svg from 'rollup-plugin-svg';
+import terser from '@rollup/plugin-terser';
+import replace from '@rollup/plugin-replace';
+
+const plugins = [
+  replace({
+    'process.env.BUILD_ENV': JSON.stringify(process.env.BUILD_ENV),
+  }),
+  svg(),
+  svgr(),
+  resolve(),
+  json(),
+  typescript({ tsconfig: './tsconfig.comp.json' }),
+  alias({
+    resolve: ['.tsx', '.ts', '.scss'],
+    entries: {
+      '../styles/export.module.scss': '../variables',
+      '@web-common': '../web-common/src',
+      '@': '../web/src',
+    },
+  }),
+  commonjs(),
+  postcss({
+    modules: false,
+    minimize: true,
+    extract: 'index.css',
+  }),
+];
+
+const comp = [
+  'Button',
+  'Divider',
+  'SiriusBadge',
+  'Tag',
+  'Pagination',
+  'Breadcrumb',
+  'PageHeader',
+  'SiriusSteps',
+  'Table',
+  'Tabs',
+  'SiriusDrawer',
+  'Cascader',
+  'Radio',
+  'Checkbox',
+  'Switch',
+  'TimePicker',
+  'DatePicker',
+  'Input',
+  'Select',
+  'SiriusModal',
+  'Tooltip',
+  'Popover',
+  'Alert',
+];
+
+const jsConfigs = comp.map(name => ({
+  input: `./src/${name}/index.tsx`,
+  output: {
+    name: `lxui-${name}`,
+    file: `comp-dist/${name}.js`,
+    format: 'umd',
+    exports: 'named',
+    globals: {
+      react: 'React',
+      'react-dom': 'ReactDOM',
+    },
+    plugins: [terser()],
+  },
+  plugins,
+  external: ['react', 'react-dom', 'antd', '@ant-design/icons', 'react-resizable', 'api', 'moment'],
+}));
+
+const indexConfig = {
+  input: './src/index-comp.ts',
+  output: {
+    name: 'lxui',
+    file: 'comp-dist/index.js',
+    format: 'umd',
+    exports: 'named',
+    globals: {
+      react: 'React',
+      'react-dom': 'ReactDOM',
+    },
+    plugins: [terser()],
+  },
+  plugins,
+  external: ['react', 'react-dom', 'antd', '@ant-design/icons', 'react-resizable', 'api', 'moment'],
+};
+
+export default [indexConfig, ...jsConfigs];
+```
 
 ## React 性能优化
 * 加载时性能优化
